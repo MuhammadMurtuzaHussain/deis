@@ -238,3 +238,15 @@ describe("citations in round brackets", () => {
     expect(inlineIds("Dashboards (ab5) and SQL [ab6, ab7]")).toEqual(["ab5", "ab6", "ab7"]);
   });
 });
+
+import { newFactId } from "@/lib/profile/types";
+describe("ids in odd shapes", () => {
+  it("reads ids however the model wrote them", () => {
+    expect(cleanId("RM1")).toBe("rm1");
+    expect(cleanId("fact rm11")).toBe("rm11");
+    expect(cleanId("id: ab5")).toBe("ab5");
+    expect(cleanId("(ab5)")).toBe("ab5");
+    const id = newFactId();
+    expect(cleanId(`[${id}] (achievement) Built a thing`)).toBe(id);
+  });
+});

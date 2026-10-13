@@ -79,8 +79,8 @@ export const emptyPreferences = (): Preferences => ({
 });
 
 let counter = 0;
-/** Short, unique, readable in prompts ("f3k9a"). */
+/** Short, unique, readable in prompts ("fk3x907"). Always ends in digits, which is how cleanId spots an id. */
 export function newFactId(): string {
-  counter = (counter + 1) % 1296;
-  return `f${Date.now().toString(36).slice(-4)}${counter.toString(36).padStart(2, "0")}`;
+  counter = (counter + 1) % 100;
+  return `f${Date.now().toString(36).slice(-4)}${String(counter).padStart(2, "0")}`;
 }

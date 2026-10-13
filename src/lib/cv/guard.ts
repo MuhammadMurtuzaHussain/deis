@@ -28,7 +28,7 @@ export type GuardRule =
   | "past_as_present"
   | "work_status";
 
-export type GuardEvent = { rule: GuardRule; text: string };
+export type GuardEvent = { rule: GuardRule; text: string; /** For unknown ids: what the model actually cited. */ ids?: string[] };
 
 /** Tools and platforms people get caught out on in interviews. Mentioning one needs a fact that does. */
 export const TOOLS = [
@@ -67,9 +67,11 @@ const NUMBER_RE = /(?<![\w.])\d[\d,]*(?:\.\d+)?/g;
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ");
 /** Models copy the prompt's "[ab5]" format back, sometimes with the whole fact line after it; the id is the first token. */
 export function cleanId(raw: string): string {
-  const inBrackets = /\[([^\]]+)\]/.exec(raw)?.[1];
-  const token = (inBrackets ?? raw).trim().split(/[\s(,;:]/)[0];
-  return token.replace(/[^\w-]/g, "");
+  // Fact ids look like "ab5", "rm11" or "fk3x9a07": letters, then letters or digits, ending in a digit.
+  const ID = /[a-z][a-z0-9]{0,10}\d/i;
+  const inBrackets = [...raw.matchAll(/[[(]([^\])]+)[\])]/g)].map((m) => ID.exec(m[1])?.[0]).find(Boolean);
+  const id = inBrackets ?? ID.exec(raw)?.[0];
+  return (id ?? raw.trim().split(/[\s(,;:]/)[0].replace(/[^\w-]/g, "")).toLowerCase();
 }
 
 /** Trim to a length at a word boundary, for model text that ran long. */
@@ -171,7 +173,7 @@ export function keepSentences(text: string, facts: string[], l: Ledger, events: 
   const ids = cleanIds(facts);
   const known = ids.filter((id) => l.byId.has(id));
   if ((opts?.requireFacts ?? true) && !known.length) {
-    events.push({ rule: ids.length ? "unknown_fact" : "uncited", text });
+    events.push({ rule: ids.length ? "unknown_fact" : "uncited", text, ...(ids.length ? { ids: facts.slice(0, 4) } : {}) });
     return null;
   }
   const kept = splitSentences(clean).filter((sentence) => {

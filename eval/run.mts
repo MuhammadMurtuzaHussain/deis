@@ -67,6 +67,8 @@ for (const id of Object.keys(PERSONAS) as PersonaId[]) {
       const letterText = kit.letter?.paragraphs.map((x) => x.text).join(" ") ?? "";
       const answerText = kit.answers?.answers.map((a) => a.answer).join(" ") ?? "";
       const events: GuardEvent[] = [...fitEvents, ...kit.events];
+      const unknown = events.filter((e) => e.ids).flatMap((e) => e.ids!);
+      if (unknown.length) console.log("  unknown ids the model cited:", JSON.stringify([...new Set(unknown)].slice(0, 8)));
       const byRule: Record<string, number> = {};
       for (const e of events) byRule[e.rule] = (byRule[e.rule] ?? 0) + 1;
       rows.push({
