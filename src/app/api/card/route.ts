@@ -22,8 +22,10 @@ export async function POST(req: Request) {
     const { data, usage } = await structured("card", "cardAgent", ai.chain, cardPrompt(input.job as unknown as ScoredJob, input.facts), cardSchema, { maxOutputTokens: 500 });
     const known = new Set(input.facts.filter((f) => f.confirmed).map((f) => f.id));
     // A "strong" line with no real fact behind it reads as a gap instead.
-    const why = data.why.map((w) => {
-      const facts = w.facts.map(cleanId).filter((id) => known.has(id));
+    const why = data.why.slice(0, 3).map((w) => {
+      // Small models sometimes cite inline ("…dashboards [rm5]") and leave the list empty; both count.
+      const inline = [...w.text.matchAll(/\[([^\]]+)\]/g)].flatMap((m) => m[1].split(/[,\s]+/));
+      const facts = [...new Set([...w.facts, ...inline].map(cleanId))].filter((id) => known.has(id));
       return { ...w, text: houseStyle(w.text.replace(/\s*\[[^\]]*\]/g, "")), facts, kind: w.kind !== "gap" && !facts.length ? ("gap" as const) : w.kind };
     });
     return Response.json({ why, score: Math.round(data.score), usage });

@@ -12,7 +12,7 @@ import { emptyPreferences, type Fact, type FactKind, type Header, type Preferenc
 // app's) own database. There are no accounts and no server copy. Export makes a
 // JSON backup; "Delete everything" in Settings clears it.
 
-export type Swipe = { jobId: string; dir: "apply" | "skip" | "save"; reason?: string; at: number };
+export type Swipe = { jobId: string; dir: "apply" | "skip" | "save"; reason?: string; at: number; /** Kept for saved jobs, so they can be found again. */ job?: ScoredJob };
 export type CardCache = { jobId: string; why: CardWhy["why"]; score: number; at: number };
 
 export const STATUSES = ["ready", "applied", "interview", "offer", "closed"] as const;
@@ -37,6 +37,8 @@ export type Application = {
   fit: Fit | null;
   fitEvents: GuardEvent[];
   kit: Kit | null;
+  /** Why the background build failed, shown with a Retry. */
+  kitError?: string | null;
   notes: string;
   createdAt: number;
   updatedAt: number;

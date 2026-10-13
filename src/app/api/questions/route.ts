@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   if (!input.fit.requirements.some((r) => r.match !== "strong")) return Response.json({ questions: [] });
   try {
     const { data } = await structured("questions", "coachAgent", ai.chain, gapQuestionsPrompt(input.job as unknown as ScoredJob, input.fit), gapQuestionsSchema, { maxOutputTokens: 800, temperature: 0.4 });
-    return Response.json({ questions: data.questions.map((q) => ({ need: q.need, question: houseStyle(q.question) })) });
+    return Response.json({ questions: data.questions.slice(0, 4).map((q) => ({ need: q.need, question: houseStyle(q.question) })) });
   } catch (e) {
     return modelFailure(e, ai);
   }

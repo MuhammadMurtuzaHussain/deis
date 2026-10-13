@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   if (input instanceof Response) return input;
   try {
     const { data } = await structured("proposals", "coachAgent", ai.chain, proposalPrompt(input.need, input.question, input.answer, input.orgs), proposalSchema, { maxOutputTokens: 600, temperature: 0.1 });
-    return Response.json({ proposals: data.proposals.map((p) => ({ ...p, text: houseStyle(p.text) })) });
+    return Response.json({ proposals: data.proposals.slice(0, 3).map((p) => ({ ...p, text: houseStyle(p.text) })) });
   } catch (e) {
     return modelFailure(e, ai);
   }

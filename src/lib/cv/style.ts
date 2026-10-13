@@ -33,7 +33,9 @@ function keepCase(original: string, replacement: string): string {
   return original[0] === original[0].toUpperCase() ? replacement[0].toUpperCase() + replacement.slice(1) : replacement;
 }
 
-export function houseStyle(s: string): string {
+export function houseStyle(input: string): string {
+  // Markdown has no place in a CV line: "**Data analysis**" → "Data analysis".
+  const s = input.replace(/\*\*|__/g, "").replace(/^\s*[*•-]\s+/, "");
   let out = s.replace(/\s*[—–]\s*(?=\S)/g, (m, offset: number) => {
     // An en dash between numbers is a range ("2024–2025"); keep it.
     const before = s[offset - 1];

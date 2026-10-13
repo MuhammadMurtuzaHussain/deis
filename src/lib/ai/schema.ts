@@ -15,7 +15,7 @@ export const extractSchema = z.object({
     .array(
       z.object({
         kind: z.enum(FACT_KINDS),
-        text: z.string().min(2).max(400),
+        text: z.string().min(2).max(1600),
         org: z.string().nullish(),
         title: z.string().nullish(),
         start: z.string().nullish(),
@@ -31,12 +31,12 @@ export const cardSchema = z.object({
     .array(
       z.object({
         kind: z.enum(["strong", "transferable", "gap"]),
-        text: z.string().max(140),
-        facts: z.array(z.string()).max(4).default([]),
+        text: z.string().max(560),
+        facts: z.array(z.string()).max(12).default([]),
       }),
     )
     .min(1)
-    .max(3),
+    .max(6),
   score: z.number().min(0).max(100),
 });
 export type CardWhy = z.infer<typeof cardSchema>;

@@ -25,7 +25,8 @@ export type GuardRule =
   | "first_person"
   | "unsupported_skill"
   | "fit_demoted"
-  | "past_as_present";
+  | "past_as_present"
+  | "work_status";
 
 export type GuardEvent = { rule: GuardRule; text: string };
 
@@ -55,6 +56,8 @@ const IS_CERT = new RegExp(CERT_RE.source, "i");
 
 /** "Currently pursuing an MSc" when the MSc ended last year: small models get tense wrong. */
 const CURRENTLY = /\b(currently|now)\s+(pursuing|studying|completing|enrolled|undertaking|doing|working towards|reading)\b|\bexpected (to graduate|graduation)\b/i;
+/** Visas, stamps and sponsorship are facts about the user's status that only the check-in knows. A model guessing them can cost someone the job. */
+const WORK_STATUS = /\b(visa|sponsor(ship|ed)?|stamp\s*[0-9][a-z]?|work permit|employment permit|critical skills|right to work|eligible to work|authori[sz]ed to work|citizen(ship)?|immigration)\b/i;
 /** A sentence that admits a gap may name the posting's tools: "I haven't used Java professionally yet". */
 const ADMITS_GAP = /\b(not|n['’]t|no|yet|learn(ing)?|developing|new to|build(ing)? up|close (the|this|that) gap|gap)\b/i;
 
@@ -62,8 +65,20 @@ const YEARS_CLAIM = /\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten
 const NUMBER_RE = /(?<![\w.])\d[\d,]*(?:\.\d+)?/g;
 
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ");
-/** Models copy the prompt's "[ab5]" format back; the id is what's inside. */
-export const cleanId = (id: string) => id.replace(/[^\w-]/g, "");
+/** Models copy the prompt's "[ab5]" format back, sometimes with the whole fact line after it; the id is the first token. */
+export function cleanId(raw: string): string {
+  const inBrackets = /\[([^\]]+)\]/.exec(raw)?.[1];
+  const token = (inBrackets ?? raw).trim().split(/[\s(,;:]/)[0];
+  return token.replace(/[^\w-]/g, "");
+}
+
+/** Trim to a length at a word boundary, for model text that ran long. */
+export function clip(s: string, max: number): string {
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max);
+  const end = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("; "));
+  return end > max * 0.6 ? cut.slice(0, end + 1) : `${cut.slice(0, cut.lastIndexOf(" "))}…`;
+}
 const cleanIds = (ids: string[]) => [...new Set(ids.map(cleanId).filter(Boolean))];
 const digits = (s: string) => s.replace(/,/g, "");
 
@@ -99,6 +114,7 @@ export function whyNot(text: string, rawIds: string[], l: Ledger, opts: WhyNotOp
   const sourceDigits = digits(source);
 
   for (const phrase of l.neverClaim) if (phrase.length > 2 && norm(text).includes(norm(phrase))) return "never_claim";
+  if (WORK_STATUS.test(text)) return "work_status";
 
   if (CURRENTLY.test(text)) {
     const year = (opts.now ?? new Date()).getFullYear();
@@ -134,13 +150,39 @@ export function whyNot(text: string, rawIds: string[], l: Ledger, opts: WhyNotOp
 /** "…from 41% to 68% [ab7]." → "…from 41% to 68%." The ids live in `facts`, not the prose. */
 export const stripCitations = (s: string) => s.replace(/\s*\[(?:\s*[a-z]{1,3}\d[\w-]*\s*,?)+\]/gi, "");
 
+/** "One. Two? Three." → ["One.", "Two?", "Three."], without splitting "e.g." or "3.5". */
+export function splitSentences(text: string): string[] {
+  return text
+    .split(/(?<=[.!?])\s+(?=[A-Z"“(])/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Guard sentence by sentence: one invented claim costs that sentence, not the whole
+ * paragraph. Citation and fact checks still use the item's cited facts.
+ */
+export function keepSentences(text: string, facts: string[], l: Ledger, events: GuardEvent[], opts?: WhyNotOptions): string | null {
+  const clean = houseStyle(stripCitations(text));
+  // An item with no real facts behind it fails as a whole.
+  const whole = whyNot("", facts, l, opts);
+  if (whole === "uncited" || whole === "unknown_fact") {
+    events.push({ rule: whole, text });
+    return null;
+  }
+  const kept = splitSentences(clean).filter((sentence) => {
+    const rule = whyNot(sentence, facts, l, opts);
+    if (rule) events.push({ rule, text: sentence });
+    return !rule;
+  });
+  return kept.length ? kept.join(" ") : null;
+}
+
 function keep<T extends Cited>(items: T[], l: Ledger, events: GuardEvent[], opts?: WhyNotOptions): T[] {
   const out: T[] = [];
   for (const item of items) {
-    const text = houseStyle(stripCitations(item.text));
-    const rule = whyNot(text, item.facts, l, opts);
-    if (rule) events.push({ rule, text: item.text });
-    else out.push({ ...item, text, facts: cleanIds(item.facts) });
+    const text = keepSentences(item.text, item.facts, l, events, opts);
+    if (text) out.push({ ...item, text, facts: cleanIds(item.facts) });
   }
   return out;
 }
@@ -191,7 +233,7 @@ export function guardCv(body: CvBody, l: Ledger): { body: CvBody; events: GuardE
       roles,
       projects: keep(body.projects, l, events),
       achievements: keep(body.achievements, l, events),
-      skills,
+      skills: skills.slice(0, 30),
     },
     events,
   };
@@ -208,12 +250,8 @@ export function guardAnswers(a: Answers, l: Ledger, posting = ""): { answers: An
   const events: GuardEvent[] = [];
   const answers = a.answers.map((x) => {
     if (x.needsYou) return { ...x, answer: "", facts: [] };
-    const text = houseStyle(stripCitations(x.answer));
-    const rule = whyNot(text, x.facts, l, { requireFacts: false, cv: false, posting });
-    if (rule) {
-      events.push({ rule, text: x.answer });
-      return { ...x, answer: "", facts: [], needsYou: true };
-    }
+    const text = keepSentences(x.answer, x.facts, l, events, { requireFacts: false, cv: false, posting });
+    if (!text) return { ...x, answer: "", facts: [], needsYou: true };
     return { ...x, answer: text, facts: cleanIds(x.facts) };
   });
   return { answers: { answers }, events };
@@ -222,13 +260,13 @@ export function guardAnswers(a: Answers, l: Ledger, posting = ""): { answers: An
 /** A "strong" or "transferable" match needs real facts behind it, or it's a gap. */
 export function guardFit(fit: Fit, l: Ledger): { fit: Fit; events: GuardEvent[] } {
   const events: GuardEvent[] = [];
-  const requirements = fit.requirements.map((r) => {
+  const requirements = fit.requirements.slice(0, 10).map((r) => {
     const facts = cleanIds(r.facts).filter((id) => l.byId.has(id));
     if (r.match !== "gap" && !facts.length) {
       events.push({ rule: "fit_demoted", text: r.need });
       return { ...r, match: "gap" as const, facts: [], note: r.note };
     }
-    return { ...r, facts, need: houseStyle(stripCitations(r.need)), note: houseStyle(stripCitations(r.note)) };
+    return { ...r, facts, need: clip(houseStyle(stripCitations(r.need)), 200), note: clip(houseStyle(stripCitations(r.note)), 320) };
   });
-  return { fit: { ...fit, requirements, angle: houseStyle(fit.angle) }, events };
+  return { fit: { ...fit, requirements, angle: clip(houseStyle(fit.angle), 300) }, events };
 }

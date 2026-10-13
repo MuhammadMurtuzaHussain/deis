@@ -176,3 +176,43 @@ describe("guard refinements from the first live runs", () => {
     expect(whyNot("Joining the 2027 placement.", ["a1"], l, { posting })).toBe("unsupported_number");
   });
 });
+
+import { cleanId, clip } from "@/lib/cv/guard";
+describe("model output tolerance", () => {
+  it("finds the id when a model copies the whole fact line", () => {
+    expect(cleanId("[rm1] (education · University of Galway · 2024 to 2025) MSc Data Analytics")).toBe("rm1");
+    expect(cleanId("rm11")).toBe("rm11");
+    expect(cleanId("ab5 (achievement)")).toBe("ab5");
+  });
+  it("trims long text at a sentence or word", () => {
+    expect(clip("First sentence here. Second one is long and goes on", 30)).toBe("First sentence here.");
+    expect(clip("short", 30)).toBe("short");
+  });
+});
+
+import { keepSentences, splitSentences } from "@/lib/cv/guard";
+describe("sentence-level guarding", () => {
+  const done = ledger(
+    [
+      fact("m1", "education", "MSc Data Analytics, University of Galway", { start: "2024", end: "2025" }),
+      fact("m2", "achievement", "Built Power BI dashboards for 5 regional managers", { org: "Lantern" }),
+    ],
+    [],
+  );
+  it("drops only the sentence that fails", () => {
+    const events: { rule: string; text: string }[] = [];
+    const out = keepSentences("Currently undertaking an MSc in Data Analytics [m1]. Built Power BI dashboards for 5 regional managers [m2].", ["m1", "m2"], done, events as never, { now: new Date("2026-10-13") });
+    expect(out).toBe("Built Power BI dashboards for 5 regional managers.");
+    expect(events.map((e) => e.rule)).toEqual(["past_as_present"]);
+  });
+  it("never lets a model claim a visa or right-to-work status", () => {
+    expect(whyNot("I am eligible to work in Ireland without sponsorship.", [], done, { requireFacts: false, cv: false })).toBe("work_status");
+    expect(whyNot("I hold a Stamp 1G.", [], done, { requireFacts: false, cv: false })).toBe("work_status");
+  });
+  it("splits sentences without breaking decimals", () => {
+    expect(splitSentences("Raised it to 3.5 points. Then left!")).toEqual(["Raised it to 3.5 points.", "Then left!"]);
+  });
+  it("strips markdown from labels", () => {
+    expect(houseStyle("**Data analysis**")).toBe("Data analysis");
+  });
+});

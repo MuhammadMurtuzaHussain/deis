@@ -1,1 +1,191 @@
 @import "tailwindcss";
+
+/* Deis design tokens.
+   Calm and plain on purpose: people use this while job hunting, which is stressful
+   enough. Cool off-white and ink, one accent (estuary green: "go", swipe right),
+   amber only for gaps and stretch roles, brick only for blocked and errors.
+   Shapes: controls 10px, surfaces 16px, the job card 20px. Nothing else. */
+
+:root {
+  --bg: #f3f5f4;
+  --surface: #fbfcfb;
+  --surface-2: #e9ecea;
+  --ink: #131816;
+  --ink-2: #47514d;
+  --ink-3: #66706b;
+  --line: #d5dad7;
+  --accent: #17694f;
+  --accent-ink: #ffffff;
+  --accent-soft: #d9eee5;
+  --accent-text: #11553f;
+  --amber: #8a5a00;
+  --amber-soft: #fbefd4;
+  --brick: #9b2f2f;
+  --brick-soft: #f8e1df;
+  --focus: #1b6fd1;
+  --shadow: 0 1px 2px rgb(19 24 22 / 0.06), 0 12px 32px -12px rgb(19 24 22 / 0.18);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e1110;
+  --surface: #151a18;
+  --surface-2: #1d2321;
+  --ink: #e8ece9;
+  --ink-2: #aab4af;
+  --ink-3: #8a948f;
+  --line: #2b3330;
+  --accent: #4fbf94;
+  --accent-ink: #062016;
+  --accent-soft: #143428;
+  --accent-text: #7fd8b2;
+  --amber: #e9b75c;
+  --amber-soft: #2c2311;
+  --brick: #f08e86;
+  --brick-soft: #33191a;
+  --focus: #7ab4ff;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 40px -16px rgb(0 0 0 / 0.7);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1110;
+    --surface: #151a18;
+    --surface-2: #1d2321;
+    --ink: #e8ece9;
+    --ink-2: #aab4af;
+    --ink-3: #8a948f;
+    --line: #2b3330;
+    --accent: #4fbf94;
+    --accent-ink: #062016;
+    --accent-soft: #143428;
+    --accent-text: #7fd8b2;
+    --amber: #e9b75c;
+    --amber-soft: #2c2311;
+    --brick: #f08e86;
+    --brick-soft: #33191a;
+    --focus: #7ab4ff;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 40px -16px rgb(0 0 0 / 0.7);
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-brick: var(--brick);
+  --color-brick-soft: var(--brick-soft);
+  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-atkinson-mono), ui-monospace, monospace;
+  --radius-control: 10px;
+  --radius-surface: 16px;
+  --radius-card: 20px;
+  --shadow-lift: var(--shadow);
+}
+
+html {
+  background: var(--bg);
+  color: var(--ink);
+  scrollbar-gutter: stable;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100dvh;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* One visible focus style everywhere, for keyboard users. */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* The Irish road-sign convention: the Irish word in italics, the English beside it. */
+.ga {
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Figures line up in counters and timers without switching to a monospace face. */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Skeleton shimmer for loading states; still under reduced motion. */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 0%, color-mix(in oklab, var(--surface-2) 60%, var(--surface)) 50%, var(--surface-2) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* The CV preview prints as the CV alone: "Save as PDF" from the print dialog. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #cv-print,
+  #cv-print * {
+    visibility: visible;
+  }
+  #cv-print {
+    position: absolute;
+    inset: 0;
+    padding: 0;
+    box-shadow: none;
+    border: 0;
+    background: white;
+    color: black;
+  }
+  @page {
+    size: A4;
+    margin: 14mm 15mm;
+  }
+}

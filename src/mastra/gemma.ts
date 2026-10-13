@@ -71,6 +71,8 @@ export async function structured<T>(
     if (res.object) return { data: res.object as T, usage };
     const parsed = schema.safeParse(extractJson(res.text ?? ""));
     if (parsed.success) return { data: parsed.data, usage };
+    // Local debugging only (DEIS_DEBUG=1): what the model actually said. Never sent anywhere.
+    if (process.env.DEIS_DEBUG) console.error(`[${task}] attempt ${n} raw:`, (res.text ?? "").slice(0, 800), "| issues:", JSON.stringify(parsed.error?.issues?.slice(0, 3)));
     throw new Error("Model returned no usable JSON");
   };
 
