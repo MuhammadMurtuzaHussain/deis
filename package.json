@@ -14,7 +14,8 @@
     "desktop": "electron desktop/main.mjs",
     "dist:mac": "pnpm desktop:build && electron-builder --mac",
     "dist:win": "pnpm desktop:build && electron-builder --win",
-    "dist:linux": "pnpm desktop:build && electron-builder --linux"
+    "dist:linux": "pnpm desktop:build && electron-builder --linux",
+    "eval:seniority": "tsx eval/seniority.mts && tsx eval/seniority.mts holdout"
   },
   "packageManager": "pnpm@12.8.1",
   "dependencies": {
