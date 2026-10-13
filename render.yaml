@@ -40,16 +40,26 @@ services:
           type: keyvalue
           name: deis-cache
           property: connectionString
-      # Sentry: agent traces and guard issues. Never prompts, CVs or keys. A DSN can only send events.
+      # Sentry: agent traces and guard issues. Never prompts, CVs or keys.
+      # A DSN can only send events, so it is fine in the repo.
       - key: SENTRY_DSN
-        sync: false
+        value: https://8bd442bdbb309e905151b8b25032e60b@o4512237895417856.ingest.de.sentry.io/4512249652641872
       - key: NEXT_PUBLIC_SENTRY_DSN
+        value: https://8bd442bdbb309e905151b8b25032e60b@o4512237895417856.ingest.de.sentry.io/4512249652641872
+      # Optional: readable stack traces (source maps uploaded at build time).
+      - key: SENTRY_ORG
+        value: tfc-research-and-innovation-li
+      - key: SENTRY_PROJECT
+        value: deis
+      - key: SENTRY_AUTH_TOKEN
         sync: false
 
-  # Render Key Value (Valkey). Internal only: holds the job feed cache and the demo's rate limits.
+  # Render Key Value (Valkey). Internal only: holds the job feed cache, the demo's rate limits
+  # and this month's SerpApi count, so a sleeping web service wakes without spending searches.
+  # Paid because a workspace gets one free Key Value, and Return Route has it.
   - type: keyvalue
     name: deis-cache
-    plan: free
+    plan: 256mb
     region: frankfurt
     maxmemoryPolicy: allkeys-lru
     ipAllowList: []

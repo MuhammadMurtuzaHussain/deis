@@ -25,6 +25,8 @@ const LABEL: Record<string, string> = {
   first_person: "A CV line was in the first person",
   unsupported_skill: "A skill wasn't in the profile",
   fit_demoted: "A 'strong' match had no facts, so it became a gap",
+  past_as_present: "Something finished was written as ongoing",
+  work_status: "Gemma wrote a visa or right-to-work claim",
   model_error: "Gemma call failed",
   json_retry: "Gemma needed a second try to return valid JSON",
   json_failed: "Gemma never returned valid JSON",

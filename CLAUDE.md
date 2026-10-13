@@ -49,7 +49,7 @@ Local Gemma: `ollama pull gemma4:e4b` (6.6 GB). `.env.local` points the demo's f
 
 ## Learned the hard way (13 Oct)
 
-- AI Studio's Gemma 4 (26B and 31B) returned 500s for hours; some requests hung past 90 s. Gemini on the same key worked. Hence deadlines, the probe and the fallback chain.
+- AI Studio's Gemma 4 (26B and 31B) returned 500s for hours; some requests hung past 90 s. Gemini on the same key worked. Hence deadlines, the probe and the fallback chain. Later that day 26B answered 4 of 5 one-word prompts (29–52 s each) and 31B 2 of 5, so with no second host the demo retries 26B rather than falling back to 31B.
 - Output schemas with tight `.max()` limits threw away good answers (a 170-character requirement failed the whole fit). Schemas are generous; code trims.
 - Models cite ids as `[ab5]`, inline in text, or copy the whole fact line; `cleanId` takes the first token.
 - Gemma 26B wrote "currently undertaking an MSc" about a 2025 degree and "eligible to work in Ireland without sponsorship" for a Stamp 1G persona. Both are now code-checked.
@@ -65,9 +65,9 @@ Local Gemma: `ollama pull gemma4:e4b` (6.6 GB). `.env.local` points the demo's f
 
 ## Open items
 
-- [ ] Render blueprint (author's account), then set secrets: AI Studio key, SerpApi key, DigitalOcean key and model, Sentry DSN.
+- [ ] Render blueprint (author's account). Key Value is on the paid `256mb` plan ($10/month from the $50 hackathon credit): a workspace gets one free Key Value and Return Route's cache has it. Secrets to set in the dashboard: AI Studio key, SerpApi key, Sentry auth token; DigitalOcean key and model later.
 - [ ] DigitalOcean serverless inference as the demo's second Gemma host: confirm the model id with the key (`GET https://inference.do-ai.run/v1/models`).
-- [ ] Sentry project `deis`: DSN into Render; screenshots of a kit trace and guard issues for the post.
+- [ ] Sentry project `deis` (org `tfc-research-and-innovation-li`, DSN in `render.yaml`, traces and guard issues verified 13 Oct): screenshots of a kit trace and guard issues for the post.
 - [ ] Polar: €9 product with a licence-key benefit; put the organisation id and checkout link in `desktop/config.json`.
 - [ ] First users (the author, Cybersecurity Society), video, screenshots, DevRelay session, publish the post.
 - [ ] Windows and Linux installers tested on real machines; code signing before a real launch.
