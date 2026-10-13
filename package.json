@@ -61,15 +61,6 @@
       "app": "desktop",
       "output": "release"
     },
-    "extraResources": [
-      {
-        "from": ".next/standalone",
-        "to": "server",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
     "mac": {
       "target": [
         "dmg"
@@ -91,6 +82,12 @@
         "AppImage"
       ],
       "category": "Office"
-    }
+    },
+    "files": [
+      "main.mjs",
+      "package.json",
+      "!**/node_modules/**"
+    ],
+    "afterPack": "scripts/after-pack.cjs"
   }
 }

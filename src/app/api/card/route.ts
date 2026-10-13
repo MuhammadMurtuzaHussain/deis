@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { cardPrompt } from "@/lib/ai/prompts";
 import { cardSchema } from "@/lib/ai/schema";
-import { cleanId } from "@/lib/cv/guard";
+import { cleanId, inlineIds, stripCitations } from "@/lib/cv/guard";
 import { houseStyle } from "@/lib/cv/style";
 import type { ScoredJob } from "@/lib/jobs/types";
 import { aiFor, body, factsInputSchema, jobInputSchema, modelFailure } from "@/lib/server/api";
@@ -24,9 +24,9 @@ export async function POST(req: Request) {
     // A "strong" line with no real fact behind it reads as a gap instead.
     const why = data.why.slice(0, 3).map((w) => {
       // Small models sometimes cite inline ("…dashboards [rm5]") and leave the list empty; both count.
-      const inline = [...w.text.matchAll(/\[([^\]]+)\]/g)].flatMap((m) => m[1].split(/[,\s]+/));
+      const inline = inlineIds(w.text);
       const facts = [...new Set([...w.facts, ...inline].map(cleanId))].filter((id) => known.has(id));
-      return { ...w, text: houseStyle(w.text.replace(/\s*\[[^\]]*\]/g, "")), facts, kind: w.kind !== "gap" && !facts.length ? ("gap" as const) : w.kind };
+      return { ...w, text: houseStyle(stripCitations(w.text)), facts, kind: w.kind !== "gap" && !facts.length ? ("gap" as const) : w.kind };
     });
     return Response.json({ why, score: Math.round(data.score), usage });
   } catch (e) {

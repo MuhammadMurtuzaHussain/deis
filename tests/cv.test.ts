@@ -228,3 +228,13 @@ describe("guard tolerance from the Careful-lane run", () => {
     expect(keepSentences("Cleaned sales data for 40 stores.", ["zz9"], l, events)).toBeNull();
   });
 });
+
+import { inlineIds } from "@/lib/cv/guard";
+describe("citations in round brackets", () => {
+  it("strips and reads (ab5) style ids", () => {
+    expect(stripCitations("Built a dashboard in React (ab5).")).toBe("Built a dashboard in React.");
+    expect(stripCitations("Wrote SQL (ab6, ab7) weekly")).toBe("Wrote SQL weekly");
+    expect(stripCitations("Raised coverage (from 41%)")).toBe("Raised coverage (from 41%)");
+    expect(inlineIds("Dashboards (ab5) and SQL [ab6, ab7]")).toEqual(["ab5", "ab6", "ab7"]);
+  });
+});

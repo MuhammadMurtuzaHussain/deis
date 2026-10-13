@@ -8,3 +8,6 @@ allowBuilds:
   protobufjs: false
   electron: true
   electron-winstaller: false
+
+# Flat node_modules: Next standalone output then holds real folders the desktop installer can ship.
+nodeLinker: hoisted

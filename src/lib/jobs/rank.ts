@@ -13,7 +13,7 @@ export type DeckEntry = { job: ScoredJob; rank: number; work: WorkFit; matched: 
 export type Deck = { entries: DeckEntry[]; hidden: Record<HiddenReason, number> };
 
 const STOP = new Set(
-  "about above after again also and any are based been being both but can could did does doing during each few for from further had has have having her here hers him his how into its itself just more most other our ours out over own same she should some such than that the their them then there these they this those through too under until very was were what when where which while who whom why will with would you your yours work team role skills experience using used built across within including strong ability good excellent".split(" "),
+  "about above after again also and any are based been being both but can could did does doing during each few for from further had has have having her here hers him his how into its itself just more most other our ours out over own same she should some such than that the their them then there these they this those through too under until very was were what when where which while who whom why will with would you your yours work team role skills experience using used built across within including strong ability good excellent one two three four five first new year years events event ireland irish dublin cork galway limerick waterford remote hybrid university college school".split(" "),
 );
 
 /** Words and tools from the user's confirmed facts, for matching against postings. */

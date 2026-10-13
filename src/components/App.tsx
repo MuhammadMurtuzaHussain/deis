@@ -63,7 +63,7 @@ function Shell() {
   if (r.name === "checkin") return <CheckIn />;
 
   const active = r.name === "application" ? "tracker" : r.name;
-  const modelLabel = !ai ? (status?.hosted ? "Demo Gemma" : "Not set up") : ai.provider === "demo" ? "Demo Gemma" : tierOf(ai) === "local" ? "Gemma on this computer" : ai.provider === "google" ? "Gemma on AI Studio" : "Your own server";
+  const modelLabel = !ai ? (status?.hosted ? "Demo Gemma" : status?.desktop ? "Gemma on this computer" : "Not set up") : ai.provider === "demo" ? "Demo Gemma" : tierOf(ai) === "local" ? "Gemma on this computer" : ai.provider === "google" ? "Gemma on AI Studio" : "Your own server";
 
   let screen: ReactNode;
   switch (r.name) {

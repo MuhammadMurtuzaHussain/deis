@@ -148,7 +148,10 @@ export function whyNot(text: string, rawIds: string[], l: Ledger, opts: WhyNotOp
 }
 
 /** "…from 41% to 68% [ab7]." → "…from 41% to 68%." The ids live in `facts`, not the prose. */
-export const stripCitations = (s: string) => s.replace(/\s*\[(?:\s*[a-z]{1,3}\d[\w-]*\s*,?)+\]/gi, "");
+export const stripCitations = (s: string) => s.replace(/\s*\[(?:\s*[a-z]{1,3}\d[\w-]*\s*,?)+\]/gi, "").replace(/\s*\((?:\s*[a-z]{1,3}\d[\w-]*\s*,?)+\)/gi, "");
+
+/** Fact ids a model wrote inline, in [ab5] or (ab5, ab6) form. */
+export const inlineIds = (s: string) => [...s.matchAll(/[[(]((?:\s*[a-z]{1,3}\d[\w-]*\s*,?)+)[\])]/gi)].flatMap((m) => m[1].split(/[,\s]+/)).filter(Boolean);
 
 /** "One. Two? Three." → ["One.", "Two?", "Three."], without splitting "e.g." or "3.5". */
 export function splitSentences(text: string): string[] {
