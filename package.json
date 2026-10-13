@@ -87,6 +87,7 @@
     "files": [
       "main.mjs",
       "package.json",
+      "config.json",
       "!**/node_modules/**"
     ],
     "afterPack": "scripts/after-pack.cjs"

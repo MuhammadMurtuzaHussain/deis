@@ -23,6 +23,8 @@ function parseHash(hash: string): Route | null {
 
 export const routeHref = (r: Route) => (r.name === "application" ? `#/application/${encodeURIComponent(r.id)}` : `#/${r.name}`);
 
+export type Licence = ({ state: "off" } | { state: "trial"; daysLeft: number } | { state: "licensed"; customer: string | null } | { state: "locked" }) & { buyUrl?: string };
+
 export type ServerStatus = { hosted: boolean; desktop: boolean; demoModel: boolean; services: { jobSearch: boolean; tracing: boolean; cache: string } };
 
 type Store = {
@@ -37,6 +39,8 @@ type Store = {
   ai: AiSettings | null;
   setAi: (s: AiSettings) => void;
   status: ServerStatus | null;
+  licence: Licence | null;
+  setLicence: (l: Licence) => void;
   /** Which demo persona is loaded, if any (src/lib/client/demo.ts). */
   demo: string | null;
 };
@@ -58,11 +62,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // The app shows a splash until IndexedDB answers, so reading storage here can't cause a hydration mismatch.
   const [ai, setAiState] = useState<AiSettings | null>(() => (typeof window === "undefined" ? null : loadAiSettings()));
   const [status, setStatus] = useState<ServerStatus | null>(null);
+  const [licence, setLicence] = useState<Licence | null>(null);
 
   useEffect(() => {
     fetch("/api/status")
       .then((r) => r.json())
-      .then(setStatus)
+      .then((s: ServerStatus) => {
+        setStatus(s);
+        if (s.desktop)
+          fetch("/api/licence")
+            .then((r) => r.json())
+            .then(setLicence)
+            .catch(() => setLicence(null));
+      })
       .catch(() => setStatus(null));
   }, []);
 
@@ -103,6 +115,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setAiState(s);
     },
     status,
+    licence,
+    setLicence,
     demo,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

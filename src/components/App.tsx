@@ -12,6 +12,7 @@ import { ApplicationScreen } from "./ApplicationScreen";
 import { CheckIn } from "./CheckIn";
 import { Deck } from "./Deck";
 import { KitQueue } from "./KitQueue";
+import { LicenceScreen } from "./Licence";
 import { ModelSetup } from "./ModelSetup";
 import { ProfileScreen } from "./ProfileScreen";
 import { Settings } from "./Settings";
@@ -47,7 +48,7 @@ const NAV: { route: Route; label: string; icon: typeof Cards }[] = [
 ];
 
 function Shell() {
-  const { route, profile, ai, status, demo, go } = useStore();
+  const { route, profile, ai, status, demo, go, licence, setLicence } = useStore();
   const ready = useLiveQuery(() => db.applications.where("status").equals("ready").count(), [], 0);
 
   if (!profile) {
@@ -57,6 +58,8 @@ function Shell() {
       </main>
     );
   }
+
+  if (licence?.state === "locked") return <LicenceScreen licence={licence} onChange={setLicence} />;
 
   const r: Route = route ?? (isOnboarded(profile) ? { name: "deck" } : { name: "welcome" });
   if (r.name === "welcome") return <Welcome />;

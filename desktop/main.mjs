@@ -5,10 +5,19 @@ import { app, BrowserWindow, net, protocol, shell } from "electron";
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
 import path from "node:path";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ORIGIN = "deis://app";
+// Licence settings shipped with the app (Polar organisation, buy link). Empty means no licence check.
+const config = (() => {
+  try {
+    return JSON.parse(readFileSync(path.join(here, "config.json"), "utf8"));
+  } catch {
+    return {};
+  }
+})();
 
 protocol.registerSchemesAsPrivileged([{ scheme: "deis", privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } }]);
 
@@ -52,6 +61,9 @@ async function startServer() {
       PORT: String(port),
       HOSTNAME: "127.0.0.1",
       DEIS_DESKTOP: "1",
+      DEIS_LICENCE_FILE: path.join(app.getPath("userData"), "licence.json"),
+      ...(config.polarOrganizationId ? { DEIS_POLAR_ORG_ID: config.polarOrganizationId } : {}),
+      ...(config.buyUrl ? { DEIS_BUY_URL: config.buyUrl } : {}),
       // Jobs come from the hosted feed (shared Google Jobs searches); employer boards are read directly.
       DEIS_FEED_URL: process.env.DEIS_FEED_URL ?? "https://deis.onrender.com",
     },

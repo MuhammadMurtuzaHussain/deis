@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { deleteEverything, exportAll, getMeta, importAll, setMeta } from "@/lib/client/db";
 import type { KitParts } from "@/lib/client/kit";
 import { useStore } from "@/lib/client/store";
+import { LicenceForm } from "./Licence";
 import { ModelSetup } from "./ModelSetup";
 import { Button, Chip, Dialog, Notice } from "./ui";
 
@@ -25,7 +26,7 @@ function applyTheme(t: Theme) {
 }
 
 export function Settings() {
-  const { status } = useStore();
+  const { status, licence, setLicence } = useStore();
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       const t = typeof window === "undefined" ? null : localStorage.getItem("deis.theme");
@@ -135,6 +136,15 @@ export function Settings() {
         </div>
         {message && <Notice tone={message.tone}>{message.text}</Notice>}
       </section>
+
+      {licence && licence.state !== "off" && (
+        <section aria-labelledby="licence" className="grid gap-4">
+          <h2 id="licence" className="text-xl font-bold">
+            Your licence
+          </h2>
+          <LicenceForm licence={licence} onChange={setLicence} />
+        </section>
+      )}
 
       <section aria-labelledby="about" className="grid gap-2 text-ink-2">
         <h2 id="about" className="text-xl font-bold text-ink">
