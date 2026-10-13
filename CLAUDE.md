@@ -55,10 +55,19 @@ Local Gemma: `ollama pull gemma4:e4b` (6.6 GB). `.env.local` points the demo's f
 - Gemma 26B wrote "currently undertaking an MSc" about a 2025 degree and "eligible to work in Ireland without sponsorship" for a Stamp 1G persona. Both are now code-checked.
 - A `useEffect(() => register(fly))` arrow returned the function, React treated it as cleanup and flew a card every render. Effects that call registration functions need a block body.
 
+## Progress (13 Oct)
+
+- Repo public: github.com/MuhammadMurtuzaHussain/deis (AGPL-3.0), pushed to `main` as we go.
+- Whole app works locally and in the packaged macOS app: check-in, profile import (CV, LinkedIn PDF, LinkedIn export ZIP), deck over real Irish jobs, Quick and Careful lanes, kit with sources and Checks tab, Word/PDF, tracker, settings, licence (off until Polar is set).
+- Evals in `eval/RESULTS.md`: seniority 98.1% on a blind held-out set (first run), 0 jobs wrongly hidden after the fix; guard on Gemma 4 E4B removes 4% of sentences, all real over-claims, 0 untraceable left.
+- Installers for macOS, Windows and Linux build in GitHub Actions (`Desktop installers`, run by hand). Only the macOS one has been run on a real machine.
+- DEV post draft: `../deis-dev-post.md` (outside the repo), with TODOs for the author's own lines, first users, demo link and video.
+
 ## Open items
 
-- [ ] GitHub repo, Render deploy (blueprint), Sentry project, Polar product: need the author's accounts.
-- [ ] Second Gemma host for the hosted demo (DigitalOcean or OpenRouter key).
-- [ ] Electron shell, licence check, CI installers.
-- [ ] Eval: fabrication rate and seniority accuracy against hand labels; run privately on the author's real CV.
-- [ ] First users (author, Cybersecurity Society), DEV post, video.
+- [ ] Render blueprint (author's account), then set secrets: AI Studio key, SerpApi key, DigitalOcean key and model, Sentry DSN.
+- [ ] DigitalOcean serverless inference as the demo's second Gemma host: confirm the model id with the key (`GET https://inference.do-ai.run/v1/models`).
+- [ ] Sentry project `deis`: DSN into Render; screenshots of a kit trace and guard issues for the post.
+- [ ] Polar: €9 product with a licence-key benefit; put the organisation id and checkout link in `desktop/config.json`.
+- [ ] First users (the author, Cybersecurity Society), video, screenshots, DevRelay session, publish the post.
+- [ ] Windows and Linux installers tested on real machines; code signing before a real launch.
