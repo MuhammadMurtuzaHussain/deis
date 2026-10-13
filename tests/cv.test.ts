@@ -62,6 +62,7 @@ describe("guardCv", () => {
   it("files bullets only under the employer their facts belong to, and reports every drop", () => {
     const { body, events } = guardCv(
       {
+        objective: [],
         summary: [
           { text: "Data science graduate who builds dashboards people use", facts: ["e1", "a1"] },
           { text: "Results-driven analyst with 3 years of experience", facts: ["a1"] },
@@ -219,7 +220,7 @@ describe("sentence-level guarding", () => {
 
 describe("guard tolerance from the Careful-lane run", () => {
   it("reads skills the model cited inline", () => {
-    const { body } = guardCv({ summary: [{ text: "Graduate.", facts: ["e1"] }], competencies: [], roles: [], projects: [], achievements: [], skills: ["Python [s1]", "SQL [s1]"] }, l);
+    const { body } = guardCv({ objective: [], summary: [{ text: "Graduate.", facts: ["e1"] }], competencies: [], roles: [], projects: [], achievements: [], skills: ["Python [s1]", "SQL [s1]"] }, l);
     expect(body.skills).toEqual(["Python", "SQL"]);
   });
   it("ignores an invented id when a real one backs the line", () => {
@@ -270,5 +271,38 @@ describe("citation repair", () => {
     expect(resolveCitations(["achievement · Kerry Group"], l)).toEqual(["a1", "a2"]);
     expect(resolveCitations(["[a1]", "nonsense"], l)).toEqual(["a1"]);
     expect(resolveCitations(["Led a team of 50 engineers"], l)).toEqual([]);
+  });
+});
+
+describe("career objective", () => {
+  it("may quote the posting's numbers; the rest of the CV may not", () => {
+    const { body, events } = guardCv(
+      {
+        objective: [{ text: "Seeks a place on the Finance Graduate Programme 2027, bringing Power BI reporting.", facts: ["a1"] }],
+        summary: [{ text: "Joins the 2027 intake with Power BI reporting.", facts: ["a1"] }],
+        competencies: [],
+        roles: [],
+        projects: [],
+        achievements: [],
+        skills: [],
+      },
+      l,
+      "Finance Graduate Programme 2027",
+    );
+    expect(body.objective).toHaveLength(1);
+    expect(body.summary).toHaveLength(0);
+    expect(events.map((e) => e.rule)).toEqual(["unsupported_number"]);
+  });
+});
+
+describe("ids written into a CV line", () => {
+  it("count as its citation when the list is empty", () => {
+    const { body, events } = guardCv(
+      { objective: [], summary: [{ text: "Data science graduate of University College Cork (e1).", facts: [] }], competencies: [{ label: "Reporting", text: "Power BI dashboards a1", facts: [] }], roles: [], projects: [], achievements: [], skills: [] },
+      l,
+    );
+    expect(body.summary).toEqual([{ text: "Data science graduate of University College Cork.", facts: ["e1"] }]);
+    expect(body.competencies[0]).toMatchObject({ text: "Power BI dashboards", facts: ["a1"] });
+    expect(events).toEqual([]);
   });
 });

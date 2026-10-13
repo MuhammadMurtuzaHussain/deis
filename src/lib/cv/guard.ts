@@ -135,6 +135,8 @@ export type WhyNotOptions = {
   cv?: boolean;
   /** The posting itself: letters may quote its dates and durations, and name its tools when admitting a gap. */
   posting?: string;
+  /** The CV's objective may quote the posting's numbers too, to name the role as advertised ("Graduate Programme 2027"). */
+  quotesPosting?: boolean;
   now?: Date;
 };
 
@@ -168,7 +170,7 @@ export function whyNot(text: string, rawIds: string[], l: Ledger, opts: WhyNotOp
     if (/^(19|20)\d{2}$/.test(n) && source.includes(n)) continue;
     const exact = new RegExp(`(?<![\\d.])${n.replace(".", "\\.")}(?![\\d])`);
     if (exact.test(sourceDigits)) continue;
-    if (!cv && posting && exact.test(digits(posting))) continue;
+    if ((!cv || opts.quotesPosting) && posting && exact.test(digits(posting))) continue;
     return "unsupported_number";
   }
   for (const m of text.matchAll(CERT_RE)) if (!source.includes(norm(m[0]))) return "unsupported_cert";
@@ -236,18 +238,23 @@ export function keepSentences(text: string, facts: string[], l: Ledger, events: 
   return kept.length ? kept.join(" ") : null;
 }
 
+/** The ids a line cites: its list, plus any the model wrote into the text ("… Galway (rm1)."). */
+const citesOf = (item: { text: string; facts: string[] }, l: Ledger) => [...item.facts, ...inlineIds(item.text), ...bareIds(item.text, l)];
+
 function keep<T extends Cited>(items: T[], l: Ledger, events: GuardEvent[], opts?: WhyNotOptions): T[] {
   const out: T[] = [];
   for (const item of items) {
-    const text = keepSentences(item.text, item.facts, l, events, opts);
-    if (text) out.push({ ...item, text, facts: resolveCitations(item.facts, l) });
+    const facts = citesOf(item, l);
+    const text = keepSentences(item.text, facts, l, events, opts);
+    if (text) out.push({ ...item, text, facts: resolveCitations(facts, l) });
   }
   return out;
 }
 
 const sameOrg = (a: string | null | undefined, b: string | null | undefined) => Boolean(a && b && companyKey(a) === companyKey(b));
 
-export function guardCv(body: CvBody, l: Ledger): { body: CvBody; events: GuardEvent[] } {
+/** `posting` lets the objective name the role as advertised; every other CV line keeps to the facts. */
+export function guardCv(body: CvBody, l: Ledger, posting = ""): { body: CvBody; events: GuardEvent[] } {
   const events: GuardEvent[] = [];
   const roleOrgs = [...new Set(l.confirmed.filter((f) => f.kind === "role" && f.org).map((f) => f.org as string))];
 
@@ -270,7 +277,7 @@ export function guardCv(body: CvBody, l: Ledger): { body: CvBody; events: GuardE
     .filter((r): r is { org: string; bullets: Cited[] } => Boolean(r));
 
   const competencies = body.competencies
-    .map((c) => ({ ...c, text: houseStyle(stripCitations(c.text, l)), label: houseStyle(c.label), facts: resolveCitations(c.facts, l) }))
+    .map((c) => ({ ...c, text: houseStyle(stripCitations(c.text, l)), label: houseStyle(c.label), facts: resolveCitations(citesOf(c, l), l) }))
     .filter((c) => {
       const rule = whyNot(`${c.label}: ${c.text}`, c.facts, l);
       if (rule) events.push({ rule, text: `${c.label}: ${c.text}` });
@@ -286,6 +293,7 @@ export function guardCv(body: CvBody, l: Ledger): { body: CvBody; events: GuardE
 
   return {
     body: {
+      objective: keep(body.objective ?? [], l, events, { posting, quotesPosting: true }),
       summary: keep(body.summary, l, events),
       competencies,
       roles,

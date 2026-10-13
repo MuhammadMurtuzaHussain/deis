@@ -50,9 +50,9 @@ const cvStep = createStep({
       const chain = chainOf(requestContext);
       try {
         const { data, usage } = await structured("cv", "cvAgent", chain, cvPrompt(job, fit, profile.facts, profile.neverClaim), cvBodySchema, { maxOutputTokens: 3000 });
-        const { body, events } = guardCv(data, ledger(profile.facts, profile.neverClaim));
+        const { body, events } = guardCv(data, ledger(profile.facts, profile.neverClaim), `${job.title}\n${job.description}`);
         reportGuard("cv", events, where(chain));
-        return { value: composeCv(profile, body), events, usage };
+        return { value: composeCv(profile, body, fit), events, usage };
       } catch (e) {
         return { value: null, events: [], usage: null, error: e instanceof Error ? e.message : String(e) };
       }

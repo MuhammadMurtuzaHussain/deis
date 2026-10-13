@@ -8,7 +8,7 @@ import { api, ApiError } from "@/lib/client/api";
 import { db, loadProfile, STATUS_LABEL, STATUSES, type Application, type Kit, type Status } from "@/lib/client/db";
 import { runFit, runKit, updateApplication } from "@/lib/client/kit";
 import { routeHref, useStore } from "@/lib/client/store";
-import type { CvDocument } from "@/lib/cv/compose";
+import { projectsHeading, type CvDocument } from "@/lib/cv/compose";
 import { cvDocx, cvFileName, letterDocx, letterFileName, toBlob } from "@/lib/cv/docx";
 import type { GuardRule } from "@/lib/cv/guard";
 import { readRightToWork, workFit, WORK_FIT_COPY, WORK_STATUS_LABEL } from "@/lib/jobs/rightToWork";
@@ -86,6 +86,13 @@ function CvPaper({ cv, facts, showSources }: { cv: CvDocument; facts: Map<string
     <div id="cv-print" className="rounded-surface border border-line bg-white p-8 font-[Arial,Helvetica,sans-serif] text-[13px] leading-relaxed text-[#1a1a1a] shadow-lift sm:p-10">
       <p className="text-center text-2xl font-bold text-[#1F2A2E]">{cv.header.name || "Your name"}</p>
       <p className="mt-1 text-center text-[12px] text-[#333]">{[cv.header.location, cv.header.email, cv.header.phone, ...(cv.header.links ?? [])].filter(Boolean).join(" | ")}</p>
+      {cv.objective && cv.objective.length > 0 && (
+        <>
+          <H>Career objective</H>
+          <p className="mt-1.5">{cv.objective.map((s) => s.text).join(" ")}</p>
+          {S([...new Set(cv.objective.flatMap((s) => s.facts))])}
+        </>
+      )}
       {cv.summary.length > 0 && (
         <>
           <H>Professional summary</H>
@@ -135,7 +142,7 @@ function CvPaper({ cv, facts, showSources }: { cv: CvDocument; facts: Map<string
       )}
       {cv.projects.length > 0 && (
         <>
-          <H>Selected projects</H>
+          <H>{projectsHeading(cv)}</H>
           <ul className="mt-1.5 list-disc pl-5">
             {cv.projects.map((p, i) => (
               <li key={i}>
@@ -157,10 +164,15 @@ function CvPaper({ cv, facts, showSources }: { cv: CvDocument; facts: Map<string
           ))}
         </>
       )}
-      {cv.skills.length > 0 && (
+      {(cv.skills.length > 0 || (cv.languages?.length ?? 0) > 0) && (
         <>
           <H>Skills</H>
-          <p className="mt-1.5">{cv.skills.join(", ")}</p>
+          {cv.skills.length > 0 && <p className="mt-1.5">{cv.skills.join(", ")}</p>}
+          {cv.languages && cv.languages.length > 0 && (
+            <p className="mt-1">
+              <strong>Languages:</strong> {cv.languages.join("; ")}
+            </p>
+          )}
         </>
       )}
       {cv.achievements.length > 0 && (
@@ -183,15 +195,21 @@ function CvPaper({ cv, facts, showSources }: { cv: CvDocument; facts: Map<string
 
 function cvText(cv: CvDocument): string {
   const out = [cv.header.name, [cv.header.location, cv.header.email, cv.header.phone].filter(Boolean).join(" | "), ""];
+  if (cv.objective?.length) out.push("CAREER OBJECTIVE", cv.objective.map((s) => s.text).join(" "), "");
   if (cv.summary.length) out.push("PROFESSIONAL SUMMARY", cv.summary.map((s) => s.text).join(" "), "");
   if (cv.competencies.length) out.push("CORE COMPETENCIES", ...cv.competencies.map((c) => `- ${c.label}: ${c.text}`), "");
   if (cv.experience.length) {
     out.push("WORK EXPERIENCE");
     for (const r of cv.experience) out.push(`${[r.title, r.org, r.where].filter(Boolean).join(", ")} (${r.dates})`, ...r.bullets.map((b) => `- ${b.text}`), "");
   }
-  if (cv.projects.length) out.push("SELECTED PROJECTS", ...cv.projects.map((p) => `- ${p.text}`), "");
+  if (cv.projects.length) out.push(projectsHeading(cv).toUpperCase(), ...cv.projects.map((p) => `- ${p.text}`), "");
   if (cv.education.length) out.push("EDUCATION", ...cv.education.map((e) => `${e.text} (${e.dates})`), "");
-  if (cv.skills.length) out.push("SKILLS", cv.skills.join(", "), "");
+  if (cv.skills.length || cv.languages?.length) {
+    out.push("SKILLS");
+    if (cv.skills.length) out.push(cv.skills.join(", "));
+    if (cv.languages?.length) out.push(`Languages: ${cv.languages.join("; ")}`);
+    out.push("");
+  }
   if (cv.achievements.length) out.push("ACHIEVEMENTS", ...cv.achievements.map((a) => `- ${a.text}`));
   return out.join("\n");
 }

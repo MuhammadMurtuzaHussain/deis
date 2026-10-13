@@ -1,5 +1,5 @@
 import { AlignmentType, BorderStyle, Document, Packer, Paragraph, TabStopType, TextRun } from "docx";
-import type { CvDocument } from "./compose";
+import { projectsHeading, type CvDocument } from "./compose";
 import type { Letter } from "./schema";
 import type { Header } from "../profile/types";
 
@@ -37,6 +37,9 @@ function headerBlock(h: Header): Paragraph[] {
 
 export function cvDocx(cv: CvDocument): Document {
   const children: Paragraph[] = [...headerBlock(cv.header)];
+  if (cv.objective?.length) {
+    children.push(heading("Career objective"), para(cv.objective.map((s) => s.text).join(" "), 80));
+  }
   if (cv.summary.length) {
     children.push(heading("Professional summary"), para(cv.summary.map((s) => s.text).join(" "), 80));
   }
@@ -58,7 +61,7 @@ export function cvDocx(cv: CvDocument): Document {
     }
   }
   if (cv.projects.length) {
-    children.push(heading("Selected projects"));
+    children.push(heading(projectsHeading(cv)));
     for (const p of cv.projects) children.push(bullet([run(p.text)]));
   }
   if (cv.education.length) {
@@ -72,7 +75,11 @@ export function cvDocx(cv: CvDocument): Document {
         }),
       );
   }
-  if (cv.skills.length) children.push(heading("Skills"), para(cv.skills.join(", ")));
+  if (cv.skills.length || cv.languages?.length) {
+    children.push(heading("Skills"));
+    if (cv.skills.length) children.push(para(cv.skills.join(", ")));
+    if (cv.languages?.length) children.push(new Paragraph({ spacing: { after: 60 }, children: [run("Languages: ", { bold: true }), run(cv.languages.join("; "))] }));
+  }
   if (cv.achievements.length) {
     children.push(heading("Achievements"));
     for (const a of cv.achievements) children.push(bullet([run(a.text)]));

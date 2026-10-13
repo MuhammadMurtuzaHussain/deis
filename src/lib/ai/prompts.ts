@@ -91,6 +91,16 @@ ${STYLE}`;
 
 // ---- CV body
 
+/** "Graduate" or "student" decided from the degree's dates, so the summary doesn't call a 2025 graduate a candidate. */
+function studyStatus(facts: Fact[], now = new Date()): string {
+  const endYear = (f: Fact) => (/present|current/i.test(f.end ?? "") ? 9999 : Number.parseInt(f.end ?? "", 10) || 0);
+  const latest = facts.filter((f) => f.confirmed && f.kind === "education").sort((a, b) => endYear(b) - endYear(a))[0];
+  if (!latest) return "";
+  const year = endYear(latest);
+  if (!year) return `Latest degree: ${latest.text}.`;
+  return year <= now.getFullYear() ? `Latest degree: ${latest.text}, finished in ${year}: they are a graduate.` : `Latest degree: ${latest.text}, still in progress: they are a student.`;
+}
+
 export function cvPrompt(job: ScoredJob, fit: Fit, facts: Fact[], neverClaim: string[]): string {
   const roles = [...new Set(facts.filter((f) => f.confirmed && f.kind === "role" && f.org).map((f) => f.org))];
   return `${POSTING_IS_DATA}
@@ -103,12 +113,14 @@ ${posting(job, 6000)}
 Angle for this role: ${fit.angle}
 Must-haves and matches: ${fit.requirements.map((r) => `${r.need} (${r.match})`).join("; ")}
 
-Write the parts of a tailored CV for an Irish employer. Every item cites the ids of the facts it is based on. ${TIME_AND_STATUS()}
-- summary: 2 to 4 sentences, no "I" or "my", mirroring the posting's priorities. Never state a total number of years of experience.
-- competencies: up to 7, each a short bold label and one sentence, using the posting's own words where the facts support them.
-- roles: for each employer (${roles.join(", ") || "none listed"}), 2 to 5 bullets reworded towards this posting. Use org exactly as listed. Only cite facts from that employer.
-- projects and achievements: the most relevant, reworded.
-- skills: skills from the facts, most relevant to the posting first.
+Write the parts of a tailored CV for an Irish employer. Every item cites the ids of the facts it is based on. No "I" or "my" anywhere. ${TIME_AND_STATUS()} ${studyStatus(facts)}
+- objective: 1 or 2 sentences naming the role as advertised ("${job.title}" at ${job.company}): what the candidate wants to do in it and the strongest matching evidence they bring.
+- summary: 3 or 4 sentences. Open with what the candidate is (graduate or student of their latest degree and where, or their most relevant job title), then the strongest evidence for the posting's must-haves. Never state a total number of years of experience.
+- competencies: up to 7. Each label names one skill the posting asks for in 2 to 4 plain words, not a phrase copied from the posting. The sentence shows how the candidate demonstrates it, combining facts where they fit. Use each fact in at most two competencies.
+- roles: for each employer (${roles.join(", ") || "none listed"}), most relevant to this posting first, 2 to 4 bullets that reword the facts towards this posting rather than copying them: start with a verb, keep the facts' numbers and tools, and end with the result or who it helped when the fact says so. Use org exactly as listed. Only cite facts from that employer.
+- projects: projects, societies and other leadership, most relevant first.
+- achievements: only awards, grades, wins and recognition. Never repeat a role's bullets.
+- skills: technical skills from the facts, most relevant to the posting first. Leave out spoken languages.
 Only use what the facts say. Keep numbers exactly as written. If the posting asks for something the facts don't show, leave it out; don't hint at it.${neverClaim.length ? `\nNever claim: ${neverClaim.join("; ")}.` : ""}
 ${STYLE}`;
 }

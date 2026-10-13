@@ -37,6 +37,8 @@ export const fitSchema = z.object({
 export type Fit = z.infer<typeof fitSchema>;
 
 export const cvBodySchema = z.object({
+  /** One or two lines naming this role at this employer. */
+  objective: z.array(citedSchema).max(3).default([]),
   summary: z.array(citedSchema).min(1).max(8),
   competencies: z
     .array(z.object({ label: z.string().max(400), text: z.string().max(960), facts: z.array(z.string()).max(12).default([]) }))
