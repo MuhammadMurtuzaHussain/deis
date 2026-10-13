@@ -68,7 +68,7 @@ Local Gemma: `ollama pull gemma4:e4b` (6.6 GB). `.env.local` points the demo's f
 ## Open items
 
 - [ ] Render blueprint (author's account). Key Value is on the paid `256mb` plan ($10/month from the $50 hackathon credit): a workspace gets one free Key Value and Return Route's cache has it. Secrets to set in the dashboard: AI Studio key, SerpApi key, Sentry auth token; DigitalOcean key and model later.
-- [ ] DigitalOcean serverless inference as the demo's second Gemma host: confirm the model id with the key (`GET https://inference.do-ai.run/v1/models`).
+- [ ] Second Gemma host for the demo (AI Studio alone failed ~80% of calls on 13 Oct): OpenRouter first (`FALLBACK_BASE_URL=https://openrouter.ai/api/v1`, `FALLBACK_MODEL=google/gemma-4-26b-a4b-it`, key with a credit limit), all three set in Render's dashboard. DigitalOcean serverless inference later; confirm its model id with `GET https://inference.do-ai.run/v1/models`.
 - [ ] Sentry project `deis` (org `tfc-research-and-innovation-li`, DSN in `render.yaml`, traces and guard issues verified 13 Oct): screenshots of a kit trace and guard issues for the post.
 - [ ] Polar: €9 product with a licence-key benefit; put the organisation id and checkout link in `desktop/config.json`.
 - [ ] First users (the author, Cybersecurity Society), video, screenshots, DevRelay session, publish the post.

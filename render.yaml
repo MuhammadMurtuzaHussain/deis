@@ -23,9 +23,11 @@ services:
         sync: false
       - key: GOOGLE_MODEL
         value: gemma-4-26b-a4b-it
-      # … and Gemma on DigitalOcean serverless inference when AI Studio is having a bad day.
+      # … and a second Gemma host for when AI Studio is having a bad day. Any OpenAI-compatible
+      # server, set in the dashboard: OpenRouter (https://openrouter.ai/api/v1, model
+      # google/gemma-4-26b-a4b-it) or DigitalOcean serverless inference (https://inference.do-ai.run/v1).
       - key: FALLBACK_BASE_URL
-        value: https://inference.do-ai.run/v1
+        sync: false
       - key: FALLBACK_MODEL
         sync: false
       - key: FALLBACK_API_KEY
