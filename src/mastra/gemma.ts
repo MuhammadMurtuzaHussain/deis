@@ -77,8 +77,9 @@ export async function structured<T>(
   };
 
   return traceAgent(agent.name, task, where, async () => {
-    // Local models follow a schema in the prompt more reliably than Ollama's format mode.
-    const injectFirst = chain.tier === "local";
+    // Local models follow a schema in the prompt more reliably than Ollama's format mode, and
+    // AI Studio's Gemma refuses bigger schemas in JSON mode ("invalid argument" at 16 fit requirements).
+    const injectFirst = chain.tier === "local" || /^(demo|google):gemma/.test(String(chain.models[0]?.id));
     try {
       return await attempt(injectFirst, 1);
     } catch (first) {

@@ -31,12 +31,15 @@ export function modelFailure(e: unknown, ai: Ai): Response {
   const msg = e instanceof Error ? e.message : String(e);
   console.error("[ai]", ai.chain.label, msg.slice(0, 300));
   if (/ECONNREFUSED|fetch failed|connect/i.test(msg) && ai.chain.tier === "local") {
+    if (ai.settings.provider !== "ollama") return jsonError("model_unreachable", `Couldn't reach ${ai.chain.label}. Is the server running?`, 502);
     return jsonError("model_unreachable", "Couldn't reach Ollama on this computer. Is it running? Open the Ollama app, then try again.", 502);
   }
-  if (/API key|401|403|permission|invalid/i.test(msg)) return jsonError("model_auth", "The AI provider didn't accept the key. Check it in Settings.", 502);
+  // Not "invalid" on its own: AI Studio says "Request contains an invalid argument" for bad requests, not bad keys.
+  if (/API key|API_KEY|\b40[13]\b|permission/i.test(msg)) return jsonError("model_auth", "The AI provider didn't accept the key. Check it in Settings.", 502);
   if (/429|quota|rate/i.test(msg)) return jsonError("model_quota", "The AI provider says you've hit its free limit for now. Try again in a minute, or switch provider in Settings.", 502);
   if (/not found|404|pull/i.test(msg)) return jsonError("model_missing", `The model isn't available: ${ai.chain.label}. Check the model name in Settings.`, 502);
-  return jsonError("model_failed", "Gemma didn't give a usable answer this time. Try again; on a laptop the first run can be slow.", 502);
+  const hint = ai.chain.tier === "local" ? "Try again; on a laptop the first run can be slow." : ai.chain.tier === "demo" ? "The demo's Gemma host is busy. Try again in a minute." : "Try again.";
+  return jsonError("model_failed", `Gemma didn't give a usable answer this time. ${hint}`, 502);
 }
 
 // ---- Request bodies. The job and facts come from the user's own device, so these

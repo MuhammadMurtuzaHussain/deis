@@ -129,8 +129,7 @@ export function Welcome() {
               <button key={id} type="button" onClick={() => startDemo(id)} className="rounded-surface border border-line bg-surface p-4 text-left transition hover:border-accent active:translate-y-px">
                 <span className="block font-bold">{p.header.name}</span>
                 <span className="mt-1 block text-sm text-ink-2">
-                  {edu.text}. {p.preferences.workStatus === "stamp1g" ? "On Stamp 1G, " : ""}
-                  looking in {p.preferences.cities.join(", ")}.
+                  {edu.text}. {p.preferences.workStatus === "stamp1g" ? "On Stamp 1G, looking" : "Looking"} in {p.preferences.cities.join(", ")}.
                 </span>
               </button>
             );

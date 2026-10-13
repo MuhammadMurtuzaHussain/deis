@@ -50,6 +50,7 @@ Local Gemma: `ollama pull gemma4:e4b` (6.6 GB). `.env.local` points the demo's f
 ## Learned the hard way (13 Oct)
 
 - AI Studio's Gemma 4 (26B and 31B) returned 500s for hours; some requests hung past 90 s. Gemini on the same key worked. Hence deadlines, the probe and the fallback chain. Later that day 26B answered 4 of 5 one-word prompts (29–52 s each) and 31B 2 of 5, so with no second host the demo retries 26B rather than falling back to 31B.
+- AI Studio's Gemma 4 takes thinking level `minimal` or `high` only (`low`/`medium` are a 400), and its JSON mode refuses bigger schemas ("invalid argument" with 16 fit requirements, fine with 6). So Gemma on AI Studio gets `minimal` and the schema in the prompt first, like local models. The free tier also caps 31B at 16,000 input tokens a minute; a kit's three parallel calls can hit it.
 - Output schemas with tight `.max()` limits threw away good answers (a 170-character requirement failed the whole fit). Schemas are generous; code trims.
 - Models cite ids as `[ab5]`, inline in text, or copy the whole fact line; `cleanId` takes the first token.
 - Gemma 26B wrote "currently undertaking an MSc" about a 2025 degree and "eligible to work in Ireland without sponsorship" for a Stamp 1G persona. Both are now code-checked.

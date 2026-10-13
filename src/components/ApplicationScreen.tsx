@@ -472,7 +472,13 @@ export function ApplicationScreen({ id }: { id: string }) {
   const queue = useKitQueue();
   const [fitState, setFitState] = useState<{ since: number } | null>(null);
   const [fitError, setFitError] = useState<string | null>(null);
+  const [fitAttempt, setFitAttempt] = useState(0);
   const started = useRef(false);
+  const retryFit = () => {
+    started.current = false;
+    setFitError(null);
+    setFitAttempt((n) => n + 1);
+  };
 
   // The Careful lane runs the fit check here; the Quick lane's background queue does its own.
   useEffect(() => {
@@ -489,7 +495,7 @@ export function ApplicationScreen({ id }: { id: string }) {
         setFitState(null);
       }
     })();
-  }, [app]);
+  }, [app, fitAttempt]);
 
   if (app === undefined) return null;
   if (!app)
@@ -545,7 +551,12 @@ export function ApplicationScreen({ id }: { id: string }) {
         <WorkLine description={job.description} />
         {!app.fit ? (
           fitError ? (
-            <Notice tone="error">{fitError}</Notice>
+            <Notice tone="error">
+              {fitError}{" "}
+              <button className="font-medium underline" onClick={retryFit}>
+                Try again
+              </button>
+            </Notice>
           ) : app.kitError ? (
             <p className="text-ink-2">Not checked yet.</p>
           ) : (
