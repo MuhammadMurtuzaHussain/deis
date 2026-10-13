@@ -1,0 +1,131 @@
+{
+ "summary": {
+  "tier": "ollama",
+  "model": "gemma4:e4b on this computer",
+  "kits": 8,
+  "failed": 0,
+  "sentencesKept": 210,
+  "removedByGuard": 56,
+  "removedShare": 0.211,
+  "byRule": {
+   "unsupported_tool": 12,
+   "unknown_fact": 44
+  },
+  "untraceableAfterGuard": 0,
+  "medianSeconds": 46.1,
+  "avgTokensIn": 7727,
+  "avgTokensOut": 2480
+ },
+ "rows": [
+  {
+   "persona": "Aoife Byrne",
+   "job": "Software Engineer, Intern (Summer or Winter)",
+   "company": "Stripe",
+   "ms": 51672,
+   "tokensIn": 7843,
+   "tokensOut": 2590,
+   "kept": 35,
+   "removed": 0,
+   "byRule": {},
+   "untraceable": []
+  },
+  {
+   "persona": "Aoife Byrne",
+   "job": "Software Engineer, New Grad",
+   "company": "Stripe",
+   "ms": 50573,
+   "tokensIn": 7604,
+   "tokensOut": 2583,
+   "kept": 34,
+   "removed": 1,
+   "byRule": {
+    "unsupported_tool": 1
+   },
+   "untraceable": []
+  },
+  {
+   "persona": "Aoife Byrne",
+   "job": "2027 - Software Engineer Intern, Dublin - 6 Month Internship",
+   "company": "MongoDB",
+   "ms": 40431,
+   "tokensIn": 7820,
+   "tokensOut": 2247,
+   "kept": 28,
+   "removed": 3,
+   "byRule": {
+    "unsupported_tool": 3
+   },
+   "untraceable": []
+  },
+  {
+   "persona": "Aoife Byrne",
+   "job": "Software Engineer 2",
+   "company": "MongoDB",
+   "ms": 44680,
+   "tokensIn": 7245,
+   "tokensOut": 2357,
+   "kept": 16,
+   "removed": 21,
+   "byRule": {
+    "unknown_fact": 16,
+    "unsupported_tool": 5
+   },
+   "untraceable": []
+  },
+  {
+   "persona": "Rahul Menon",
+   "job": "Machine Learning Intern 2027 (Dublin)",
+   "company": "Pinterest",
+   "ms": 51830,
+   "tokensIn": 8079,
+   "tokensOut": 2881,
+   "kept": 20,
+   "removed": 15,
+   "byRule": {
+    "unknown_fact": 15
+   },
+   "untraceable": []
+  },
+  {
+   "persona": "Rahul Menon",
+   "job": "Software Engineering Graduate Programme FY28",
+   "company": "Accenture",
+   "ms": 46092,
+   "tokensIn": 8241,
+   "tokensOut": 2615,
+   "kept": 16,
+   "removed": 14,
+   "byRule": {
+    "unknown_fact": 13,
+    "unsupported_tool": 1
+   },
+   "untraceable": []
+  },
+  {
+   "persona": "Rahul Menon",
+   "job": "IT Graduate Development Programme 2027 - Software",
+   "company": "ESB",
+   "ms": 42583,
+   "tokensIn": 7860,
+   "tokensOut": 2284,
+   "kept": 32,
+   "removed": 0,
+   "byRule": {},
+   "untraceable": []
+  },
+  {
+   "persona": "Rahul Menon",
+   "job": "Workday Analyst",
+   "company": "Stripe",
+   "ms": 45665,
+   "tokensIn": 7124,
+   "tokensOut": 2279,
+   "kept": 29,
+   "removed": 2,
+   "byRule": {
+    "unsupported_tool": 2
+   },
+   "untraceable": []
+  }
+ ]
+}

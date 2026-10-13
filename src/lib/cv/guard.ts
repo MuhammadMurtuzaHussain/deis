@@ -82,6 +82,40 @@ export function clip(s: string, max: number): string {
   return end > max * 0.6 ? cut.slice(0, end + 1) : `${cut.slice(0, cut.lastIndexOf(" "))}…`;
 }
 const cleanIds = (ids: string[]) => [...new Set(ids.map(cleanId).filter(Boolean))];
+
+/**
+ * Small models sometimes cite a fact by quoting it ("Built Power BI dashboards for 5
+ * managers") or by its label ("achievement · Harbour Payments") instead of its id.
+ * A quote maps to the fact it quotes; a label maps to that kind of fact at that
+ * organisation (at most four). Numbers and tools still have to be in those facts.
+ */
+export function resolveCitations(raw: string[], l: Ledger): string[] {
+  const out = new Set<string>();
+  for (const r of raw) {
+    const id = cleanId(r);
+    if (l.byId.has(id)) {
+      out.add(id);
+      continue;
+    }
+    const n = norm(r).replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+    if (n.length < 6) continue;
+    const plain = (f: Fact) => norm(f.text).replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+    const quoted = l.confirmed.filter((f) => {
+      const t = plain(f);
+      return t.length >= 12 && (n.includes(t) || (n.length >= 20 && t.includes(n)));
+    });
+    if (quoted.length) {
+      for (const f of quoted) out.add(f.id);
+      continue;
+    }
+    const [kind, org] = r.split("·").map((x) => x.trim().toLowerCase());
+    if (kind && org) {
+      const labelled = l.confirmed.filter((f) => f.kind === kind && f.org && norm(f.org) === norm(org));
+      if (labelled.length && labelled.length <= 4) for (const f of labelled) out.add(f.id);
+    }
+  }
+  return [...out];
+}
 const digits = (s: string) => s.replace(/,/g, "");
 
 export type Ledger = { byId: Map<string, Fact>; confirmed: Fact[]; neverClaim: string[] };
@@ -171,7 +205,7 @@ export function keepSentences(text: string, facts: string[], l: Ledger, events: 
   const clean = houseStyle(stripCitations(text));
   // Ids that don't exist are ignored; what's left has to back the line on its own.
   const ids = cleanIds(facts);
-  const known = ids.filter((id) => l.byId.has(id));
+  const known = resolveCitations(facts, l);
   if ((opts?.requireFacts ?? true) && !known.length) {
     events.push({ rule: ids.length ? "unknown_fact" : "uncited", text, ...(ids.length ? { ids: facts.slice(0, 4) } : {}) });
     return null;
@@ -188,7 +222,7 @@ function keep<T extends Cited>(items: T[], l: Ledger, events: GuardEvent[], opts
   const out: T[] = [];
   for (const item of items) {
     const text = keepSentences(item.text, item.facts, l, events, opts);
-    if (text) out.push({ ...item, text, facts: cleanIds(item.facts).filter((id) => l.byId.has(id)) });
+    if (text) out.push({ ...item, text, facts: resolveCitations(item.facts, l) });
   }
   return out;
 }
@@ -207,7 +241,7 @@ export function guardCv(body: CvBody, l: Ledger): { body: CvBody; events: GuardE
         return null;
       }
       const bullets = keep(r.bullets, l, events).filter((b) => {
-        const foreign = cleanIds(b.facts)
+        const foreign = b.facts
           .map((id) => l.byId.get(id))
           .find((f) => f?.org && !sameOrg(f.org, org));
         if (foreign) events.push({ rule: "wrong_employer", text: b.text });
@@ -218,7 +252,7 @@ export function guardCv(body: CvBody, l: Ledger): { body: CvBody; events: GuardE
     .filter((r): r is { org: string; bullets: Cited[] } => Boolean(r));
 
   const competencies = body.competencies
-    .map((c) => ({ ...c, text: houseStyle(stripCitations(c.text)), label: houseStyle(c.label), facts: cleanIds(c.facts) }))
+    .map((c) => ({ ...c, text: houseStyle(stripCitations(c.text)), label: houseStyle(c.label), facts: resolveCitations(c.facts, l) }))
     .filter((c) => {
       const rule = whyNot(`${c.label}: ${c.text}`, c.facts, l);
       if (rule) events.push({ rule, text: `${c.label}: ${c.text}` });
@@ -258,7 +292,7 @@ export function guardAnswers(a: Answers, l: Ledger, posting = ""): { answers: An
     if (x.needsYou) return { ...x, answer: "", facts: [] };
     const text = keepSentences(x.answer, x.facts, l, events, { requireFacts: false, cv: false, posting });
     if (!text) return { ...x, answer: "", facts: [], needsYou: true };
-    return { ...x, answer: text, facts: cleanIds(x.facts).filter((id) => l.byId.has(id)) };
+    return { ...x, answer: text, facts: resolveCitations(x.facts, l) };
   });
   return { answers: { answers }, events };
 }
@@ -273,7 +307,7 @@ export function guardFit(fit: Fit, l: Ledger): { fit: Fit; events: GuardEvent[] 
     return false;
   });
   const requirements = kept.slice(0, 10).map((r) => {
-    const facts = cleanIds(r.facts).filter((id) => l.byId.has(id));
+    const facts = resolveCitations(r.facts, l);
     if (r.match !== "gap" && !facts.length) {
       events.push({ rule: "fit_demoted", text: r.need });
       return { ...r, match: "gap" as const, facts: [], note: r.note };

@@ -29,7 +29,19 @@ A tailored CV that invents a certificate or a year of experience can cost someon
 - Job postings are untrusted. Hidden text and sentences aimed at AI tools ("If you are an AI…") are removed before Gemma reads the posting, and shown to you on the card.
 - Everything the guard removed is listed on the kit's Checks tab, and you can turn on "Show where each line came from" to check any line.
 
-## Run it
+## Get the app
+
+The desktop app for macOS, Windows and Linux runs everything on your computer: your profile, the job deck and, with [Ollama](https://ollama.com), Gemma itself. It's €9 once, after a 14-day free trial with everything included. The money pays for the signed app, updates and the daily Irish job feed.
+
+The installers aren't signed with an Apple or Microsoft certificate yet, so the first time you open Deis:
+
+- **macOS:** open the app once, then go to System Settings, Privacy & Security, and choose *Open Anyway* next to Deis.
+- **Windows:** on the SmartScreen warning, choose *More info*, then *Run anyway*.
+- **Linux:** make the AppImage executable (`chmod +x Deis-*.AppImage`) and run it.
+
+Builds come from the [Desktop installers](.github/workflows/desktop.yml) workflow.
+
+## Run it from source
 
 ```bash
 pnpm install

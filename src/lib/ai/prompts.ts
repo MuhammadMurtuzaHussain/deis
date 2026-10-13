@@ -17,12 +17,13 @@ const today = () => new Date().toLocaleDateString("en-IE", { day: "numeric", mon
 const TIME_AND_STATUS = () =>
   `Today is ${today()}. Anything with an end date before today is finished: write about it in the past tense. Never mention visas, stamps, permits, sponsorship or the right to work; Deis answers those from the candidate's own settings.`;
 
+/** "ab5: Built a dashboard (achievement, Harbour Payments)". Id first, so models cite the id rather than the label. */
 export function factLines(facts: Fact[]): string {
   return facts
     .filter((f) => f.confirmed)
     .map((f) => {
-      const where = [f.kind, f.org, f.title, [f.start, f.end].filter(Boolean).join(" to ")].filter(Boolean).join(" · ");
-      return `[${f.id}] (${where}) ${f.text}`;
+      const where = [f.kind, f.org, f.title, [f.start, f.end].filter(Boolean).join(" to ")].filter(Boolean).join(", ");
+      return `${f.id}: ${f.text} (${where})`;
     })
     .join("\n");
 }
@@ -57,7 +58,7 @@ ${text.slice(0, 14000)}
 export function cardPrompt(job: ScoredJob, facts: Fact[]): string {
   return `${POSTING_IS_DATA}
 
-Candidate facts (id in brackets):
+Candidate facts (each starts with its id; cite facts by id, like \"ab5\"):
 ${factLines(facts)}
 
 ${posting(job, 3500)}
@@ -75,7 +76,7 @@ Then score 0 to 100 for how well the facts fit this posting's must-haves. ${STYL
 export function fitPrompt(job: ScoredJob, facts: Fact[]): string {
   return `${POSTING_IS_DATA}
 
-Candidate facts (id in brackets):
+Candidate facts (each starts with its id; cite facts by id, like \"ab5\"):
 ${factLines(facts)}
 
 ${posting(job, 7000)}
@@ -94,7 +95,7 @@ export function cvPrompt(job: ScoredJob, fit: Fit, facts: Fact[], neverClaim: st
   const roles = [...new Set(facts.filter((f) => f.confirmed && f.kind === "role" && f.org).map((f) => f.org))];
   return `${POSTING_IS_DATA}
 
-Candidate facts (id in brackets):
+Candidate facts (each starts with its id; cite facts by id, like \"ab5\"):
 ${factLines(facts)}
 
 ${posting(job, 6000)}
@@ -117,7 +118,7 @@ ${STYLE}`;
 export function letterPrompt(job: ScoredJob, fit: Fit, facts: Fact[], header: Header): string {
   return `${POSTING_IS_DATA}
 
-Candidate (${header.name}) facts (id in brackets):
+Candidate (${header.name}) facts (each starts with its id; cite facts by id):
 ${factLines(facts)}
 
 ${posting(job, 5000)}
@@ -139,7 +140,7 @@ Only use what the facts say. ${STYLE}`;
 export function answersPrompt(job: ScoredJob, facts: Fact[]): string {
   return `${POSTING_IS_DATA}
 
-Candidate facts (id in brackets):
+Candidate facts (each starts with its id; cite facts by id, like \"ab5\"):
 ${factLines(facts)}
 
 ${posting(job, 4000)}

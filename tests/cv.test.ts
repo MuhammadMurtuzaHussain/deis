@@ -250,3 +250,13 @@ describe("ids in odd shapes", () => {
     expect(cleanId(`[${id}] (achievement) Built a thing`)).toBe(id);
   });
 });
+
+import { resolveCitations } from "@/lib/cv/guard";
+describe("citation repair", () => {
+  it("maps a quoted fact or a kind-and-employer label to real facts", () => {
+    expect(resolveCitations(["Built Power BI dashboards that cut weekly reporting from 6 hours to 2"], l)).toEqual(["a1"]);
+    expect(resolveCitations(["achievement · Kerry Group"], l)).toEqual(["a1", "a2"]);
+    expect(resolveCitations(["[a1]", "nonsense"], l)).toEqual(["a1"]);
+    expect(resolveCitations(["Led a team of 50 engineers"], l)).toEqual([]);
+  });
+});

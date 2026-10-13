@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { cardPrompt } from "@/lib/ai/prompts";
 import { cardSchema } from "@/lib/ai/schema";
-import { cleanId, inlineIds, stripCitations } from "@/lib/cv/guard";
+import { inlineIds, ledger, resolveCitations, stripCitations } from "@/lib/cv/guard";
 import { houseStyle } from "@/lib/cv/style";
 import type { ScoredJob } from "@/lib/jobs/types";
 import { aiFor, body, factsInputSchema, jobInputSchema, modelFailure } from "@/lib/server/api";
@@ -20,12 +20,12 @@ export async function POST(req: Request) {
   if (input instanceof Response) return input;
   try {
     const { data, usage } = await structured("card", "cardAgent", ai.chain, cardPrompt(input.job as unknown as ScoredJob, input.facts), cardSchema, { maxOutputTokens: 500 });
-    const known = new Set(input.facts.filter((f) => f.confirmed).map((f) => f.id));
+    const l = ledger(input.facts, []);
     // A "strong" line with no real fact behind it reads as a gap instead.
     const why = data.why.slice(0, 3).map((w) => {
       // Small models sometimes cite inline ("…dashboards [rm5]") and leave the list empty; both count.
       const inline = inlineIds(w.text);
-      const facts = [...new Set([...w.facts, ...inline].map(cleanId))].filter((id) => known.has(id));
+      const facts = resolveCitations([...w.facts, ...inline], l);
       return { ...w, text: houseStyle(stripCitations(w.text)), facts, kind: w.kind !== "gap" && !facts.length ? ("gap" as const) : w.kind };
     });
     return Response.json({ why, score: Math.round(data.score), usage });
