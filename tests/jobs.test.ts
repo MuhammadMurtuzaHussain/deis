@@ -197,3 +197,24 @@ describe("Google Jobs glued text", () => {
     expect(readRightToWork(text).stance).toBe("no_sponsorship");
   });
 });
+
+describe("seniority lessons from the eval", () => {
+  it("reads requirement-style years without the word experience", () => {
+    expect(classifySeniority("Partner Manager", "• 8+ years in partnerships and/or sales").level).toBe("senior");
+    expect(classifySeniority("Workday Analyst", "• 3+ years of hands-on Workday configuration").level).toBe("senior");
+  });
+  it("doesn't read programme names, company history or study periods as experience", () => {
+    expect(classifySeniority("Privacy Program Manager", "• 5+ years of demonstrated privacy program management").level).toBe("senior");
+    expect(classifySeniority("Engineer", "the first database provider to IPO in over 20 years").yearsMin).toBeNull();
+    expect(classifySeniority("Trainee Accountant Graduate", "Complete the ACA qualification over a period of 3 - 4 years (depending on exemptions)").level).toBe("early");
+  });
+  it("reads numbered levels and people-manager titles", () => {
+    expect(classifySeniority("Software Engineer 3", "").level).toBe("senior");
+    expect(classifySeniority("Software Engineer 2", "").level).toBe("stretch");
+    expect(classifySeniority("Software Engineer 2", "Recent graduates are welcome.").level).toBe("early");
+    expect(classifySeniority("Manager, Sales Development", "").level).toBe("senior");
+  });
+  it("treats 'ideally' later in the line as not softening the years", () => {
+    expect(classifySeniority("Associate Enablement Manager", "• 5+ years of enablement experience in software, ideally supporting customer success").level).toBe("senior");
+  });
+});
