@@ -17,8 +17,9 @@
 /.next/
 /out/
 
-# production
-/build
+# production (the desktop icon in build/ is source)
+/build/*
+!/build/icon.png
 
 # misc
 .DS_Store
