@@ -189,3 +189,11 @@ describe("not a job", () => {
     expect(fromGreenhouse({ id: 2, title: "Your next opportunity – Ireland Talent Community", location: { name: "Dublin" }, absolute_url: "https://x.io/2" }, "X")).toBeNull();
   });
 });
+
+describe("Google Jobs glued text", () => {
+  it("reads no-sponsorship wording even when list items run together", () => {
+    const { text } = sanitisePosting("work-integrated master's)Eligible to work in Ireland on a full-time basis without the need for current or future visa sponsorshipProficiency with Excel");
+    expect(text).toContain("master's)\nEligible to work");
+    expect(readRightToWork(text).stance).toBe("no_sponsorship");
+  });
+});

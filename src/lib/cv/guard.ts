@@ -57,7 +57,7 @@ const IS_CERT = new RegExp(CERT_RE.source, "i");
 /** "Currently pursuing an MSc" when the MSc ended last year: small models get tense wrong. */
 const CURRENTLY = /\b(currently|now)\s+(pursuing|studying|completing|enrolled|undertaking|doing|working towards|reading)\b|\bexpected (to graduate|graduation)\b/i;
 /** Visas, stamps and sponsorship are facts about the user's status that only the check-in knows. A model guessing them can cost someone the job. */
-const WORK_STATUS = /\b(visa|sponsor(ship|ed)?|stamp\s*[0-9][a-z]?|work permit|employment permit|critical skills|right to work|eligible to work|authori[sz]ed to work|citizen(ship)?|immigration)\b/i;
+export const WORK_STATUS = /\b(visa|sponsor(ship|ed)?|stamp\s*[0-9][a-z]?|work permit|employment permit|critical skills|right to work|eligible to work|authori[sz]ed to work|citizen(ship)?|immigration)\b/i;
 /** A sentence that admits a gap may name the posting's tools: "I haven't used Java professionally yet". */
 const ADMITS_GAP = /\b(not|n['’]t|no|yet|learn(ing)?|developing|new to|build(ing)? up|close (the|this|that) gap|gap)\b/i;
 
@@ -164,14 +164,15 @@ export function splitSentences(text: string): string[] {
  */
 export function keepSentences(text: string, facts: string[], l: Ledger, events: GuardEvent[], opts?: WhyNotOptions): string | null {
   const clean = houseStyle(stripCitations(text));
-  // An item with no real facts behind it fails as a whole.
-  const whole = whyNot("", facts, l, opts);
-  if (whole === "uncited" || whole === "unknown_fact") {
-    events.push({ rule: whole, text });
+  // Ids that don't exist are ignored; what's left has to back the line on its own.
+  const ids = cleanIds(facts);
+  const known = ids.filter((id) => l.byId.has(id));
+  if ((opts?.requireFacts ?? true) && !known.length) {
+    events.push({ rule: ids.length ? "unknown_fact" : "uncited", text });
     return null;
   }
   const kept = splitSentences(clean).filter((sentence) => {
-    const rule = whyNot(sentence, facts, l, opts);
+    const rule = whyNot(sentence, known, l, opts);
     if (rule) events.push({ rule, text: sentence });
     return !rule;
   });
@@ -182,7 +183,7 @@ function keep<T extends Cited>(items: T[], l: Ledger, events: GuardEvent[], opts
   const out: T[] = [];
   for (const item of items) {
     const text = keepSentences(item.text, item.facts, l, events, opts);
-    if (text) out.push({ ...item, text, facts: cleanIds(item.facts) });
+    if (text) out.push({ ...item, text, facts: cleanIds(item.facts).filter((id) => l.byId.has(id)) });
   }
   return out;
 }
@@ -220,7 +221,7 @@ export function guardCv(body: CvBody, l: Ledger): { body: CvBody; events: GuardE
     });
 
   const everything = norm(l.confirmed.map(factText).join(" \n "));
-  const skills = [...new Set(body.skills.map((s) => s.trim()).filter(Boolean))].filter((s) => {
+  const skills = [...new Set(body.skills.map((s) => houseStyle(stripCitations(s)).trim()).filter(Boolean))].filter((s) => {
     const ok = everything.includes(norm(s)) || norm(s).split(/[\s/,&]+/).every((w) => w.length < 3 || everything.includes(w));
     if (!ok) events.push({ rule: "unsupported_skill", text: s });
     return ok && !IS_CERT.test(s);
@@ -252,7 +253,7 @@ export function guardAnswers(a: Answers, l: Ledger, posting = ""): { answers: An
     if (x.needsYou) return { ...x, answer: "", facts: [] };
     const text = keepSentences(x.answer, x.facts, l, events, { requireFacts: false, cv: false, posting });
     if (!text) return { ...x, answer: "", facts: [], needsYou: true };
-    return { ...x, answer: text, facts: cleanIds(x.facts) };
+    return { ...x, answer: text, facts: cleanIds(x.facts).filter((id) => l.byId.has(id)) };
   });
   return { answers: { answers }, events };
 }
@@ -260,7 +261,13 @@ export function guardAnswers(a: Answers, l: Ledger, posting = ""): { answers: An
 /** A "strong" or "transferable" match needs real facts behind it, or it's a gap. */
 export function guardFit(fit: Fit, l: Ledger): { fit: Fit; events: GuardEvent[] } {
   const events: GuardEvent[] = [];
-  const requirements = fit.requirements.slice(0, 10).map((r) => {
+  // Right to work is decided by code from the posting and the user's own status, never by the model.
+  const kept = fit.requirements.filter((r) => {
+    if (!WORK_STATUS.test(r.need)) return true;
+    events.push({ rule: "work_status", text: r.need });
+    return false;
+  });
+  const requirements = kept.slice(0, 10).map((r) => {
     const facts = cleanIds(r.facts).filter((id) => l.byId.has(id));
     if (r.match !== "gap" && !facts.length) {
       events.push({ rule: "fit_demoted", text: r.need });

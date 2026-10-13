@@ -11,6 +11,7 @@ import { routeHref, useStore } from "@/lib/client/store";
 import type { CvDocument } from "@/lib/cv/compose";
 import { cvDocx, cvFileName, letterDocx, letterFileName, toBlob } from "@/lib/cv/docx";
 import type { GuardRule } from "@/lib/cv/guard";
+import { readRightToWork, workFit, WORK_FIT_COPY, WORK_STATUS_LABEL } from "@/lib/jobs/rightToWork";
 import { newFactId, type Fact } from "@/lib/profile/types";
 import { LevelBadge } from "./JobCard";
 import { useKitQueue } from "./KitQueue";
@@ -440,6 +441,30 @@ function Coach({ app, onBuilt }: { app: Application; onBuilt: () => void }) {
   );
 }
 
+/** Right to work, from code: what the posting says (quoted) and what it means for the user's own status. */
+function WorkLine({ description }: { description: string }) {
+  const { profile } = useStore();
+  const rtw = readRightToWork(description);
+  if (rtw.stance === "unknown") return null;
+  const status = profile?.preferences.workStatus ?? null;
+  const fit = workFit(rtw.stance, status);
+  const meaning =
+    fit === "blocked" ? "This rules out your status, so think twice before applying." : fit === "check" ? "Check this fits your situation before you apply." : status ? "That fits your status." : "Set your status in Profile and Deis will check this for you.";
+  return (
+    <div className={`rounded-control px-4 py-3 text-[15px] ${fit === "ok" ? "bg-surface-2" : fit === "check" ? "bg-amber-soft" : "bg-brick-soft"}`}>
+      <p className="font-medium">
+        {WORK_FIT_COPY[rtw.stance]}. {meaning}
+      </p>
+      {rtw.evidence && (
+        <p className="mt-1 text-sm text-ink-2">
+          The posting says: <q>{rtw.evidence}</q>
+        </p>
+      )}
+      {status && <p className="mt-1 text-sm text-ink-3">Your status: {WORK_STATUS_LABEL[status]}. Deis checks this with code; it isn&apos;t immigration advice.</p>}
+    </div>
+  );
+}
+
 export function ApplicationScreen({ id }: { id: string }) {
   const app = useLiveQuery(() => db.applications.get(id), [id]);
   const factsList = useLiveQuery(() => db.facts.toArray(), [], []);
@@ -517,9 +542,12 @@ export function ApplicationScreen({ id }: { id: string }) {
         <h2 id="fit" className="text-xl font-bold">
           How you fit
         </h2>
+        <WorkLine description={job.description} />
         {!app.fit ? (
           fitError ? (
             <Notice tone="error">{fitError}</Notice>
+          ) : app.kitError ? (
+            <p className="text-ink-2">Not checked yet.</p>
           ) : (
             <Notice>
               Gemma is comparing the posting to your facts…{" "}

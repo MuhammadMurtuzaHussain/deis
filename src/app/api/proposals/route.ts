@@ -23,7 +23,9 @@ export async function POST(req: Request) {
   if (input instanceof Response) return input;
   try {
     const { data } = await structured("proposals", "coachAgent", ai.chain, proposalPrompt(input.need, input.question, input.answer, input.orgs), proposalSchema, { maxOutputTokens: 600, temperature: 0.1 });
-    return Response.json({ proposals: data.proposals.slice(0, 3).map((p) => ({ ...p, text: houseStyle(p.text) })) });
+    // An org the profile doesn't know ("MSc") is dropped rather than invented; the user can set it later.
+    const known = (org: string | null | undefined) => input.orgs.find((o) => org && (o.toLowerCase().includes(org.toLowerCase()) || org.toLowerCase().includes(o.toLowerCase()))) ?? null;
+    return Response.json({ proposals: data.proposals.slice(0, 3).map((p) => ({ ...p, org: known(p.org), text: houseStyle(p.text).replace(/\.$/, "") })) });
   } catch (e) {
     return modelFailure(e, ai);
   }

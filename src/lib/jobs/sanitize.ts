@@ -51,6 +51,8 @@ function stripTags(html: string): string {
 
 function tidy(s: string): string {
   return s
+    // Google Jobs glues list items together: "…master's)Eligible to work…". Split after ) . : ; ! ?
+    .replace(/([).:;!?])(?=[A-Z][a-z])/g, "$1\n")
     .replace(/[ \t ]+/g, " ")
     .replace(/ *\n */g, "\n")
     .replace(/\n{3,}/g, "\n\n")

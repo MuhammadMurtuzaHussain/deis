@@ -216,3 +216,15 @@ describe("sentence-level guarding", () => {
     expect(houseStyle("**Data analysis**")).toBe("Data analysis");
   });
 });
+
+describe("guard tolerance from the Careful-lane run", () => {
+  it("reads skills the model cited inline", () => {
+    const { body } = guardCv({ summary: [{ text: "Graduate.", facts: ["e1"] }], competencies: [], roles: [], projects: [], achievements: [], skills: ["Python [s1]", "SQL [s1]"] }, l);
+    expect(body.skills).toEqual(["Python", "SQL"]);
+  });
+  it("ignores an invented id when a real one backs the line", () => {
+    const events: never[] = [];
+    expect(keepSentences("Cleaned sales data for 40 stores using Python and Pandas.", ["zz9", "a2"], l, events)).toBe("Cleaned sales data for 40 stores using Python and Pandas.");
+    expect(keepSentences("Cleaned sales data for 40 stores.", ["zz9"], l, events)).toBeNull();
+  });
+});

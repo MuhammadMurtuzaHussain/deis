@@ -25,7 +25,7 @@ const RULES: { stance: WorkStance; re: RegExp }[] = [
   },
   {
     stance: "no_sponsorship",
-    re: /\b(no|not\s+(able|in a position)\s+to\s+(offer|provide)|unable\s+to\s+(offer|provide|support)|cannot\s+(offer|provide|support)|can['’]?t\s+(offer|provide|support)|will\s+not\s+(offer|provide|support)|won['’]?t\s+(offer|provide|support)|do(es)?\s+not\s+(offer|provide|support))\s+(any\s+)?(visa\s+|work\s+permit\s+|employment\s+permit\s+|immigration\s+)?sponsorship\b|\bwithout\s+(the\s+need\s+for\s+)?(current\s+or\s+future\s+)?(visa\s+|permit\s+|employer\s+)?sponsorship\b|\bsponsorship\s+(is\s+)?not\s+(available|offered|provided|possible)\b/i,
+    re: /\b(no|not\s+(able|in a position)\s+to\s+(offer|provide)|unable\s+to\s+(offer|provide|support)|cannot\s+(offer|provide|support)|can['’]?t\s+(offer|provide|support)|will\s+not\s+(offer|provide|support)|won['’]?t\s+(offer|provide|support)|do(es)?\s+not\s+(offer|provide|support))\s+(any\s+)?(visa\s+|work\s+permit\s+|employment\s+permit\s+|immigration\s+)?sponsorship|\bwithout\s+(the\s+need\s+for\s+|needing\s+|requiring\s+)?(current\s+or\s+future\s+|any\s+)?(visa\s+|permit\s+|employer\s+)?sponsorship|\bsponsorship\s+(is\s+)?not\s+(available|offered|provided|possible)\b/i,
   },
   {
     stance: "right_to_work",

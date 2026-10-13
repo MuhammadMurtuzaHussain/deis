@@ -80,7 +80,7 @@ ${factLines(facts)}
 
 ${posting(job, 7000)}
 
-1. List the posting's must-haves in its own words (up to 8, most important first).
+1. List the posting's must-haves in its own words (up to 8, most important first). Leave out visa, permit and right-to-work requirements; Deis checks those separately.
 2. Match each to the facts: strong (clear evidence), transferable (related evidence), or gap (none). Cite the fact ids (just the id, like "ab5") for strong and transferable. In note, say briefly why, speaking to the candidate as "you".
 Today is ${today()}; anything that ended before today is finished.
 3. verdict: close, good, stretch or major_stretch. Be honest; a stretch is fine to apply for.
