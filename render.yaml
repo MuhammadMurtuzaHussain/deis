@@ -17,7 +17,7 @@ services:
       - key: DEIS_HOSTED
         value: "1"
       - key: SITE_URL
-        value: https://deis.onrender.com
+        value: https://deis-bu83.onrender.com
       # The demo's Gemma: Google AI Studio's free tier first …
       - key: GOOGLE_GENERATIVE_AI_API_KEY
         sync: false

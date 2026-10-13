@@ -12,7 +12,7 @@ const atkinsonMono = Atkinson_Hyperlegible_Mono({ variable: "--font-atkinson-mon
 const description = "Swipe through early-career jobs in Ireland. Your CV, tailored by open-weight Gemma on your own terms, with every line traced to something you told it.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.SITE_URL ?? "https://deis.onrender.com"),
+  metadataBase: new URL(process.env.SITE_URL ?? "https://deis-bu83.onrender.com"),
   title: "Deis · Jobs you can actually get",
   description,
   applicationName: "Deis",

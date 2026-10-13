@@ -8,7 +8,7 @@ export async function GET() {
     ok: true,
     hosted: process.env.DEIS_HOSTED === "1",
     desktop: process.env.DEIS_DESKTOP === "1",
-    demoModel: Boolean(process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.FALLBACK_BASE_URL),
+    demoModel: Boolean(process.env.GOOGLE_GENERATIVE_AI_API_KEY || (process.env.FALLBACK_BASE_URL && process.env.FALLBACK_MODEL)),
     services: { cache: kvBackend(), jobSearch: Boolean(process.env.SERPAPI_KEY), tracing: sentryEnabled() },
   });
 }

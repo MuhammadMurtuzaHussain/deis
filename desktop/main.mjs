@@ -65,7 +65,7 @@ async function startServer() {
       ...(config.polarOrganizationId ? { DEIS_POLAR_ORG_ID: config.polarOrganizationId } : {}),
       ...(config.buyUrl ? { DEIS_BUY_URL: config.buyUrl } : {}),
       // Jobs come from the hosted feed (shared Google Jobs searches); employer boards are read directly.
-      DEIS_FEED_URL: process.env.DEIS_FEED_URL ?? "https://deis.onrender.com",
+      DEIS_FEED_URL: process.env.DEIS_FEED_URL ?? "https://deis-bu83.onrender.com",
     },
     stdio: "inherit",
   });

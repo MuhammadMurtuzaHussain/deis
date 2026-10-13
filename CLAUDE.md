@@ -58,6 +58,7 @@ Local Gemma: `ollama pull gemma4:e4b` (6.6 GB). `.env.local` points the demo's f
 ## Progress (13 Oct)
 
 - Repo public: github.com/MuhammadMurtuzaHussain/deis (AGPL-3.0), pushed to `main` as we go.
+- Hosted demo: https://deis-bu83.onrender.com (Render gave `deis-bu83`; `deis.onrender.com` belongs to someone else). The desktop app reads its job feed from it, so installers built before 13 Oct 17:15 point at the wrong host.
 - Whole app works locally and in the packaged macOS app: check-in, profile import (CV, LinkedIn PDF, LinkedIn export ZIP), deck over real Irish jobs, Quick and Careful lanes, kit with sources and Checks tab, Word/PDF, tracker, settings, licence (off until Polar is set).
 - Evals in `eval/RESULTS.md`: seniority 98.1% on a blind held-out set (first run), 0 jobs wrongly hidden after the fix; guard on Gemma 4 E4B removes 4% of sentences, all real over-claims, 0 untraceable left.
 - Installers for macOS, Windows and Linux build in GitHub Actions (`Desktop installers`, run by hand). Only the macOS one has been run on a real machine.
