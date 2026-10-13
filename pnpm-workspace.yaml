@@ -1,0 +1,8 @@
+allowBuilds:
+  sharp: false
+  unrs-resolver: false
+  "@parcel/watcher": false
+  "@swc/core": false
+  esbuild: true
+  onnxruntime-node: false
+  protobufjs: false
