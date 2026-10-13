@@ -3,9 +3,12 @@
 
 /** Words recruiters skim past. Replaced where there's a plain equivalent, removed where there isn't. */
 const PLAIN: [RegExp, string][] = [
-  [/\bspearhead(ed|ing|s)?\b/gi, "led"],
-  [/\bleverag(e|ed|ing|es)\b/gi, "used"],
-  [/\butili[sz](e|ed|ing|es)\b/gi, "used"],
+  [/\bspearheading\b/gi, "leading"],
+  [/\bspearhead(ed)?\b/gi, "led"],
+  [/\b(?:leverag|utili[sz])ing\b/gi, "using"],
+  [/\b(?:leverag|utili[sz])ed\b/gi, "used"],
+  [/\b(?:leverag|utili[sz])es\b/gi, "uses"],
+  [/\b(?:leverag|utili[sz])e\b/gi, "use"],
   [/\bsynerg(y|ies)\b/gi, "collaboration"],
   [/\b(proven track record of|proven track record in)\s+/gi, ""],
   [/\b(highly )?(passionate|results[- ]driven|dynamic|motivated|hard[- ]working|detail[- ]oriented|go[- ]getter|self[- ]starter)\s+/gi, ""],

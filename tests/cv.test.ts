@@ -134,7 +134,7 @@ describe("other guards", () => {
 describe("houseStyle", () => {
   it("writes plainly, in Irish and British spelling, without em dashes", () => {
     expect(houseStyle("Spearheaded a world-class initiative — utilizing data to optimize the program center!")).toBe(
-      "Led an initiative, used data to optimise the program centre.",
+      "Led an initiative, using data to optimise the program centre.",
     );
     expect(houseStyle("Analyzed behavior across 2024–2025")).toBe("Analysed behaviour across 2024–2025");
   });
@@ -152,5 +152,27 @@ describe("stripCitations", () => {
     expect(stripCitations("Raised coverage from 41% to 68% [ab7].")).toBe("Raised coverage from 41% to 68%.");
     expect(stripCitations("Used Python and SQL [ab2, ab6] daily")).toBe("Used Python and SQL daily");
     expect(stripCitations("Led the Q3 [internal] review")).toBe("Led the Q3 [internal] review");
+  });
+});
+
+describe("guard refinements from the first live runs", () => {
+  it("keeps verbs grammatical when replacing buzzwords", () => {
+    expect(houseStyle("Skilled in utilizing Python and leveraging SQL")).toBe("Skilled in using Python and using SQL");
+    expect(houseStyle("Spearheading the rollout")).toBe("Leading the rollout");
+  });
+
+  it("drops 'currently studying' for a degree that has ended", () => {
+    const done = ledger([fact("m1", "education", "MSc Data Analytics, University of Galway", { start: "2024", end: "2025" })], []);
+    expect(whyNot("Currently pursuing an MSc in Data Analytics", ["m1"], done, { now: new Date("2026-10-13") })).toBe("past_as_present");
+    const going = ledger([fact("m2", "education", "BSc Data Science, UCC", { start: "2022", end: "2027" })], []);
+    expect(whyNot("Currently studying Data Science", ["m2"], going, { now: new Date("2026-10-13") })).toBeNull();
+  });
+
+  it("lets a letter quote the posting's dates and admit a tool gap, but not claim the tool", () => {
+    const posting = "A 6 month placement starting January 2027. You know Java.";
+    expect(whyNot("I would love to join the 2027 placement.", [], l, { requireFacts: false, cv: false, posting })).toBeNull();
+    expect(whyNot("I haven't used Java professionally yet, but I learn fast.", [], l, { requireFacts: false, cv: false, posting })).toBeNull();
+    expect(whyNot("I am proficient in Java.", [], l, { requireFacts: false, cv: false, posting })).toBe("unsupported_tool");
+    expect(whyNot("Joining the 2027 placement.", ["a1"], l, { posting })).toBe("unsupported_number");
   });
 });

@@ -206,7 +206,7 @@ export function fromGoogleJobs(raw: GoogleJob, now = new Date()): ScoredJob | nu
 
 /** Pasted postings come through here too, with the injections sanitisePosting found. */
 /** Talent pools and open applications aren't jobs you can swipe on. */
-export const NOT_A_JOB = /\b(talent (community|pool|network)|general application|speculative application|expression of interest|open application|future opportunities)\b/i;
+export const NOT_A_JOB = /\b(talent (community|pool|network)|general application|speculative application|expression of interest|register your interest|open application|future opportunities)\b/i;
 
 export function score(job: Job, injections: string[]): ScoredJob {
   return {

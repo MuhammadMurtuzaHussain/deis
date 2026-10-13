@@ -24,7 +24,8 @@ export type GuardRule =
   | "wrong_employer"
   | "first_person"
   | "unsupported_skill"
-  | "fit_demoted";
+  | "fit_demoted"
+  | "past_as_present";
 
 export type GuardEvent = { rule: GuardRule; text: string };
 
@@ -52,6 +53,11 @@ export const CERTS = [
 const CERT_RE = new RegExp(`(?<![\\w+])(${CERTS.join("|")})(?![\\w+])`, "gi");
 const IS_CERT = new RegExp(CERT_RE.source, "i");
 
+/** "Currently pursuing an MSc" when the MSc ended last year: small models get tense wrong. */
+const CURRENTLY = /\b(currently|now)\s+(pursuing|studying|completing|enrolled|undertaking|doing|working towards|reading)\b|\bexpected (to graduate|graduation)\b/i;
+/** A sentence that admits a gap may name the posting's tools: "I haven't used Java professionally yet". */
+const ADMITS_GAP = /\b(not|n['’]t|no|yet|learn(ing)?|developing|new to|build(ing)? up|close (the|this|that) gap|gap)\b/i;
+
 const YEARS_CLAIM = /\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\+?\s*(?:years?|yrs?)['’]?\s*(?:of\s+)?(?:experience|expertise|background)/i;
 const NUMBER_RE = /(?<![\w.])\d[\d,]*(?:\.\d+)?/g;
 
@@ -72,9 +78,19 @@ function factText(f: Fact): string {
   return [f.text, f.org, f.title, f.start, f.end, f.where].filter(Boolean).join(" · ");
 }
 
+export type WhyNotOptions = {
+  requireFacts?: boolean;
+  /** CV lines: no first person. Letters and answers are first person. */
+  cv?: boolean;
+  /** The posting itself: letters may quote its dates and durations, and name its tools when admitting a gap. */
+  posting?: string;
+  now?: Date;
+};
+
 /** Why a cited line can't stay, or null when it can. */
-export function whyNot(text: string, rawIds: string[], l: Ledger, opts: { requireFacts?: boolean; cv?: boolean } = {}): GuardRule | null {
+export function whyNot(text: string, rawIds: string[], l: Ledger, opts: WhyNotOptions = {}): GuardRule | null {
   const { requireFacts = true, cv = true } = opts;
+  const posting = norm(opts.posting ?? "");
   const factIds = cleanIds(rawIds);
   const cited = factIds.map((id) => l.byId.get(id)).filter((f): f is Fact => Boolean(f));
   if (factIds.length && cited.length < factIds.length) return "unknown_fact";
@@ -84,6 +100,13 @@ export function whyNot(text: string, rawIds: string[], l: Ledger, opts: { requir
 
   for (const phrase of l.neverClaim) if (phrase.length > 2 && norm(text).includes(norm(phrase))) return "never_claim";
 
+  if (CURRENTLY.test(text)) {
+    const year = (opts.now ?? new Date()).getFullYear();
+    const study = cited.filter((f) => f.kind === "education");
+    const stillGoing = study.some((f) => !f.end || /present|current/i.test(f.end) || Number.parseInt(f.end, 10) >= year);
+    if (study.length && !stillGoing) return "past_as_present";
+  }
+
   const years = YEARS_CLAIM.exec(text);
   if (years && !source.includes(norm(years[0]))) return "years_claim";
 
@@ -91,10 +114,19 @@ export function whyNot(text: string, rawIds: string[], l: Ledger, opts: { requir
     const n = digits(m[0]);
     // Calendar years are dates, and dates come from the facts' own start/end.
     if (/^(19|20)\d{2}$/.test(n) && source.includes(n)) continue;
-    if (!new RegExp(`(?<![\\d.])${n.replace(".", "\\.")}(?![\\d])`).test(sourceDigits)) return "unsupported_number";
+    const exact = new RegExp(`(?<![\\d.])${n.replace(".", "\\.")}(?![\\d])`);
+    if (exact.test(sourceDigits)) continue;
+    if (!cv && posting && exact.test(digits(posting))) continue;
+    return "unsupported_number";
   }
   for (const m of text.matchAll(CERT_RE)) if (!source.includes(norm(m[0]))) return "unsupported_cert";
-  for (const m of text.matchAll(TOOL_RE)) if (!new RegExp(`(?<![\\w.+#])${m[0].replace(/[.+#]/g, "\\$&")}(?![\\w+#])`, "i").test(source)) return "unsupported_tool";
+  for (const m of text.matchAll(TOOL_RE)) {
+    if (new RegExp(`(?<![\\w.+#])${m[0].replace(/[.+#]/g, "\\$&")}(?![\\w+#])`, "i").test(source)) continue;
+    // A letter may name a tool it doesn't claim: only in a sentence that admits the gap.
+    const sentence = text.slice(text.lastIndexOf(".", m.index ?? 0) + 1, text.indexOf(".", m.index ?? 0) + 1 || undefined);
+    if (!cv && ADMITS_GAP.test(sentence)) continue;
+    return "unsupported_tool";
+  }
   if (cv && FIRST_PERSON.test(text)) return "first_person";
   return null;
 }
@@ -102,7 +134,7 @@ export function whyNot(text: string, rawIds: string[], l: Ledger, opts: { requir
 /** "…from 41% to 68% [ab7]." → "…from 41% to 68%." The ids live in `facts`, not the prose. */
 export const stripCitations = (s: string) => s.replace(/\s*\[(?:\s*[a-z]{1,3}\d[\w-]*\s*,?)+\]/gi, "");
 
-function keep<T extends Cited>(items: T[], l: Ledger, events: GuardEvent[], opts?: Parameters<typeof whyNot>[3]): T[] {
+function keep<T extends Cited>(items: T[], l: Ledger, events: GuardEvent[], opts?: WhyNotOptions): T[] {
   const out: T[] = [];
   for (const item of items) {
     const text = houseStyle(stripCitations(item.text));
@@ -166,18 +198,18 @@ export function guardCv(body: CvBody, l: Ledger): { body: CvBody; events: GuardE
 }
 
 /** Cover letters are first person, and the opening and closing lines can be uncited, but they still can't invent. */
-export function guardLetter(letter: Letter, l: Ledger): { letter: Letter; events: GuardEvent[] } {
+export function guardLetter(letter: Letter, l: Ledger, posting = ""): { letter: Letter; events: GuardEvent[] } {
   const events: GuardEvent[] = [];
-  const paragraphs = keep(letter.paragraphs, l, events, { requireFacts: false, cv: false });
+  const paragraphs = keep(letter.paragraphs, l, events, { requireFacts: false, cv: false, posting });
   return { letter: { paragraphs }, events };
 }
 
-export function guardAnswers(a: Answers, l: Ledger): { answers: Answers; events: GuardEvent[] } {
+export function guardAnswers(a: Answers, l: Ledger, posting = ""): { answers: Answers; events: GuardEvent[] } {
   const events: GuardEvent[] = [];
   const answers = a.answers.map((x) => {
     if (x.needsYou) return { ...x, answer: "", facts: [] };
     const text = houseStyle(stripCitations(x.answer));
-    const rule = whyNot(text, x.facts, l, { requireFacts: false, cv: false });
+    const rule = whyNot(text, x.facts, l, { requireFacts: false, cv: false, posting });
     if (rule) {
       events.push({ rule, text: x.answer });
       return { ...x, answer: "", facts: [], needsYou: true };
