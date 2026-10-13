@@ -4,12 +4,12 @@
 
 *Deis* (said "desh") is Irish for "opportunity". A swipe-to-apply job app for early-career people in Ireland: jobs filtered for your level, languages and right to work, and a CV tailored by open-weight Gemma for each one you swipe right on. Every CV line points to a fact you confirmed. Your model, your laptop, about €0 an application. €9 once for the signed app; the code is AGPL-3.0.
 
-Entry for the **DEV Hacktoberfest Open-Source AI Challenge, Week 2: Side Hustle** (DEV event 80, tag `#hf26challenge`): build something with open AI that someone would pay for. Solo build by Muhammad Murtuza Hussain. Same family as Pīzhù (`../pizhu`), Return Route (`../return-route`) and Droichead (`~/Desktop/MLH/droichead`), but a new project: patterns reused, not code.
+Entry for the **DEV Hacktoberfest Open-Source AI Challenge, Week 2: Side Hustle** (DEV event 80, tag `#hf26challenge`): build something with open AI that someone would pay for. Solo build by Muhammad Murtuza Hussain. Same family as the author's earlier entries Pīzhù, Return Route and Droichead, but a new project: patterns reused, not code.
 
 - **Deadline:** Sun 18 Oct 2026 23:59 PDT = **Mon 19 Oct 07:59 Irish time** (MLH's copy shows a day earlier; aim for Sunday evening).
-- **Plan / PRD:** `docs/PRD.md` (from `~/.claude/plans/look-into-mlh-s-week-whimsical-eclipse.md`).
+- **Plan / PRD:** `docs/PRD.md`.
 - **Prize categories in view:** Gemma, Render (featured), SerpApi, Sentry Agent Tracing, Mastra. One win per challenge. Decided against: Tinker (no fine-tune, can't tune Gemma), TabPFN (Python runtime), MongoDB/Tiger/Backboard (break local-first), ElevenLabs. DigitalOcean only if it becomes the demo's second Gemma host and a guide ships.
-- **The author is the first user:** their TFC role ends 14 Oct 2026 and `~/Desktop/CV Making/` holds 83 hand-tailored CVs plus `Grok CV Tailoring Handoff.md`, which is this product's tailoring spec done by hand. Never commit anything from that folder.
+- **The author is the first user.** Private context (their own CVs, tailoring brief) is in `CLAUDE.local.md`, which is gitignored. Never commit personal data.
 
 ## Working rules
 

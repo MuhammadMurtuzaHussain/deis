@@ -1,0 +1,55 @@
+# Hosted demo on Render. The desktop app needs none of this: it runs the same server
+# on the user's own machine and talks to the model they choose.
+services:
+  - type: web
+    name: deis
+    runtime: node
+    plan: free
+    region: frankfurt
+    # Render's /usr/bin is read-only, so call pnpm through corepack instead of `corepack enable`.
+    buildCommand: corepack pnpm install --frozen-lockfile && corepack pnpm build
+    startCommand: corepack pnpm start
+    healthCheckPath: /api/status
+    envVars:
+      - key: COREPACK_ENABLE_DOWNLOAD_PROMPT
+        value: "0"
+      # Rate-limits the demo's own Gemma and refuses local model addresses (no SSRF).
+      - key: DEIS_HOSTED
+        value: "1"
+      - key: SITE_URL
+        value: https://deis.onrender.com
+      # The demo's Gemma: Google AI Studio's free tier first …
+      - key: GOOGLE_GENERATIVE_AI_API_KEY
+        sync: false
+      - key: GOOGLE_MODEL
+        value: gemma-4-26b-a4b-it
+      # … and Gemma on DigitalOcean serverless inference when AI Studio is having a bad day.
+      - key: FALLBACK_BASE_URL
+        value: https://inference.do-ai.run/v1
+      - key: FALLBACK_MODEL
+        sync: false
+      - key: FALLBACK_API_KEY
+        sync: false
+      # The shared Irish job feed: one Google Jobs search per role family, cached two days.
+      - key: SERPAPI_KEY
+        sync: false
+      - key: SERPAPI_MONTHLY_BUDGET
+        value: "200"
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: deis-cache
+          property: connectionString
+      # Sentry: agent traces and guard issues. Never prompts, CVs or keys. A DSN can only send events.
+      - key: SENTRY_DSN
+        sync: false
+      - key: NEXT_PUBLIC_SENTRY_DSN
+        sync: false
+
+  # Render Key Value (Valkey). Internal only: holds the job feed cache and the demo's rate limits.
+  - type: keyvalue
+    name: deis-cache
+    plan: free
+    region: frankfurt
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
