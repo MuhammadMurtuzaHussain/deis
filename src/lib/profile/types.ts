@@ -43,7 +43,7 @@ export const preferencesSchema = z.object({
   workStatus: z.enum(WORK_STATUSES).nullable(),
   /** Languages besides English. */
   languages: z.array(z.enum(LANGUAGES)),
-  /** Free-text role families: "data analyst", "cyber security", "marketing". */
+  /** Role family ids from src/lib/jobs/categories.ts: "software", "data", "cyber" … */
   roles: z.array(z.string()),
   dealBreakers: z.array(z.string()),
   showStretch: z.boolean(),
