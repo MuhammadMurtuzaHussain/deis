@@ -14,7 +14,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Vendored from pdfjs-dist for in-browser PDF reading.
     "public/pdf.worker.min.mjs",
-    "dist-electron/**",
+    "desktop/**",
     "release/**",
   ]),
 ]);

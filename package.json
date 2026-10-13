@@ -9,7 +9,12 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "eval": "tsx --env-file=.env.local eval/run.mts"
+    "eval": "tsx --env-file=.env.local eval/run.mts",
+    "desktop:build": "next build && node scripts/desktop-prepare.mjs",
+    "desktop": "electron desktop/main.mjs",
+    "dist:mac": "pnpm desktop:build && electron-builder --mac",
+    "dist:win": "pnpm desktop:build && electron-builder --win",
+    "dist:linux": "pnpm desktop:build && electron-builder --linux"
   },
   "packageManager": "pnpm@12.8.1",
   "dependencies": {
@@ -38,11 +43,54 @@
     "@types/node": "^20.19.43",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3",
     "eslint": "^9.39.5",
     "eslint-config-next": "16.3.8",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vitest": "^5.0.4"
+  },
+  "build": {
+    "appId": "ie.deis.app",
+    "productName": "Deis",
+    "copyright": "Muhammad Murtuza Hussain, AGPL-3.0",
+    "electronVersion": "44.7.0",
+    "directories": {
+      "app": "desktop",
+      "output": "release"
+    },
+    "extraResources": [
+      {
+        "from": ".next/standalone",
+        "to": "server",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.productivity",
+      "identity": null
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Office"
+    }
   }
 }

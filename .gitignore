@@ -49,3 +49,6 @@ next-env.d.ts
 
 # Private notes
 CLAUDE.local.md
+
+# Desktop builds
+/release

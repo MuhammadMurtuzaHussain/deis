@@ -1,0 +1,9 @@
+{
+  "name": "deis",
+  "productName": "Deis",
+  "version": "0.1.0",
+  "description": "Jobs you can actually get: early-career jobs in Ireland, with a CV tailored by open-weight Gemma.",
+  "author": "Muhammad Murtuza Hussain",
+  "license": "AGPL-3.0-only",
+  "main": "main.mjs"
+}

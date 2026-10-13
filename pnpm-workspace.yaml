@@ -6,3 +6,5 @@ allowBuilds:
   esbuild: true
   onnxruntime-node: false
   protobufjs: false
+  electron: true
+  electron-winstaller: false
