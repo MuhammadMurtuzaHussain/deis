@@ -22,3 +22,20 @@ What the first runs got wrong, and what changed:
 - **Held out:** "complete the ACA qualification over a period of 3 - 4 years" hid a *Trainee Accountant* job. Study periods no longer count, and a graduate, trainee or intern title can only be hidden by a line that actually says "experience".
 
 Run them: `npx tsx eval/seniority.mts` and `npx tsx eval/seniority.mts holdout`.
+
+## The CV guard (Gemma writes, code checks)
+
+The real fit check and kit workflow (CV, cover letter, form answers) for both fictional personas against 8 early-career postings from the snapshot, on **Gemma 4 E4B through Ollama on a MacBook** (13 Oct 2026). For every kit: what the guard removed, by rule, and an independent re-check of the finished CV. Every number, tool and certificate must appear in the persona's confirmed facts.
+
+| Run | Sentences kept | Removed by the guard | What it removed | Untraceable after the guard | Median time per kit |
+| --- | --- | --- | --- | --- | --- |
+| First run | 210 | 56 (21%) | 44 lines citing a fact by quoting it or by its label instead of its id; 12 tools not in the facts | **0** | 46 s |
+| After citation repair | 261 | 11 (4%) | 6 tools, 2 "currently studying" a finished degree, 1 number, 1 skill, 1 uncited line | **0** | 50 s |
+
+- The first run showed the small model never invented ids. Instead it cited facts by quoting them or by their label ("achievement · Harbour Payments"). Those quotes and labels are now matched back to the facts they name, and prompts put the id first. The guard went from throwing away good lines to removing only real over-claims.
+- In both runs, nothing the independent check could trace was left unsupported.
+- What code can't check is meaning. In an earlier manual run a competency called a solo final-year project "multi-person". That's why the kit can show the source facts under every line.
+
+Tokens per kit (fit + CV + letter + answers): about **7,700 in and 2,500 out**. On a laptop that costs nothing beyond electricity; on Google AI Studio's free tier it costs nothing; at a reseller's Gemma 4 26B price ($0.06 per million input tokens, $0.33 per million output) it's about **$0.0013 per application**, or roughly $0.65 for 500.
+
+Run it: `pnpm eval ollama 4` (needs `ollama pull gemma4:e4b`). Raw results are in `eval/results/`.
