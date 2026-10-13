@@ -184,10 +184,28 @@ export function whyNot(text: string, rawIds: string[], l: Ledger, opts: WhyNotOp
 }
 
 /** "…from 41% to 68% [ab7]." → "…from 41% to 68%." The ids live in `facts`, not the prose. */
-export const stripCitations = (s: string) => s.replace(/\s*\[(?:\s*[a-z]{1,3}\d[\w-]*\s*,?)+\]/gi, "").replace(/\s*\((?:\s*[a-z]{1,3}\d[\w-]*\s*,?)+\)/gi, "");
+/** Removes [ab5] and (ab5, ab6) citations, and with a ledger also bare ones ("… dashboards rm5, rm11"). */
+export const stripCitations = (s: string, l?: Ledger) => {
+  const out = s.replace(/\s*\[(?:\s*[a-z]{1,3}\d[\w-]*\s*,?)+\]/gi, "").replace(/\s*\((?:\s*[a-z]{1,3}\d[\w-]*\s*,?)+\)/gi, "");
+  return l ? stripBareIds(out, l) : out;
+};
 
 /** Fact ids a model wrote inline, in [ab5] or (ab5, ab6) form. */
 export const inlineIds = (s: string) => [...s.matchAll(/[[(]((?:\s*[a-z]{1,3}\d[\w-]*\s*,?)+)[\])]/gi)].flatMap((m) => m[1].split(/[,\s]+/)).filter(Boolean);
+
+const BARE_ID = /\b[a-z][a-z0-9]{0,10}\d\b/gi;
+
+/** Fact ids a model wrote with no brackets. Only real ids count, so "Q3" or "B2" are left alone. */
+export const bareIds = (s: string, l: Ledger) => [...s.matchAll(BARE_ID)].map((m) => m[0].toLowerCase()).filter((id) => l.byId.has(id));
+
+function stripBareIds(s: string, l: Ledger): string {
+  const marked = s.replace(BARE_ID, (t) => (l.byId.has(t.toLowerCase()) ? "\u0000" : t));
+  if (marked === s) return s;
+  return marked
+    .replace(/(?:\s*(?:,|\band\b)?\s*\u0000)+/g, "")
+    .replace(/\s+([.,;:!?])/g, "$1")
+    .trim();
+}
 
 /** "One. Two? Three." → ["One.", "Two?", "Three."], without splitting "e.g." or "3.5". */
 export function splitSentences(text: string): string[] {
@@ -202,7 +220,7 @@ export function splitSentences(text: string): string[] {
  * paragraph. Citation and fact checks still use the item's cited facts.
  */
 export function keepSentences(text: string, facts: string[], l: Ledger, events: GuardEvent[], opts?: WhyNotOptions): string | null {
-  const clean = houseStyle(stripCitations(text));
+  const clean = houseStyle(stripCitations(text, l));
   // Ids that don't exist are ignored; what's left has to back the line on its own.
   const ids = cleanIds(facts);
   const known = resolveCitations(facts, l);
@@ -252,7 +270,7 @@ export function guardCv(body: CvBody, l: Ledger): { body: CvBody; events: GuardE
     .filter((r): r is { org: string; bullets: Cited[] } => Boolean(r));
 
   const competencies = body.competencies
-    .map((c) => ({ ...c, text: houseStyle(stripCitations(c.text)), label: houseStyle(c.label), facts: resolveCitations(c.facts, l) }))
+    .map((c) => ({ ...c, text: houseStyle(stripCitations(c.text, l)), label: houseStyle(c.label), facts: resolveCitations(c.facts, l) }))
     .filter((c) => {
       const rule = whyNot(`${c.label}: ${c.text}`, c.facts, l);
       if (rule) events.push({ rule, text: `${c.label}: ${c.text}` });
@@ -260,7 +278,7 @@ export function guardCv(body: CvBody, l: Ledger): { body: CvBody; events: GuardE
     });
 
   const everything = norm(l.confirmed.map(factText).join(" \n "));
-  const skills = [...new Set(body.skills.map((s) => houseStyle(stripCitations(s)).trim()).filter(Boolean))].filter((s) => {
+  const skills = [...new Set(body.skills.map((s) => houseStyle(stripCitations(s, l)).trim()).filter(Boolean))].filter((s) => {
     const ok = everything.includes(norm(s)) || norm(s).split(/[\s/,&]+/).every((w) => w.length < 3 || everything.includes(w));
     if (!ok) events.push({ rule: "unsupported_skill", text: s });
     return ok && !IS_CERT.test(s);
@@ -312,7 +330,7 @@ export function guardFit(fit: Fit, l: Ledger): { fit: Fit; events: GuardEvent[] 
       events.push({ rule: "fit_demoted", text: r.need });
       return { ...r, match: "gap" as const, facts: [], note: r.note };
     }
-    return { ...r, facts, need: clip(houseStyle(stripCitations(r.need)), 200), note: clip(houseStyle(stripCitations(r.note)), 320) };
+    return { ...r, facts, need: clip(houseStyle(stripCitations(r.need, l)), 200), note: clip(houseStyle(stripCitations(r.note, l)), 320) };
   });
-  return { fit: { ...fit, requirements, angle: clip(houseStyle(fit.angle), 300) }, events };
+  return { fit: { ...fit, requirements, angle: clip(houseStyle(stripCitations(fit.angle, l)), 300) }, events };
 }

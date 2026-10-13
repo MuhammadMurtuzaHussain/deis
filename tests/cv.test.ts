@@ -239,6 +239,18 @@ describe("citations in round brackets", () => {
   });
 });
 
+import { bareIds } from "@/lib/cv/guard";
+describe("citations with no brackets", () => {
+  it("strips real fact ids and leaves look-alikes", () => {
+    expect(stripCitations("Cleaned sales data in Python a2, s1, a1", l)).toBe("Cleaned sales data in Python");
+    expect(stripCitations("Built dashboards a1 and a2.", l)).toBe("Built dashboards.");
+    expect(stripCitations("Python a2 and SQL s1 every week", l)).toBe("Python and SQL every week");
+    expect(stripCitations("Led the Q3 review at B2 level", l)).toBe("Led the Q3 review at B2 level");
+    expect(stripCitations("Cleaned sales data a2")).toBe("Cleaned sales data a2");
+    expect(bareIds("Python a2, SQL s1, Q3 and u1", l)).toEqual(["a2", "s1"]);
+  });
+});
+
 import { newFactId } from "@/lib/profile/types";
 describe("ids in odd shapes", () => {
   it("reads ids however the model wrote them", () => {

@@ -30,11 +30,21 @@ const withDeadline =
 
 const deadline = (effort: Effort) => (effort === "careful" ? 120_000 : 45_000);
 
+/**
+ * AI Studio's Gemma 4 takes only "minimal" or "high": "low" and "medium" are a 400 every time.
+ * "high" thinks past the deadline on a CV, so Gemma stays on "minimal"; Gemini gets "low" when careful.
+ */
+const thinkingLevel = (model: string, effort: Effort) => (effort === "careful" && !/^gemma/i.test(model) ? ("low" as const) : ("minimal" as const));
+
 function googleEntries(apiKey: string, primary: string, effort: Effort, id: string, retries = 2): ModelWithRetries[] {
   const google = createGoogleGenerativeAI({ apiKey, fetch: withDeadline(deadline(effort)) });
-  const providerOptions = { google: { thinkingConfig: { thinkingLevel: effort === "careful" ? ("low" as const) : ("minimal" as const) } } };
   const ids = [primary, ...(primary.startsWith("gemma-4") ? ["gemma-4-26b-a4b-it", "gemma-4-31b-it"].filter((m) => m !== primary) : [])];
-  return ids.map((m, i) => ({ id: `${id}:${m}`, model: google(m), maxRetries: i === 0 ? retries : Math.min(retries, 1), providerOptions }));
+  return ids.map((m, i) => ({
+    id: `${id}:${m}`,
+    model: google(m),
+    maxRetries: i === 0 ? retries : Math.min(retries, 1),
+    providerOptions: { google: { thinkingConfig: { thinkingLevel: thinkingLevel(m, effort) } } },
+  }));
 }
 
 function ollamaEntry(baseUrl: string, model: string, effort: Effort): ModelWithRetries {
