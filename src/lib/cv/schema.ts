@@ -7,7 +7,7 @@ import { z } from "zod";
 
 export const citedSchema = z.object({
   text: z.string().min(1).max(600),
-  facts: z.array(z.string()).max(6),
+  facts: z.array(z.string()).max(6).default([]),
 });
 export type Cited = z.infer<typeof citedSchema>;
 
@@ -22,7 +22,7 @@ export const fitSchema = z.object({
       z.object({
         need: z.string().max(160),
         match: z.enum(MATCHES),
-        facts: z.array(z.string()).max(4),
+        facts: z.array(z.string()).max(4).default([]),
         note: z.string().max(240),
       }),
     )
@@ -36,7 +36,7 @@ export type Fit = z.infer<typeof fitSchema>;
 export const cvBodySchema = z.object({
   summary: z.array(citedSchema).min(1).max(4),
   competencies: z
-    .array(z.object({ label: z.string().max(40), text: z.string().max(240), facts: z.array(z.string()).max(4) }))
+    .array(z.object({ label: z.string().max(40), text: z.string().max(240), facts: z.array(z.string()).max(4).default([]) }))
     .max(7),
   roles: z.array(z.object({ org: z.string(), bullets: z.array(citedSchema).max(6) })).max(8),
   projects: z.array(citedSchema).max(6),
@@ -56,7 +56,7 @@ export const answersSchema = z.object({
       z.object({
         question: z.string().max(200),
         answer: z.string().max(1200),
-        facts: z.array(z.string()).max(6),
+        facts: z.array(z.string()).max(6).default([]),
         /** Salary, notice period, start date, referees: only the user can answer. */
         needsYou: z.boolean(),
       }),

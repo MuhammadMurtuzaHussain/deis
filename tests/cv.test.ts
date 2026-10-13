@@ -139,3 +139,18 @@ describe("houseStyle", () => {
     expect(houseStyle("Analyzed behavior across 2024–2025")).toBe("Analysed behaviour across 2024–2025");
   });
 });
+
+describe("fact ids", () => {
+  it("accepts ids the way models copy them from the prompt", () => {
+    expect(whyNot("Built Power BI dashboards that cut weekly reporting from 6 hours to 2", ["[a1]"], l)).toBeNull();
+  });
+});
+
+import { stripCitations } from "@/lib/cv/guard";
+describe("stripCitations", () => {
+  it("removes inline fact ids but not ordinary brackets", () => {
+    expect(stripCitations("Raised coverage from 41% to 68% [ab7].")).toBe("Raised coverage from 41% to 68%.");
+    expect(stripCitations("Used Python and SQL [ab2, ab6] daily")).toBe("Used Python and SQL daily");
+    expect(stripCitations("Led the Q3 [internal] review")).toBe("Led the Q3 [internal] review");
+  });
+});

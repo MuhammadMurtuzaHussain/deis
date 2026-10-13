@@ -56,6 +56,9 @@ const YEARS_CLAIM = /\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten
 const NUMBER_RE = /(?<![\w.])\d[\d,]*(?:\.\d+)?/g;
 
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ");
+/** Models copy the prompt's "[ab5]" format back; the id is what's inside. */
+export const cleanId = (id: string) => id.replace(/[^\w-]/g, "");
+const cleanIds = (ids: string[]) => [...new Set(ids.map(cleanId).filter(Boolean))];
 const digits = (s: string) => s.replace(/,/g, "");
 
 export type Ledger = { byId: Map<string, Fact>; confirmed: Fact[]; neverClaim: string[] };
@@ -70,8 +73,9 @@ function factText(f: Fact): string {
 }
 
 /** Why a cited line can't stay, or null when it can. */
-export function whyNot(text: string, factIds: string[], l: Ledger, opts: { requireFacts?: boolean; cv?: boolean } = {}): GuardRule | null {
+export function whyNot(text: string, rawIds: string[], l: Ledger, opts: { requireFacts?: boolean; cv?: boolean } = {}): GuardRule | null {
   const { requireFacts = true, cv = true } = opts;
+  const factIds = cleanIds(rawIds);
   const cited = factIds.map((id) => l.byId.get(id)).filter((f): f is Fact => Boolean(f));
   if (factIds.length && cited.length < factIds.length) return "unknown_fact";
   if (requireFacts && !cited.length) return "uncited";
@@ -95,13 +99,16 @@ export function whyNot(text: string, factIds: string[], l: Ledger, opts: { requi
   return null;
 }
 
+/** "…from 41% to 68% [ab7]." → "…from 41% to 68%." The ids live in `facts`, not the prose. */
+export const stripCitations = (s: string) => s.replace(/\s*\[(?:\s*[a-z]{1,3}\d[\w-]*\s*,?)+\]/gi, "");
+
 function keep<T extends Cited>(items: T[], l: Ledger, events: GuardEvent[], opts?: Parameters<typeof whyNot>[3]): T[] {
   const out: T[] = [];
   for (const item of items) {
-    const text = houseStyle(item.text);
+    const text = houseStyle(stripCitations(item.text));
     const rule = whyNot(text, item.facts, l, opts);
     if (rule) events.push({ rule, text: item.text });
-    else out.push({ ...item, text });
+    else out.push({ ...item, text, facts: cleanIds(item.facts) });
   }
   return out;
 }
@@ -120,7 +127,9 @@ export function guardCv(body: CvBody, l: Ledger): { body: CvBody; events: GuardE
         return null;
       }
       const bullets = keep(r.bullets, l, events).filter((b) => {
-        const foreign = b.facts.map((id) => l.byId.get(id)).find((f) => f?.org && !sameOrg(f.org, org));
+        const foreign = cleanIds(b.facts)
+          .map((id) => l.byId.get(id))
+          .find((f) => f?.org && !sameOrg(f.org, org));
         if (foreign) events.push({ rule: "wrong_employer", text: b.text });
         return !foreign;
       });
@@ -129,7 +138,7 @@ export function guardCv(body: CvBody, l: Ledger): { body: CvBody; events: GuardE
     .filter((r): r is { org: string; bullets: Cited[] } => Boolean(r));
 
   const competencies = body.competencies
-    .map((c) => ({ ...c, text: houseStyle(c.text), label: houseStyle(c.label) }))
+    .map((c) => ({ ...c, text: houseStyle(stripCitations(c.text)), label: houseStyle(c.label), facts: cleanIds(c.facts) }))
     .filter((c) => {
       const rule = whyNot(`${c.label}: ${c.text}`, c.facts, l);
       if (rule) events.push({ rule, text: `${c.label}: ${c.text}` });
@@ -167,13 +176,13 @@ export function guardAnswers(a: Answers, l: Ledger): { answers: Answers; events:
   const events: GuardEvent[] = [];
   const answers = a.answers.map((x) => {
     if (x.needsYou) return { ...x, answer: "", facts: [] };
-    const text = houseStyle(x.answer);
+    const text = houseStyle(stripCitations(x.answer));
     const rule = whyNot(text, x.facts, l, { requireFacts: false, cv: false });
     if (rule) {
       events.push({ rule, text: x.answer });
       return { ...x, answer: "", facts: [], needsYou: true };
     }
-    return { ...x, answer: text };
+    return { ...x, answer: text, facts: cleanIds(x.facts) };
   });
   return { answers: { answers }, events };
 }
@@ -182,12 +191,12 @@ export function guardAnswers(a: Answers, l: Ledger): { answers: Answers; events:
 export function guardFit(fit: Fit, l: Ledger): { fit: Fit; events: GuardEvent[] } {
   const events: GuardEvent[] = [];
   const requirements = fit.requirements.map((r) => {
-    const facts = r.facts.filter((id) => l.byId.has(id));
+    const facts = cleanIds(r.facts).filter((id) => l.byId.has(id));
     if (r.match !== "gap" && !facts.length) {
       events.push({ rule: "fit_demoted", text: r.need });
       return { ...r, match: "gap" as const, facts: [], note: r.note };
     }
-    return { ...r, facts, need: houseStyle(r.need), note: houseStyle(r.note) };
+    return { ...r, facts, need: houseStyle(stripCitations(r.need)), note: houseStyle(stripCitations(r.note)) };
   });
   return { fit: { ...fit, requirements, angle: houseStyle(fit.angle) }, events };
 }
