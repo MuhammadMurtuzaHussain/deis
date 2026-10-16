@@ -12,7 +12,7 @@ import { Button, Elapsed, Field, inputClass, Notice } from "./ui";
 // server they run or rent. The hosted demo offers its own key, rate limited.
 
 type Choice = AiSettings["provider"];
-type Ollama = { running: boolean; models: { name: string; gb: number }[]; hosted?: boolean };
+type Ollama = { running: boolean; models: { name: string; gb: number }[]; hosted?: boolean; memoryGb?: number };
 
 function Option({ id, choice, setChoice, icon, title, sub, children }: { id: Choice; choice: Choice; setChoice: (c: Choice) => void; icon: ReactNode; title: string; sub: string; children?: ReactNode }) {
   const on = choice === id;
@@ -64,6 +64,8 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
   const [customModel, setCustomModel] = useState(ai?.provider === "openai" ? ai.model : "");
   const [customKey, setCustomKey] = useState(ai?.provider === "openai" ? (ai.apiKey ?? "") : "");
   const [ollama, setOllama] = useState<Ollama | null>(null);
+  // "Better writing": the 12B model writes the kit. Unset until we know this computer's memory.
+  const [betterWriting, setBetterWriting] = useState<boolean | null>(ai?.provider === "ollama" ? Boolean(ai.kitModel) : null);
   const [test, setTest] = useState<{ state: "idle" | "running" | "ok" | "error"; message?: string; since?: number }>({ state: "idle" });
 
   useEffect(() => {
@@ -74,6 +76,8 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
         setOllama(d);
         const gemma = d.models.find((m) => m.name.startsWith("gemma"));
         if (gemma && !d.models.some((m) => m.name === ollamaModel)) setOllamaModel(gemma.name);
+        // On by default with room for it (24 GB) and the model already downloaded.
+        setBetterWriting((b) => b ?? ((d.memoryGb ?? 0) >= 24 && d.models.some((m) => m.name === DEFAULTS.kitModel)));
       })
       .catch(() => setOllama({ running: false, models: [] }));
     // Only on first look; the user can re-check with the button.
@@ -87,7 +91,7 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
       case "google":
         return googleKey.trim().length >= 10 ? { provider: "google", apiKey: googleKey.trim(), model: googleModel } : null;
       case "ollama":
-        return { provider: "ollama", baseUrl: DEFAULTS.ollamaUrl, model: ollamaModel };
+        return { provider: "ollama", baseUrl: DEFAULTS.ollamaUrl, model: ollamaModel, ...(betterWriting && ollamaModel !== DEFAULTS.kitModel ? { kitModel: DEFAULTS.kitModel } : {}) };
       case "openai":
         return baseUrl && customModel ? { provider: "openai", baseUrl: baseUrl.trim(), model: customModel.trim(), apiKey: customKey.trim() || undefined } : null;
     }
@@ -114,6 +118,7 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
   };
 
   const gemmaInstalled = ollama?.models.some((m) => m.name === ollamaModel);
+  const kitInstalled = ollama?.models.some((m) => m.name === DEFAULTS.kitModel);
 
   return (
     <div className={embedded ? "" : "max-w-3xl"}>
@@ -157,6 +162,18 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
                   )}
                 </Field>
                 {!gemmaInstalled && <CopyLine text={`ollama pull ${ollamaModel}`} />}
+                {ollamaModel !== DEFAULTS.kitModel && (
+                  <label className="flex cursor-pointer items-start gap-3 text-[15px]">
+                    <input type="checkbox" checked={Boolean(betterWriting)} onChange={(e) => setBetterWriting(e.target.checked)} className="mt-1 size-5 accent-[var(--accent)]" />
+                    <span>
+                      <span className="block font-medium">Better writing (about 2 minutes per kit)</span>
+                      <span className="block text-sm text-ink-2">
+                        The larger {DEFAULTS.kitModel} writes your CV, letter and answers. Best with 24 GB of memory or more.{kitInstalled ? "" : " Until it's downloaded, the model above writes them."}
+                      </span>
+                    </span>
+                  </label>
+                )}
+                {betterWriting && !kitInstalled && ollamaModel !== DEFAULTS.kitModel && <CopyLine text={`ollama pull ${DEFAULTS.kitModel}`} />}
               </div>
             )}
           </Option>

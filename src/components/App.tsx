@@ -59,9 +59,10 @@ function Shell() {
     );
   }
 
-  if (licence?.state === "locked") return <LicenceScreen licence={licence} onChange={setLicence} />;
-
   const r: Route = route ?? (isOnboarded(profile) ? { name: "deck" } : { name: "welcome" });
+  // A locked licence is read-only: applications, profile and settings (export) stay open.
+  const locked = licence?.state === "locked";
+  if (locked && ["deck", "welcome", "checkin", "model"].includes(r.name)) return <LicenceScreen licence={licence} onChange={setLicence} />;
   if (r.name === "welcome") return <Welcome />;
   if (r.name === "checkin") return <CheckIn />;
 
@@ -123,6 +124,16 @@ function Shell() {
 
       <div className="pb-24 lg:pb-0">
         {demo && <DemoBar persona={demo as PersonaId} />}
+        {locked && (
+          <div className="border-b border-line bg-amber-soft">
+            <p className="mx-auto max-w-[1120px] px-4 py-2 text-sm sm:px-8">
+              Your free trial has ended. You can still read and export everything.{" "}
+              <a href={routeHref({ name: "settings" })} className="font-medium underline">
+                Add a licence key
+              </a>
+            </p>
+          </div>
+        )}
         <main id="main" className="mx-auto w-full max-w-[1120px] px-4 py-6 sm:px-8 lg:py-10">
           {screen}
         </main>

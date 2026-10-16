@@ -36,6 +36,23 @@ export const fitSchema = z.object({
 });
 export type Fit = z.infer<typeof fitSchema>;
 
+/**
+ * What Gemma writes for a CV: a short profile, key skill labels, bullets for each
+ * employer, projects and tools. Education, certifications and languages are copied
+ * from the facts by code (src/lib/cv/compose.ts).
+ */
+export const cvDraftSchema = z.object({
+  /** 2 or 3 sentences at the top of the CV. */
+  profile: z.array(citedSchema).min(1).max(6),
+  /** Short labels ("Unit testing"), each citing the facts that show it. */
+  keySkills: z.array(z.object({ label: z.string().max(400), facts: z.array(z.string()).max(12).default([]) })).max(12).default([]),
+  roles: z.array(z.object({ org: z.string(), bullets: z.array(citedSchema).max(12) })).max(16).default([]),
+  projects: z.array(citedSchema).max(12).default([]),
+  skills: z.array(z.string().max(400)).max(60).default([]),
+});
+export type CvDraft = z.infer<typeof cvDraftSchema>;
+
+/** The shape the guard checks (src/lib/cv/guard.ts). Prompts before 16 Oct 2026 asked Gemma for it directly. */
 export const cvBodySchema = z.object({
   /** One or two lines naming this role at this employer. */
   objective: z.array(citedSchema).max(3).default([]),
@@ -50,10 +67,36 @@ export const cvBodySchema = z.object({
 });
 export type CvBody = z.infer<typeof cvBodySchema>;
 
+/**
+ * The draft in the guard's shape. The profile's first sentence names the role as advertised,
+ * so it goes where the guard lets the posting's numbers stand ("Graduate Programme 2027");
+ * key skills are competencies with no sentence.
+ */
+export function bodyFromDraft(d: CvDraft): CvBody {
+  const sentences = d.profile.flatMap((p) => p.text.split(/(?<=[.!?])\s+(?=[A-Z])/).map((text) => ({ text, facts: p.facts })));
+  return {
+    objective: sentences.slice(0, 1),
+    summary: sentences.slice(1),
+    competencies: d.keySkills.map((k) => ({ label: k.label, text: "", facts: k.facts })),
+    roles: d.roles,
+    projects: d.projects,
+    achievements: [],
+    skills: d.skills,
+  };
+}
+
+/** Bumped when the guard or the kit's layout changes, so the app can tell a kit was checked by older rules. 2: 16 Oct 2026. */
+export const GUARD_VERSION = 2;
+
 export const letterSchema = z.object({
   paragraphs: z.array(citedSchema).min(1).max(12),
 });
 export type Letter = z.infer<typeof letterSchema>;
+
+/** What Gemma writes for the form. Code owns the questions, so none of them can leak prompt text. */
+const draftAnswer = z.object({ answer: z.string().max(4800).default(""), facts: z.array(z.string()).max(12).default([]) });
+export const answersDraftSchema = z.object({ why_company: draftAnswer, why_fit: draftAnswer, proud_of: draftAnswer });
+export type AnswersDraft = z.infer<typeof answersDraftSchema>;
 
 export const answersSchema = z.object({
   answers: z

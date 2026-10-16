@@ -25,7 +25,7 @@ export const routeHref = (r: Route) => (r.name === "application" ? `#/applicatio
 
 export type Licence = ({ state: "off" } | { state: "trial"; daysLeft: number } | { state: "licensed"; customer: string | null } | { state: "locked" }) & { buyUrl?: string };
 
-export type ServerStatus = { hosted: boolean; desktop: boolean; demoModel: boolean; services: { jobSearch: boolean; tracing: boolean; cache: string } };
+export type ServerStatus = { hosted: boolean; desktop: boolean; demoModel: boolean; offline?: { mode: "off" | "on" | "forced"; reachable?: boolean }; services: { jobSearch: boolean; tracing: boolean; cache: string } };
 
 type Store = {
   route: Route | null;

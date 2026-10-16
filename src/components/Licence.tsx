@@ -3,7 +3,7 @@
 import { Key } from "@phosphor-icons/react";
 import { useState } from "react";
 import { api, ApiError } from "@/lib/client/api";
-import type { Licence as LicenceInfo } from "@/lib/client/store";
+import { routeHref, useStore, type Licence as LicenceInfo } from "@/lib/client/store";
 import { Button, Field, inputClass, LinkButton, Notice } from "./ui";
 
 // The desktop app's licence: try everything for 14 days, then a Polar licence key.
@@ -13,6 +13,8 @@ export function LicenceForm({ licence, onChange }: { licence: LicenceInfo; onCha
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  // Checking a key needs Polar, so it waits until offline mode is off.
+  const offline = (useStore().status?.offline?.mode ?? "off") !== "off";
 
   if (licence.state === "off") return null;
   if (licence.state === "licensed") return <p className="text-ink-2">Licensed{licence.customer ? ` to ${licence.customer}` : ""}. Thank you for supporting Deis.</p>;
@@ -44,11 +46,12 @@ export function LicenceForm({ licence, onChange }: { licence: LicenceInfo; onCha
         <Field label="Licence key" help="It's in your receipt email from Polar.">
           {(id, d) => <input id={id} aria-describedby={d} value={key} onChange={(e) => setKey(e.target.value)} className={inputClass} autoComplete="off" spellCheck={false} />}
         </Field>
-        <Button type="submit" variant="primary" disabled={busy || key.trim().length < 8}>
+        <Button type="submit" variant="primary" disabled={busy || offline || key.trim().length < 8}>
           <Key size={18} aria-hidden />
           {busy ? "Checking…" : "Unlock"}
         </Button>
       </form>
+      {offline && <p className="text-sm text-ink-2">Deis is in offline mode. Turn it off to check a key.</p>}
       {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
       {licence.buyUrl && (
         <div className="flex flex-wrap items-center gap-3">
@@ -69,6 +72,10 @@ export function LicenceScreen({ licence, onChange }: { licence: LicenceInfo; onC
         Your profile and applications are safe on this computer. A licence key keeps the app, its updates and the daily Irish job feed going, for €9 once. No subscription.
       </p>
       <LicenceForm licence={licence} onChange={onChange} />
+      <p className="text-ink-2">
+        You can still <a href={routeHref({ name: "tracker" })} className="font-medium underline">read your applications</a> and{" "}
+        <a href={routeHref({ name: "settings" })} className="font-medium underline">export your data</a>.
+      </p>
     </main>
   );
 }

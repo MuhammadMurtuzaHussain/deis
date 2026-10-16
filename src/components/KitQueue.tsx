@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { ApiError } from "@/lib/client/api";
 import { db, loadProfile } from "@/lib/client/db";
 import { runFit, runKit, updateApplication } from "@/lib/client/kit";
+import { useStore } from "@/lib/client/store";
 
 // Quick lane: swipe right and keep swiping. Each kit (fit check, CV, letter, answers)
 // is built in the background, one at a time, so a laptop's single Gemma isn't asked
@@ -18,9 +19,11 @@ export function KitQueue({ children }: { children: ReactNode }) {
   const pending = useLiveQuery(() => db.applications.filter((a) => a.lane === "quick" && !a.kit && !a.kitError && a.status === "ready").sortBy("createdAt"), [], []);
   const [working, setWorking] = useState<{ id: string; since: number } | null>(null);
   const busy = useRef(false);
+  // A locked licence is read-only: no new kits until it's unlocked.
+  const locked = useStore().licence?.state === "locked";
 
   useEffect(() => {
-    if (busy.current || !pending.length) return;
+    if (busy.current || locked || !pending.length) return;
     const next = pending[0];
     busy.current = true;
     setWorking({ id: next.id, since: Date.now() });
@@ -42,7 +45,7 @@ export function KitQueue({ children }: { children: ReactNode }) {
         setWorking(null);
       }
     })();
-  }, [pending]);
+  }, [pending, locked]);
 
   return <Ctx.Provider value={{ working: working?.id ?? null, since: working?.since ?? null, waiting: pending.length }}>{children}</Ctx.Provider>;
 }

@@ -16,13 +16,16 @@ export const kitParts = () => getMeta<KitParts>("kitParts", { letter: true, answ
 const usable = (p: Profile) => ({ header: p.header, facts: p.facts.filter((f) => f.confirmed), neverClaim: p.neverClaim });
 
 export async function runFit(job: ScoredJob, p: Profile): Promise<{ fit: Fit; events: GuardEvent[] }> {
-  return api("/api/fit", { job, facts: usable(p).facts });
+  const { facts, neverClaim } = usable(p);
+  return api("/api/fit", { job, facts, neverClaim });
 }
 
+/** Both callers save the fit (and its guard events) first, so the lane and those events are read back here. */
 export async function runKit(job: ScoredJob, p: Profile, fit: Fit): Promise<Kit> {
-  const include = await kitParts();
-  const out = await api<Omit<Kit, "at">>("/api/kit", { job, profile: usable(p), fit, include });
-  return { ...out, at: Date.now() };
+  const [include, app] = await Promise.all([kitParts(), db.applications.get(job.id)]);
+  const out = await api<Omit<Kit, "at">>("/api/kit", { job, profile: usable(p), fit, include, lane: app?.lane ?? "quick" });
+  // The Checks tab lists everything the guard stepped in on, the fit check included.
+  return { ...out, events: [...(app?.fitEvents ?? []), ...out.events], at: Date.now() };
 }
 
 export function newApplication(job: ScoredJob, lane: Application["lane"]): Application {

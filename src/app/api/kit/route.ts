@@ -14,6 +14,7 @@ const schema = z.object({
   profile: profileInputSchema,
   fit: fitSchema,
   include: z.object({ letter: z.boolean(), answers: z.boolean() }),
+  lane: z.enum(["quick", "careful"]).default("quick"),
 });
 
 /** A failed workflow's error arrives as a plain object, not an Error. */
@@ -21,10 +22,11 @@ const failure = (e: unknown) => (e instanceof Error ? e.message : ((e as { messa
 
 // After a swipe right: the tailored CV, an optional letter and draft answers, all guarded.
 export async function POST(req: Request) {
-  const ai = await aiFor(req, "careful", 20);
-  if (ai instanceof Response) return ai;
+  // A bad body never counts against the hourly limit.
   const input = await body(req, schema);
   if (input instanceof Response) return input;
+  const ai = await aiFor(req, "writing", 20);
+  if (ai instanceof Response) return ai;
   try {
     const run = await mastra.getWorkflow("kitWorkflow").createRun();
     const out = await traceWorkflow("application-kit", () =>

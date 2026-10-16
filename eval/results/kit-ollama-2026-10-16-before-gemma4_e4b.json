@@ -1,0 +1,3278 @@
+{
+ "summary": {
+  "tier": "ollama",
+  "model": "gemma4:e4b on this computer",
+  "kits": 8,
+  "failed": 0,
+  "sentencesKept": 270,
+  "removedByGuard": 7,
+  "removedShare": 0.025,
+  "byRule": {
+   "unsupported_tool": 7
+  },
+  "untraceableAfterGuard": 0,
+  "medianSeconds": 64.6,
+  "avgTokensIn": 8026,
+  "avgTokensOut": 2672,
+  "quality": {
+   "factsCited3PlusPerKit": 3.5,
+   "dupFactRate": 0.713,
+   "nearCopyPairsPerKit": 2.375,
+   "postingCopy": {
+    "cv": 0.002,
+    "letter": 0.004,
+    "answers": 0.015
+   },
+   "bracketLeaks": 24,
+   "tenseErrors": 3,
+   "untraceableInLettersAndAnswers": 0,
+   "citationsRepaired": 0,
+   "lettersNamingAGap": "1 of 8",
+   "wordsPerSection": {
+    "profile": 79.25,
+    "competencies": 101,
+    "experience": 72.375,
+    "projects": 36.375,
+    "education": 10.5,
+    "skills": 7.375,
+    "achievements": 12.2,
+    "languages": 3,
+    "cv": 285.625,
+    "letter": 205.25,
+    "answerAvg": 58.5
+   }
+  }
+ },
+ "rows": [
+  {
+   "persona": "Aoife Byrne",
+   "job": "Software Engineer, Intern (Summer or Winter)",
+   "company": "Stripe",
+   "ms": 66637,
+   "tokensIn": 8096,
+   "tokensOut": 2792,
+   "kept": 37,
+   "removed": 0,
+   "byRule": {},
+   "untraceable": [],
+   "output": {
+    "jobId": "1a7asmk",
+    "card": {
+     "why": [
+      {
+       "kind": "strong",
+       "text": "Developed production-facing dashboards using React and TypeScript.",
+       "facts": [
+        "ab5"
+       ]
+      },
+      {
+       "kind": "transferable",
+       "text": "Wrote SQL queries for financial data analysis and review.",
+       "facts": [
+        "ab6"
+       ]
+      },
+      {
+       "kind": "gap",
+       "text": "Experience shipping high-quality, large-scale production software is not shown.",
+       "facts": []
+      }
+     ],
+     "score": 80
+    },
+    "fit": {
+     "verdict": "good",
+     "requirements": [
+      {
+       "need": "Strong computer science fundamentals via a degree in a related field.",
+       "match": "strong",
+       "facts": [
+        "ab1"
+       ],
+       "note": "You have a BSc in Computer Science from University College Dublin, which covers this requirement."
+      },
+      {
+       "need": "Familiarity with programming through projects or coursework.",
+       "match": "strong",
+       "facts": [
+        "ab1",
+        "ab2",
+        "ab5"
+       ],
+       "note": "You have built substantial projects using languages like Python and TypeScript, demonstrating practical programming experience."
+      },
+      {
+       "need": "Experience in multi-person projects, including feedback reception.",
+       "match": "strong",
+       "facts": [
+        "ab4",
+        "ab5",
+        "ab6",
+        "ab7"
+       ],
+       "note": "Your internship at Harbour Payments involved working within a team on production software, where you clearly delivered measurable results."
+      },
+      {
+       "need": "Ability to learn unfamiliar systems through independent research.",
+       "match": "strong",
+       "facts": [
+        "ab2"
+       ],
+       "note": "Your final year project required you to independently analyse and use six months of GTFS data to solve a specific problem."
+      },
+      {
+       "need": "Ability to use AI tools while maintaining critical judgement.",
+       "match": "gap",
+       "facts": [],
+       "note": "The job explicitly mentions using AI tooling; while you have strong technical skills, you have not provided evidence of applying AI in a professional context."
+      },
+      {
+       "need": "Ambitious builder mindset focused on discovery.",
+       "match": "transferable",
+       "facts": [
+        "ab2",
+        "ab5"
+       ],
+       "note": "Your projects show you are energized by building novel solutions, such as developing the timetable app or the internal dashboard."
+      },
+      {
+       "need": "Rigorous thinking, handling non-simple problems.",
+       "match": "transferable",
+       "facts": [
+        "ab2",
+        "ab7"
+       ],
+       "note": "Improving test coverage from 41% to 68% and tackling data prediction show you appreciate depth and rigor in problem solving."
+      },
+      {
+       "need": "Adaptable problem solver who takes measured risks.",
+       "match": "transferable",
+       "facts": [
+        "ab4"
+       ],
+       "note": "Your internship experience suggests you can operate in a professional environment and adapt to the demands of software engineering."
+      }
+     ],
+     "angle": "Lead with your internship experience at Harbour Payments to demonstrate your ability to deliver production quality code and absorb feedback."
+    },
+    "fitEvents": [],
+    "kit": {
+     "cv": {
+      "header": {
+       "name": "Aoife Byrne",
+       "email": "aoife.byrne@example.ie",
+       "phone": "+353 85 000 0000",
+       "location": "Dublin, Ireland",
+       "links": [
+        "github.com/example-aoife"
+       ]
+      },
+      "objective": [
+       {
+        "text": "Seeking the Software Engineer, Intern role at Stripe to apply robust software engineering experience developed during an internship and university projects.",
+        "facts": [
+         "ab4"
+        ]
+       }
+      ],
+      "summary": [
+       {
+        "text": "Final year student completing a BSc Computer Science at University College Dublin.",
+        "facts": [
+         "ab1"
+        ]
+       },
+       {
+        "text": "Demonstrated ability to deliver production quality software, including building a TypeScript and React dashboard used by agents to look up failed card payments at Harbour Payments.",
+        "facts": [
+         "ab5"
+        ]
+       },
+       {
+        "text": "Proven experience in rigorous development practices, such as improving refunds service unit test coverage from 41% to 68% at Harbour Payments.",
+        "facts": [
+         "ab7"
+        ]
+       },
+       {
+        "text": "Completed a final year project for University College Dublin involving a timetable app built in Python using scikit-learn to predict bus delays from open GTFS data.",
+        "facts": [
+         "ab2"
+        ]
+       }
+      ],
+      "competencies": [
+       {
+        "label": "Building Production Software",
+        "text": "Constructed an internal dashboard using TypeScript and React to support agents with failed card payment lookups at Harbour Payments.",
+        "facts": [
+         "ab5"
+        ]
+       },
+       {
+        "label": "Improving Code Quality",
+        "text": "Raised unit test coverage on the refunds service from 41% to 68% during the time spent at Harbour Payments.",
+        "facts": [
+         "ab7"
+        ]
+       },
+       {
+        "label": "Data Analysis and Querying",
+        "text": "Wrote SQL queries in PostgreSQL to identify duplicate refunds, which were reviewed weekly by the finance team.",
+        "facts": [
+         "ab6"
+        ]
+       },
+       {
+        "label": "System Design and Modelling",
+        "text": "Developed a timetable application for Dublin Bus using Python and scikit-learn, analysing six months of open GTFS data.",
+        "facts": [
+         "ab2"
+        ]
+       },
+       {
+        "label": "Team Collaboration",
+        "text": "Operated as a Software Engineering Intern at Harbour Payments, building features within a professional team setting.",
+        "facts": [
+         "ab4"
+        ]
+       },
+       {
+        "label": "Problem Solving Through Projects",
+        "text": "Designed and built a final year project focused on predicting bus delays using collected GTFS data.",
+        "facts": [
+         "ab2"
+        ]
+       },
+       {
+        "label": "Organising Educational Events",
+        "text": "Managed 12 workshops for the university's computer society, accommodating between 30 and 80 students per session.",
+        "facts": [
+         "ab10"
+        ]
+       }
+      ],
+      "experience": [
+       {
+        "title": "Software Engineering Intern",
+        "org": "Harbour Payments",
+        "where": "Dublin",
+        "dates": "Jun 2025 – Aug 2025",
+        "bullets": [
+         {
+          "text": "Built an internal dashboard using TypeScript and React to enable agents to look up failed card payments.",
+          "facts": [
+           "ab5"
+          ]
+         },
+         {
+          "text": "Wrote SQL queries in PostgreSQL to locate duplicate refunds for review by the finance team.",
+          "facts": [
+           "ab6"
+          ]
+         },
+         {
+          "text": "Increased unit test coverage on the refunds service from 41% to 68% by adding tests.",
+          "facts": [
+           "ab7"
+          ]
+         }
+        ]
+       },
+       {
+        "title": "Barista",
+        "org": "Kiln Coffee",
+        "where": "Dublin",
+        "dates": "Sep 2023 – May 2026",
+        "bullets": [
+         {
+          "text": "Trained four new staff members on the till operation and the required opening checklist.",
+          "facts": [
+           "ab9"
+          ]
+         }
+        ]
+       }
+      ],
+      "projects": [
+       {
+        "text": "Developed a timetable application for Dublin Bus to predict delays by analysing six months of open GTFS data, implemented in Python using scikit-learn.",
+        "facts": [
+         "ab2"
+        ]
+       },
+       {
+        "text": "Events officer for the university's computer society, running 12 workshops in one year for 30 to 80 students each",
+        "facts": [
+         "ab10"
+        ]
+       }
+      ],
+      "leadership": true,
+      "education": [
+       {
+        "text": "BSc Computer Science, University College Dublin",
+        "dates": "2022 – 2026",
+        "facts": [
+         "ab1"
+        ]
+       }
+      ],
+      "skills": [
+       "Python",
+       "TypeScript",
+       "React",
+       "SQL",
+       "PostgreSQL",
+       "Git",
+       "Docker"
+      ],
+      "languages": [
+       "Irish (conversational)"
+      ],
+      "achievements": [
+       {
+        "text": "Achieved a first class grade for the final year project at University College Dublin.",
+        "facts": [
+         "ab3"
+        ]
+       }
+      ]
+     },
+     "letter": {
+      "paragraphs": [
+       {
+        "text": "I am keen to contribute to Stripe’s mission of building programmable financial infrastructure that makes it easier and cheaper for businesses to scale. The opportunity to work on projects that impact how millions of businesses operate aligns perfectly with my focus on rigorous, practical software development.",
+        "facts": []
+       },
+       {
+        "text": "My Software Engineering Internship at Harbour Payments provided direct experience in building production-quality systems. I contributed to an internal TypeScript and React dashboard for agents looking up failed card payments, and I improved the integrity of financial processes by writing SQL queries in PostgreSQL to identify duplicate refunds for the finance team. Furthermore, I significantly increased the test coverage on the refunds service from 41% to 68% by adding unit tests.",
+        "facts": [
+         "ab4",
+         "ab5",
+         "ab6",
+         "ab7"
+        ]
+       },
+       {
+        "text": "Academically, my final year project involved building a timetable application for Dublin Bus, using Python and scikit-learn to predict delays from extensive open GTFS data, which was graded first class. This demonstrates my foundational understanding of computer science principles and my ability to work on complex, end-to-end problems.",
+        "facts": [
+         "ab1",
+         "ab2",
+         "ab3"
+        ]
+       },
+       {
+        "text": "While I have practical experience in software development, my knowledge regarding the specific use of advanced AI tools in a production environment requires more development. However, I bring strong foundational skills in Python, TypeScript, React, and SQL, combined with my ability to learn unfamiliar systems quickly. I am ready to apply my rigorous approach to quickly master any specific AI tooling needs at Stripe.",
+        "facts": [
+         "ab10",
+         "ab11"
+        ]
+       }
+      ]
+     },
+     "answers": {
+      "answers": [
+       {
+        "question": "Why do you want to work at Stripe?",
+        "answer": "I am drawn to Stripe's focus on building programmable financial infrastructure to improve economic growth and prosperity [posting]. I admire the company's rigor and the opportunity to work on projects that impact how millions of businesses operate [posting]. I am eager to learn how the global economy functions by contributing to Stripe's codebase and solving complex problems at scale [posting].",
+        "facts": [
+         "ab1",
+         "ab11"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "Why are you a good fit for this role?",
+        "answer": "I possess the technical skills necessary for this role, including Python, TypeScript, React, and SQL. My experience as a Software Engineering Intern involved building a TypeScript and React dashboard and improving service quality by adding unit tests. Furthermore, my final year project involved using Python and scikit-learn to build a predictive timetable app, demonstrating my ability to tackle complex, unsolved problems [posting].",
+        "facts": [
+         "ab1",
+         "ab2",
+         "ab5",
+         "ab7",
+         "ab11"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "Tell us about a project or achievement you're proud of.",
+        "answer": "I am particularly proud of my final year project, where I built a timetable application for Dublin Bus. This project used Python and scikit-learn to predict bus delays using six months of open GTFS data. I achieved a first-class grade for this work. Additionally, during my internship, I wrote PostgreSQL queries to identify duplicate refunds, which the finance team reviewed every week.",
+        "facts": [
+         "ab2",
+         "ab3",
+         "ab6"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "What are your salary expectations?",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       },
+       {
+        "question": "What is your notice period or earliest start date?",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       }
+      ]
+     },
+     "events": [],
+     "usage": {
+      "inputTokens": 6147,
+      "outputTokens": 2119,
+      "ms": 39248
+     },
+     "errors": []
+    }
+   },
+   "quality": {
+    "factsCited3Plus": 3,
+    "dupFactRate": 0.667,
+    "nearCopyPairs": 2,
+    "postingCopy": {
+     "cv": 0,
+     "letter": 0.009,
+     "answers": 0.011
+    },
+    "bracketLeaks": [
+     "[posting]",
+     "[posting]",
+     "[posting]",
+     "[posting]"
+    ],
+    "tenseErrors": [
+     "Final year student"
+    ],
+    "untraceableProse": [],
+    "repairs": 0,
+    "letterNamesGap": false,
+    "words": {
+     "profile": 106,
+     "competencies": 121,
+     "experience": 71,
+     "projects": 42,
+     "education": 6,
+     "skills": 7,
+     "achievements": 14,
+     "languages": 2,
+     "cv": 344,
+     "letter": 229,
+     "answerAvg": 61
+    },
+    "removed": []
+   }
+  },
+  {
+   "persona": "Aoife Byrne",
+   "job": "Software Engineer, New Grad",
+   "company": "Stripe",
+   "ms": 64567,
+   "tokensIn": 7927,
+   "tokensOut": 2737,
+   "kept": 36,
+   "removed": 0,
+   "byRule": {},
+   "untraceable": [],
+   "output": {
+    "jobId": "18oeqhe",
+    "card": {
+     "why": [
+      {
+       "kind": "strong",
+       "text": "Developed a prediction model using Python and scikit-learn.",
+       "facts": [
+        "ab2"
+       ]
+      },
+      {
+       "kind": "transferable",
+       "text": "Used TypeScript and React to build a support dashboard.",
+       "facts": [
+        "ab5",
+        "ab11"
+       ]
+      },
+      {
+       "kind": "gap",
+       "text": "Demonstrated experience building solutions without clear precedent.",
+       "facts": []
+      }
+     ],
+     "score": 75
+    },
+    "fit": {
+     "verdict": "good",
+     "requirements": [
+      {
+       "need": "Have a degree in computer science or a related field, or equivalent work experience, finishing by summer 2027, with no more than 18 months of professional experience outside of internships.",
+       "match": "strong",
+       "facts": [
+        "ab1"
+       ],
+       "note": "You have a BSc in Computer Science and your completion date is in 2026, which meets the degree requirement."
+      },
+      {
+       "need": "Familiarity with programming concepts, demonstrated through projects or coursework. Experience in languages like Java, Ruby, JavaScript, Scala, or Go is a plus, but fundamentals are key.",
+       "match": "strong",
+       "facts": [
+        "ab11"
+       ],
+       "note": "You have experience with Python, TypeScript, and React, showing strong fundamental programming knowledge."
+      },
+      {
+       "need": "Experience collaborating on multi-person coding projects, either in university or a professional setting.",
+       "match": "strong",
+       "facts": [
+        "ab4",
+        "ab5",
+        "ab6",
+        "ab7"
+       ],
+       "note": "Your internship at Harbour Payments involved building and maintaining software with others, which demonstrates collaboration."
+      },
+      {
+       "need": "Ability to learn unfamiliar systems by researching independently or working with experts.",
+       "match": "strong",
+       "facts": [
+        "ab2"
+       ],
+       "note": "Your final year project required you to learn about and work with 6 months of open GTFS data, showing your ability to learn new systems."
+      },
+      {
+       "need": "Clear written communication skills to explain your work to various audiences.",
+       "match": "transferable",
+       "facts": [
+        "ab10"
+       ],
+       "note": "Running workshops for large groups suggests you can communicate complex ideas clearly to an audience."
+      },
+      {
+       "need": "Ability to use AI tools while maintaining critical thinking and professional judgement over outputs.",
+       "match": "gap",
+       "facts": [],
+       "note": "There is no specific evidence provided about your direct experience using AI tools in a professional capacity to review or validate work."
+      },
+      {
+       "need": "Drive and curiosity to build solutions without clear precedents and tackling difficult problems.",
+       "match": "transferable",
+       "facts": [
+        "ab2"
+       ],
+       "note": "Building a novel timetable prediction app from scratch shows initiative in tackling problems without clear existing solutions."
+      },
+      {
+       "need": "Ability to act with high agency in navigating complex technical obstacles independently.",
+       "match": "strong",
+       "facts": [
+        "ab7"
+       ],
+       "note": "Increasing test coverage from 41% to 68% shows you took independent ownership to improve system quality."
+      }
+     ],
+     "angle": "Focus on your project work demonstrating your ability to tackle complex, unprecedented problems using programming and data analysis."
+    },
+    "fitEvents": [],
+    "kit": {
+     "cv": {
+      "header": {
+       "name": "Aoife Byrne",
+       "email": "aoife.byrne@example.ie",
+       "phone": "+353 85 000 0000",
+       "location": "Dublin, Ireland",
+       "links": [
+        "github.com/example-aoife"
+       ]
+      },
+      "objective": [
+       {
+        "text": "To secure the Software Engineer, New Grad position at Stripe, applying strong analytical and development skills honed in complex project environments.",
+        "facts": [
+         "ab1"
+        ]
+       }
+      ],
+      "summary": [
+       {
+        "text": "Recent graduate with a BSc in Computer Science from University College Dublin. Demonstrated ability to tackle complex, unscripted problems by building applications that analyse large datasets, such as a timetable predictor for Dublin Bus. Possesses experience in collaborative software development environments, including professional internship roles. Skilled in using technologies like Python, TypeScript, and React to build functional solutions.",
+        "facts": [
+         "ab1",
+         "ab2",
+         "ab4",
+         "ab11",
+         "ab5"
+        ]
+       }
+      ],
+      "competencies": [
+       {
+        "label": "Tackling complex problems",
+        "text": "Successfully developed a timetable application for Dublin Bus that predicted delays using six months of open GTFS data in Python and scikit-learn.",
+        "facts": [
+         "ab2"
+        ]
+       },
+       {
+        "label": "Building software solutions",
+        "text": "Constructed an internal TypeScript and React dashboard for Harbour Payments to allow agents to look up failed card payments.",
+        "facts": [
+         "ab5"
+        ]
+       },
+       {
+        "label": "System improvement and testing",
+        "text": "Improved the refund service coverage from 41% to 68% by adding unit tests within the software engineering role at Harbour Payments.",
+        "facts": [
+         "ab7"
+        ]
+       },
+       {
+        "label": "Data analysis and querying",
+        "text": "Wrote SQL queries in PostgreSQL at Harbour Payments to identify duplicate refunds for weekly review by the finance team.",
+        "facts": [
+         "ab6"
+        ]
+       },
+       {
+        "label": "Learning unfamiliar systems",
+        "text": "Participated in roles where learning requirements were demonstrated, such as training four new staff members on the till and opening checklist at Kiln Coffee.",
+        "facts": [
+         "ab9"
+        ]
+       },
+       {
+        "label": "Leadership and organisation",
+        "text": "Acted as Events Officer for the university's computer society, coordinating 12 workshops across one year for student groups ranging from 30 to 80 attendees.",
+        "facts": [
+         "ab10"
+        ]
+       }
+      ],
+      "experience": [
+       {
+        "title": "Software Engineering Intern",
+        "org": "Harbour Payments",
+        "where": "Dublin",
+        "dates": "Jun 2025 – Aug 2025",
+        "bullets": [
+         {
+          "text": "Built an internal TypeScript and React dashboard that enabled agents to look up failed card payments.",
+          "facts": [
+           "ab5"
+          ]
+         },
+         {
+          "text": "Queried PostgreSQL using SQL to locate duplicate refunds, which were reviewed weekly by the finance team.",
+          "facts": [
+           "ab6"
+          ]
+         },
+         {
+          "text": "Increased unit test coverage on the refunds service from 41% to 68% through diligent testing practices.",
+          "facts": [
+           "ab7"
+          ]
+         }
+        ]
+       },
+       {
+        "title": "Barista",
+        "org": "Kiln Coffee",
+        "where": "Dublin",
+        "dates": "Sep 2023 – May 2026",
+        "bullets": [
+         {
+          "text": "Trained four new staff members on operational procedures, including the till and opening checklist.",
+          "facts": [
+           "ab9"
+          ]
+         }
+        ]
+       }
+      ],
+      "projects": [
+       {
+        "text": "Timetable application for Dublin Bus, designed to predict delays by analysing six months of open GTFS data, built using Python and scikit-learn.",
+        "facts": [
+         "ab2"
+        ]
+       },
+       {
+        "text": "Events officer for the university's computer society, running 12 workshops in one year for 30 to 80 students each",
+        "facts": [
+         "ab10"
+        ]
+       }
+      ],
+      "leadership": true,
+      "education": [
+       {
+        "text": "BSc Computer Science, University College Dublin",
+        "dates": "2022 – 2026",
+        "facts": [
+         "ab1"
+        ]
+       }
+      ],
+      "skills": [
+       "Python",
+       "TypeScript",
+       "React",
+       "SQL",
+       "PostgreSQL",
+       "Git",
+       "Docker"
+      ],
+      "languages": [
+       "Irish (conversational)"
+      ],
+      "achievements": [
+       {
+        "text": "Achieved a first class grade for the final-year project at University College Dublin.",
+        "facts": [
+         "ab3"
+        ]
+       }
+      ]
+     },
+     "letter": {
+      "paragraphs": [
+       {
+        "text": "The chance to build programmable financial infrastructure that facilitates economic growth, as Stripe is doing, is exactly the kind of ambitious work I want to dedicate myself to. I am drawn to the necessity of tackling complex, unprecedented problems in a rapidly changing environment.",
+        "facts": []
+       },
+       {
+        "text": "My final-year project involved tackling a novel problem: predicting Dublin Bus delays by analysing six months of open GTFS data using Python and scikit-learn, which was graded first class. Furthermore, during my internship, I built an internal TypeScript and React dashboard to help agents look up failed card payments, demonstrating my ability to build solutions without clear precedent.",
+        "facts": [
+         "ab3",
+         "ab5"
+        ]
+       },
+       {
+        "text": "This focus on rigorous technical output is mirrored in my other experience; I wrote SQL queries in PostgreSQL to identify duplicate refunds for the finance team and significantly improved service reliability by raising unit test coverage on the refunds service from 41% to 68%. My skills span Python, TypeScript, React, and SQL.",
+        "facts": [
+         "ab6",
+         "ab7",
+         "ab11"
+        ]
+       },
+       {
+        "text": "I recognise I have not yet had direct experience in applying AI tools while maintaining strict critical judgement over the outputs. However, my rigorous approach to project validation and testing and my adaptability in learning new systems mean I can quickly develop the necessary critical framework to integrate these tools effectively. I am eager to bring my drive to Stripe.",
+        "facts": [
+         "ab2",
+         "ab7"
+        ]
+       }
+      ]
+     },
+     "answers": {
+      "answers": [
+       {
+        "question": "Why do you want to work at Stripe?",
+        "answer": "I am drawn to Stripe's mission of improving conditions for economic growth and prosperity by building programmable financial infrastructure (posting). I am keen to work in an environment where individual agency can make a significant impact on how businesses grow, as described in the role section (posting). The opportunity to learn about how the world works by working with ambitious companies at the centre of the changing global economy is very appealing (posting).",
+        "facts": [
+         "ab1"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "Why are you a good fit for this role?",
+        "answer": "I am an ambitious builder, demonstrated by my final-year project which involved predicting delays using machine learning. I possess experience in building software, such as the TypeScript and React dashboard I developed during my internship. Furthermore, I am rigorous and adaptable, as shown by my work improving code test coverage and my experience in collaborative project work. My technical skills include Python, TypeScript, React, and SQL.",
+        "facts": [
+         "ab1",
+         "ab2",
+         "ab5",
+         "ab6",
+         "ab7",
+         "ab11"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "Tell us about a project or achievement you're proud of.",
+        "answer": "I am particularly proud of my final-year project, which involved building a timetable application for Dublin Bus. This project predicted delays by analysing six months of open GTFS data and was built using Python and scikit-learn. Additionally, I improved the reliability of a refund service during my internship by increasing unit test coverage from 41% to 68%. The project itself was graded first class.",
+        "facts": [
+         "ab2",
+         "ab3",
+         "ab7"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "What are your salary expectations?",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       },
+       {
+        "question": "What is your notice period or earliest start date?",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       }
+      ]
+     },
+     "events": [],
+     "usage": {
+      "inputTokens": 6109,
+      "outputTokens": 2015,
+      "ms": 40592
+     },
+     "errors": []
+    }
+   },
+   "quality": {
+    "factsCited3Plus": 2,
+    "dupFactRate": 0.7,
+    "nearCopyPairs": 2,
+    "postingCopy": {
+     "cv": 0,
+     "letter": 0,
+     "answers": 0.025
+    },
+    "bracketLeaks": [
+     "(posting)",
+     "(posting)",
+     "(posting)"
+    ],
+    "tenseErrors": [],
+    "untraceableProse": [],
+    "repairs": 0,
+    "letterNamesGap": true,
+    "words": {
+     "profile": 79,
+     "competencies": 129,
+     "experience": 72,
+     "projects": 41,
+     "education": 6,
+     "skills": 7,
+     "achievements": 13,
+     "languages": 2,
+     "cv": 324,
+     "letter": 214,
+     "answerAvg": 68
+    },
+    "removed": []
+   }
+  },
+  {
+   "persona": "Aoife Byrne",
+   "job": "2027 - Software Engineer Intern, Dublin - 6 Month Internship",
+   "company": "MongoDB",
+   "ms": 62171,
+   "tokensIn": 8168,
+   "tokensOut": 2568,
+   "kept": 30,
+   "removed": 3,
+   "byRule": {
+    "unsupported_tool": 3
+   },
+   "untraceable": [],
+   "output": {
+    "jobId": "1jf4mpa",
+    "card": {
+     "why": [
+      {
+       "kind": "strong",
+       "text": "Built a prediction app using Python and GTFS data.",
+       "facts": [
+        "ab2"
+       ]
+      },
+      {
+       "kind": "transferable",
+       "text": "Developed production features using TypeScript and React.",
+       "facts": [
+        "ab5"
+       ]
+      },
+      {
+       "kind": "gap",
+       "text": "Need confirmation of Spring 2028 or Summer 2028 graduation date.",
+       "facts": []
+      }
+     ],
+     "score": 85
+    },
+    "fit": {
+     "verdict": "good",
+     "requirements": [
+      {
+       "need": "In the process of receiving a Bachelor’s or Master's degree in Computer Science or a related field.",
+       "match": "strong",
+       "facts": [
+        "ab1"
+       ],
+       "note": "You are in the process of completing your BSc in Computer Science."
+      },
+      {
+       "need": "Foundation in computer science theory, including data structures, algorithms, and software design.",
+       "match": "strong",
+       "facts": [
+        "ab1",
+        "ab2"
+       ],
+       "note": "Your degree and your final year project show you have covered the necessary foundational knowledge."
+      },
+      {
+       "need": "Proficiency in a relevant programming language such as Python, Javascript, or Java.",
+       "match": "strong",
+       "facts": [
+        "ab11",
+        "ab2"
+       ],
+       "note": "You have experience with Python and other relevant languages like TypeScript."
+      },
+      {
+       "need": "Have a minimum of one semester remaining after the internship concludes, expecting graduation in Spring or Summer 2028.",
+       "match": "gap",
+       "facts": [],
+       "note": "Your expected graduation date in is 2026, which suggests you may not meet the required remaining time in studies."
+      },
+      {
+       "need": "Practical experience building production-level code or contributing to software development teams.",
+       "match": "strong",
+       "facts": [
+        "ab4",
+        "ab5",
+        "ab6",
+        "ab7"
+       ],
+       "note": "Your internship at Harbour Payments shows direct experience building and improving software services."
+      },
+      {
+       "need": "Experience with database querying and data management.",
+       "match": "strong",
+       "facts": [
+        "ab6",
+        "ab11"
+       ],
+       "note": "You have written SQL queries in PostgreSQL, which is directly applicable to data management."
+      },
+      {
+       "need": "Familiarity with modern development tools and workflows (e.g., version control, containers).",
+       "match": "strong",
+       "facts": [
+        "ab11"
+       ],
+       "note": "You list Git and Docker in your skills, showing familiarity with development workflows."
+      }
+     ],
+     "angle": "Lead with your internship experience at Harbour Payments, highlighting how you used Python, TypeScript, and SQL to build and improve real software systems."
+    },
+    "fitEvents": [],
+    "kit": {
+     "cv": {
+      "header": {
+       "name": "Aoife Byrne",
+       "email": "aoife.byrne@example.ie",
+       "phone": "+353 85 000 0000",
+       "location": "Dublin, Ireland",
+       "links": [
+        "github.com/example-aoife"
+       ]
+      },
+      "objective": [],
+      "summary": [
+       {
+        "text": "Recent Computer Science graduate from University College Dublin, bringing practical experience from a Software Engineering Internship at Harbour Payments. Possesses foundational skills in Python, TypeScript, and SQL from professional and academic settings. Proven ability to contribute to software systems, including developing dashboards and improving code coverage.",
+        "facts": [
+         "ab1",
+         "ab4",
+         "ab11",
+         "ab5",
+         "ab7",
+         "ab2"
+        ]
+       }
+      ],
+      "competencies": [
+       {
+        "label": "Software development lifecycle",
+        "text": "Built internal dashboards using TypeScript and React to aid agents in looking up failed card payments.",
+        "facts": [
+         "ab5"
+        ]
+       },
+       {
+        "label": "Database query analysis",
+        "text": "Wrote PostgreSQL SQL queries to identify duplicate refunds for weekly review by the finance team.",
+        "facts": [
+         "ab6"
+        ]
+       },
+       {
+        "label": "Code quality and testing",
+        "text": "Increased coverage on the refunds service from 41% to 68% by adding unit tests.",
+        "facts": [
+         "ab7"
+        ]
+       },
+       {
+        "label": "Data processing and modelling",
+        "text": "Developed a timetable application using Python and scikit-learn to predict delays from 6 months of open GTFS data.",
+        "facts": [
+         "ab2"
+        ]
+       },
+       {
+        "label": "Version control and deployment",
+        "text": "Experience with development tools including Git and Docker.",
+        "facts": [
+         "ab11"
+        ]
+       },
+       {
+        "label": "Object-oriented language use",
+        "text": "Proficient in Python and TypeScript.",
+        "facts": [
+         "ab11"
+        ]
+       }
+      ],
+      "experience": [
+       {
+        "title": "Software Engineering Intern",
+        "org": "Harbour Payments",
+        "where": "Dublin",
+        "dates": "Jun 2025 – Aug 2025",
+        "bullets": [
+         {
+          "text": "Constructed an internal dashboard using TypeScript and React to assist agents in reviewing failed card payments.",
+          "facts": [
+           "ab5"
+          ]
+         },
+         {
+          "text": "Executed PostgreSQL SQL queries to locate duplicate refunds, which were subject to weekly review by the finance team.",
+          "facts": [
+           "ab6"
+          ]
+         },
+         {
+          "text": "Enhanced the refunds service by adding unit tests, raising the test coverage from 41% to 68%.",
+          "facts": [
+           "ab7"
+          ]
+         }
+        ]
+       },
+       {
+        "title": "Barista",
+        "org": "Kiln Coffee",
+        "where": "Dublin",
+        "dates": "Sep 2023 – May 2026",
+        "bullets": [
+         {
+          "text": "Trained 4 new staff members on operational procedures, including the till and opening checklist.",
+          "facts": [
+           "ab9"
+          ]
+         }
+        ]
+       }
+      ],
+      "projects": [
+       {
+        "text": "Timetable Application for Dublin Bus: Developed a final-year project using Python and scikit-learn to predict bus delays based on six months of open GTFS data.",
+        "facts": [
+         "ab2"
+        ]
+       },
+       {
+        "text": "Events officer for the university's computer society, running 12 workshops in one year for 30 to 80 students each",
+        "facts": [
+         "ab10"
+        ]
+       }
+      ],
+      "leadership": true,
+      "education": [
+       {
+        "text": "BSc Computer Science, University College Dublin",
+        "dates": "2022 – 2026",
+        "facts": [
+         "ab1"
+        ]
+       }
+      ],
+      "skills": [
+       "Python",
+       "TypeScript",
+       "React",
+       "SQL",
+       "PostgreSQL",
+       "Git",
+       "Docker"
+      ],
+      "languages": [
+       "Irish (conversational)"
+      ],
+      "achievements": [
+       {
+        "text": "Achieved a first class grade for the final-year project at University College Dublin.",
+        "facts": [
+         "ab3"
+        ]
+       }
+      ]
+     },
+     "letter": {
+      "paragraphs": [
+       {
+        "text": "My time as a Software Engineering Intern at Harbour Payments gave me practical experience building and improving real systems. I constructed an internal TypeScript and React dashboard for agents to look up failed card payments. Furthermore, I used SQL queries in PostgreSQL to find duplicate refunds, which the finance team reviewed weekly, and improved service reliability by increasing unit test coverage from 41% to 68%.",
+        "facts": [
+         "ab5",
+         "ab6",
+         "ab7"
+        ]
+       },
+       {
+        "text": "I also have experience developing complex applications through my final year project, where I built a timetable app for Dublin Bus using Python and scikit-learn to predict delays from six months of open GTFS data. This practical work, coupled with my skills in Python, TypeScript, React, and SQL, aligns well with the need for solid foundations in programming and data structures.",
+        "facts": [
+         "ab2",
+         "ab11"
+        ]
+       },
+       {
+        "text": "My academic studies at University College Dublin are ongoing; I am currently in my final year and expect to graduate in Summer 2028. While my practical internship experience at Harbour Payments concluded in August 2025, I am ready to bring my skills to MongoDB and learn your development methodologies.",
+        "facts": [
+         "ab1",
+         "ab4"
+        ]
+       }
+      ]
+     },
+     "answers": {
+      "answers": [
+       {
+        "question": "Why do you want to work at MongoDB?",
+        "answer": "I am interested in contributing to meaningful projects (What you'll find at MongoDB) and learning development standard methodologies within a company that encourages employees to bring their whole selves to work (What we are looking for in you).",
+        "facts": [],
+        "needsYou": false
+       },
+       {
+        "question": "Why are you a good fit for this role?",
+        "answer": "I am currently studying Computer Science at University College Dublin, which aligns with the requirement for a degree in a related field. My experience includes building applications with Python and developing software components using TypeScript and React. Furthermore, I have foundational experience with SQL and PostgreSQL, which I believe speaks to the required computer science foundation.",
+        "facts": [
+         "ab1",
+         "ab5",
+         "ab6",
+         "ab11"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "Tell us about a project or achievement you're proud of.",
+        "answer": "I am proud of my final-year project, which involved building a timetable app for Dublin Bus. This app was built using Python and scikit-learn, and it successfully predicted delays based on six months of open GTFS data. This project was graded first class. Additionally, during my internship at Harbour Payments, I improved the coverage of the refunds service by adding unit tests, raising it from 41% to 68%.",
+        "facts": [
+         "ab2",
+         "ab3",
+         "ab7"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "What are your salary expectations?",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       },
+       {
+        "question": "What is your notice period or earliest start date?",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       }
+      ]
+     },
+     "events": [
+      {
+       "rule": "unsupported_tool",
+       "text": "To secure the 2027 - Software Engineer Intern, Dublin - 6 Month Internship at MongoDB, applying foundational knowledge in software development and practical experience in building production-level code."
+      },
+      {
+       "rule": "unsupported_tool",
+       "text": "MongoDB is building the next era of software by redefining the data platform for the AI era, and I am keen to contribute my development experience to a team focused on impactful, production-level code."
+      },
+      {
+       "rule": "unsupported_tool",
+       "text": "I am drawn to MongoDB because of its role in redefining the data platform for the AI era (About MongoDB)."
+      }
+     ],
+     "usage": {
+      "inputTokens": 6281,
+      "outputTokens": 1958,
+      "ms": 37680
+     },
+     "errors": []
+    }
+   },
+   "quality": {
+    "factsCited3Plus": 4,
+    "dupFactRate": 0.5,
+    "nearCopyPairs": 3,
+    "postingCopy": {
+     "cv": 0,
+     "letter": 0,
+     "answers": 0.031
+    },
+    "bracketLeaks": [],
+    "tenseErrors": [
+     "am currently studying"
+    ],
+    "untraceableProse": [],
+    "repairs": 0,
+    "letterNamesGap": false,
+    "words": {
+     "profile": 46,
+     "competencies": 76,
+     "experience": 74,
+     "projects": 44,
+     "education": 6,
+     "skills": 7,
+     "achievements": 13,
+     "languages": 2,
+     "cv": 243,
+     "letter": 175,
+     "answerAvg": 54
+    },
+    "removed": [
+     {
+      "rule": "unsupported_tool",
+      "text": "To secure the 2027 - Software Engineer Intern, Dublin - 6 Month Internship at MongoDB, applying foundational knowledge in software development and practical experience in building production-level code."
+     },
+     {
+      "rule": "unsupported_tool",
+      "text": "MongoDB is building the next era of software by redefining the data platform for the AI era, and I am keen to contribute my development experience to a team focused on impactful, production-level code."
+     },
+     {
+      "rule": "unsupported_tool",
+      "text": "I am drawn to MongoDB because of its role in redefining the data platform for the AI era (About MongoDB)."
+     }
+    ]
+   }
+  },
+  {
+   "persona": "Aoife Byrne",
+   "job": "Software Engineer 2",
+   "company": "MongoDB",
+   "ms": 62706,
+   "tokensIn": 7552,
+   "tokensOut": 2612,
+   "kept": 37,
+   "removed": 2,
+   "byRule": {
+    "unsupported_tool": 2
+   },
+   "untraceable": [],
+   "output": {
+    "jobId": "13ylxox",
+    "card": {
+     "why": [
+      {
+       "kind": "strong",
+       "text": "Developed a predictive timetable app using Python and scikit-learn.",
+       "facts": [
+        "ab2"
+       ]
+      },
+      {
+       "kind": "transferable",
+       "text": "Built internal dashboards using TypeScript and React for payments.",
+       "facts": [
+        "ab5"
+       ]
+      },
+      {
+       "kind": "gap",
+       "text": "Lacks direct evidence of working with data structures and algorithms.",
+       "facts": []
+      }
+     ],
+     "score": 80
+    },
+    "fit": {
+     "verdict": "good",
+     "requirements": [
+      {
+       "need": "Currently pursuing or holding a Bachelor's or Master's degree in a relevant field like Computer Science.",
+       "match": "strong",
+       "facts": [
+        "ab1"
+       ],
+       "note": "You are pursuing a BSc in Computer Science, which meets this requirement."
+      },
+      {
+       "need": "Possess a foundation in computer science theory, including data structures, algorithms, and software design.",
+       "match": "strong",
+       "facts": [
+        "ab2"
+       ],
+       "note": "Your final-year project involved complex problem solving, suggesting you have a strong grasp of these areas."
+      },
+      {
+       "need": "Proficiency in a commonly used high level programming language such as Python, Javascript, or Java.",
+       "match": "strong",
+       "facts": [
+        "ab11"
+       ],
+       "note": "You are proficient in Python and TypeScript, which align well with their listed languages."
+      },
+      {
+       "need": "Experience writing and testing software through projects or internships.",
+       "match": "strong",
+       "facts": [
+        "ab4",
+        "ab7"
+       ],
+       "note": "You have experience as a Software Engineering Intern, and you actively improved test coverage on a service."
+      },
+      {
+       "need": "Experience in developing and building software features.",
+       "match": "strong",
+       "facts": [
+        "ab5"
+       ],
+       "note": "You built a functional internal dashboard using TypeScript and React for agents."
+      },
+      {
+       "need": "Experience using database technologies for data manipulation.",
+       "match": "strong",
+       "facts": [
+        "ab6"
+       ],
+       "note": "You have experience writing and using SQL queries in PostgreSQL to analyse data."
+      },
+      {
+       "need": "Experience in software development lifecycle aspects like version control and containerisation.",
+       "match": "strong",
+       "facts": [
+        "ab11"
+       ],
+       "note": "Your skills list includes Git and Docker, demonstrating knowledge of development tooling."
+      },
+      {
+       "need": "Reside in Dublin for the hybrid working model.",
+       "match": "gap",
+       "facts": [],
+       "note": "While your education is at UCD, you have not stated your current residential status in Dublin."
+      }
+     ],
+     "angle": "Lead by detailing how your final-year project and internship experience demonstrate your application of computer science theory to build and test functional software solutions."
+    },
+    "fitEvents": [],
+    "kit": {
+     "cv": {
+      "header": {
+       "name": "Aoife Byrne",
+       "email": "aoife.byrne@example.ie",
+       "phone": "+353 85 000 0000",
+       "location": "Dublin, Ireland",
+       "links": [
+        "github.com/example-aoife"
+       ]
+      },
+      "objective": [],
+      "summary": [
+       {
+        "text": "Recent graduate from University College Dublin with a BSc in Computer Science. Possesses practical experience building and testing software through an internship at Harbour Payments and a significant final-year project. Competent in Python and other languages, applying skills in software design and database interaction. Adept at software development lifecycle tasks such as writing unit tests and using PostgreSQL.",
+        "facts": [
+         "ab1",
+         "ab4",
+         "ab2",
+         "ab11",
+         "ab7",
+         "ab6"
+        ]
+       }
+      ],
+      "competencies": [
+       {
+        "label": "Software design and building",
+        "text": "Built an internal dashboard using TypeScript and React that allowed agents to look up failed card payments. Final-year project involved building a timetable app using Python and scikit-learn.",
+        "facts": [
+         "ab5",
+         "ab2"
+        ]
+       },
+       {
+        "label": "Database querying and analysis",
+        "text": "Wrote SQL queries in PostgreSQL to identify duplicate refunds for weekly review by the finance team. Final-year project used 6 months of open GTFS data.",
+        "facts": [
+         "ab6",
+         "ab2"
+        ]
+       },
+       {
+        "label": "Software testing and quality",
+        "text": "Increased unit test coverage on the refunds service from 41% to 68% through added unit tests.",
+        "facts": [
+         "ab7"
+        ]
+       },
+       {
+        "label": "Programming language proficiency",
+        "text": "Experience with Python and development using TypeScript and React.",
+        "facts": [
+         "ab2",
+         "ab5"
+        ]
+       },
+       {
+        "label": "Version control and deployment",
+        "text": "Skilled in using Git and Docker.",
+        "facts": [
+         "ab11"
+        ]
+       },
+       {
+        "label": "Academic problem solving",
+        "text": "Completed a final-year project for University College Dublin involving predicting delays from open GTFS data.",
+        "facts": [
+         "ab2"
+        ]
+       }
+      ],
+      "experience": [
+       {
+        "title": "Software Engineering Intern",
+        "org": "Harbour Payments",
+        "where": "Dublin",
+        "dates": "Jun 2025 – Aug 2025",
+        "bullets": [
+         {
+          "text": "Constructed an internal dashboard using TypeScript and React to support agents in looking up failed card payments.",
+          "facts": [
+           "ab5"
+          ]
+         },
+         {
+          "text": "Queried PostgreSQL using SQL to detect duplicate refunds, which was subsequently reviewed weekly by the finance team.",
+          "facts": [
+           "ab6"
+          ]
+         },
+         {
+          "text": "Improved the coverage of the refunds service by adding unit tests, raising it from 41% to 68%.",
+          "facts": [
+           "ab7"
+          ]
+         }
+        ]
+       },
+       {
+        "title": "Barista",
+        "org": "Kiln Coffee",
+        "where": "Dublin",
+        "dates": "Sep 2023 – May 2026",
+        "bullets": [
+         {
+          "text": "Trained 4 new staff members on operational procedures including the till and opening checklist.",
+          "facts": [
+           "ab9"
+          ]
+         }
+        ]
+       }
+      ],
+      "projects": [
+       {
+        "text": "Developed a timetable application for Dublin Bus that predicts delays by analysing 6 months of open GTFS data.",
+        "facts": [
+         "ab2"
+        ]
+       },
+       {
+        "text": "Events officer for the university's computer society, running 12 workshops in one year for 30 to 80 students each",
+        "facts": [
+         "ab10"
+        ]
+       }
+      ],
+      "leadership": true,
+      "education": [
+       {
+        "text": "BSc Computer Science, University College Dublin",
+        "dates": "2022 – 2026",
+        "facts": [
+         "ab1"
+        ]
+       }
+      ],
+      "skills": [
+       "Python",
+       "TypeScript",
+       "React",
+       "SQL",
+       "PostgreSQL",
+       "Git",
+       "Docker"
+      ],
+      "languages": [
+       "Irish (conversational)"
+      ],
+      "achievements": [
+       {
+        "text": "Achieved a first class grade in the final-year project at University College Dublin.",
+        "facts": [
+         "ab3"
+        ]
+       }
+      ]
+     },
+     "letter": {
+      "paragraphs": [
+       {
+        "text": "I am keen to join MongoDB in helping to power the next era of software by developing and testing products that support a global community of users. My background in Computer Science aligns well with the need for candidates who can apply theoretical foundations to build robust, functional software solutions.",
+        "facts": [
+         "ab1"
+        ]
+       },
+       {
+        "text": "My recent experience demonstrates practical application of software design and testing. During my internship at Harbour Payments, I built an internal dashboard using TypeScript and React and significantly improved service reliability by adding unit tests that raised coverage on the refunds service from 41% to 68%. Additionally, I used SQL queries in PostgreSQL to help the finance team analyse duplicate refunds weekly.",
+        "facts": [
+         "ab5",
+         "ab6",
+         "ab7"
+        ]
+       },
+       {
+        "text": "Furthermore, my final-year project involved designing a timetable app for Dublin Bus. I built this in Python, using scikit-learn to predict delays using six months of open GTFS data. This project, which received a first class grade, directly showcases my competency in building complex applications based on data analysis, matching the requirement for building and testing software.",
+        "facts": [
+         "ab2",
+         "ab3"
+        ]
+       },
+       {
+        "text": "While my formal employment history includes a gap between my internship and the present, I reside in Dublin and am ready to commit to your hybrid working model. My skills in Python, TypeScript, and SQL, alongside my academic foundation, allow me to immediately contribute to your development efforts. I look forward to discussing this further.",
+        "facts": [
+         "ab11",
+         "ab12"
+        ]
+       }
+      ]
+     },
+     "answers": {
+      "answers": [
+       {
+        "question": "Why do you want to work at MongoDB?",
+        "answer": "I am interested in contributing to software that empowers a global community of users [posting], and I am drawn to the culture that values fostering innovation while balancing delivery and research [posting].",
+        "facts": [
+         "ab1"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "Why are you a good fit for this role?",
+        "answer": "I am in the process of completing my BSc in Computer Science. I have experience in software development through my internship at Harbour Payments, where I built a TypeScript and React dashboard and improved code quality by adding unit tests. I am proficient in Python, TypeScript, React, and SQL, skills relevant to building and testing software [posting].",
+        "facts": [
+         "ab1",
+         "ab4",
+         "ab5",
+         "ab7",
+         "ab11"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "Tell us about a project or achievement you're proud of.",
+        "answer": "I am proud of my final year project, where I built a timetable application for Dublin Bus. This application used Python and scikit-learn to predict delays by analysing six months of open GTFS data. Furthermore, this project was graded first class. At Harbour Payments, I also wrote SQL queries in PostgreSQL to identify duplicate refunds.",
+        "facts": [
+         "ab2",
+         "ab3",
+         "ab6"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "What are your salary expectations? (needsYou: true, leave answer empty)",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       },
+       {
+        "question": "What is your notice period or earliest start date? (needsYou: true, leave answer empty)",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       }
+      ]
+     },
+     "events": [
+      {
+       "rule": "unsupported_tool",
+       "text": "To secure the Software Engineer 2 role at MongoDB, applying a strong foundation in computer science principles demonstrated through advanced project development and software engineering internship experience."
+      },
+      {
+       "rule": "unsupported_tool",
+       "text": "I am keen to work at MongoDB because of its position in redefining the data platform for the AI era [posting]."
+      }
+     ],
+     "usage": {
+      "inputTokens": 5848,
+      "outputTokens": 1988,
+      "ms": 38096
+     },
+     "errors": []
+    }
+   },
+   "quality": {
+    "factsCited3Plus": 4,
+    "dupFactRate": 0.5,
+    "nearCopyPairs": 0,
+    "postingCopy": {
+     "cv": 0,
+     "letter": 0.005,
+     "answers": 0
+    },
+    "bracketLeaks": [
+     "[posting]",
+     "[posting]",
+     "[posting]",
+     "needsYou",
+     "needsYou"
+    ],
+    "tenseErrors": [],
+    "untraceableProse": [],
+    "repairs": 0,
+    "letterNamesGap": false,
+    "words": {
+     "profile": 58,
+     "competencies": 99,
+     "experience": 75,
+     "projects": 37,
+     "education": 6,
+     "skills": 7,
+     "achievements": 13,
+     "languages": 2,
+     "cv": 272,
+     "letter": 224,
+     "answerAvg": 48
+    },
+    "removed": [
+     {
+      "rule": "unsupported_tool",
+      "text": "To secure the Software Engineer 2 role at MongoDB, applying a strong foundation in computer science principles demonstrated through advanced project development and software engineering internship experience."
+     },
+     {
+      "rule": "unsupported_tool",
+      "text": "I am keen to work at MongoDB because of its position in redefining the data platform for the AI era [posting]."
+     }
+    ]
+   }
+  },
+  {
+   "persona": "Rahul Menon",
+   "job": "Machine Learning Intern 2027 (Dublin)",
+   "company": "Pinterest",
+   "ms": 65375,
+   "tokensIn": 8313,
+   "tokensOut": 2622,
+   "kept": 30,
+   "removed": 0,
+   "byRule": {},
+   "untraceable": [],
+   "output": {
+    "jobId": "3cpg47",
+    "card": {
+     "why": [
+      {
+       "kind": "strong",
+       "text": "MSc Data Analytics study covers relevant technical and analytical foundations.",
+       "facts": [
+        "rm1"
+       ]
+      },
+      {
+       "kind": "transferable",
+       "text": "Experience using Python and SQL for data cleaning and analysis.",
+       "facts": [
+        "rm3",
+        "rm7",
+        "rm11"
+       ]
+      },
+      {
+       "kind": "gap",
+       "text": "Direct experience with large scale ML systems is not apparent.",
+       "facts": []
+      }
+     ],
+     "score": 75
+    },
+    "fit": {
+     "verdict": "good",
+     "requirements": [
+      {
+       "need": "Working towards a Master's or PhD in a relevant technical field like ML, CS, or Statistics",
+       "match": "strong",
+       "facts": [
+        "rm1"
+       ],
+       "note": "You are currently pursuing an MSc in Data Analytics, which aligns with the required postgraduate study."
+      },
+      {
+       "need": "Experience applying ML or AI concepts through projects, research, or internships",
+       "match": "strong",
+       "facts": [
+        "rm3"
+       ],
+       "note": "Your MSc thesis involved using Prophet and Python to forecast footfall, which demonstrates experience applying analytical methods to a problem."
+      },
+      {
+       "need": "Proficiency in a systems language (Python, Java, C++) or an ML framework (Tensorflow, PyTorch)",
+       "match": "strong",
+       "facts": [
+        "rm11"
+       ],
+       "note": "You list proficiency in Python, which is one of the required systems languages."
+      },
+      {
+       "need": "Experience in solving analytical or data-driven problems",
+       "match": "strong",
+       "facts": [
+        "rm7",
+        "rm6"
+       ],
+       "note": "You have experience cleaning shipment data using SQL to find causes and automating reports with Python to save time."
+      },
+      {
+       "need": "Experience with data analysis and visualisation (data collection, synthesis, modeling)",
+       "match": "strong",
+       "facts": [
+        "rm5",
+        "rm11"
+       ],
+       "note": "You built Power BI dashboards on delivery times and possess skills in data tools like pandas and Tableau."
+      },
+      {
+       "need": "Ability to break down technical problems and implement solutions",
+       "match": "transferable",
+       "facts": [
+        "rm3"
+       ],
+       "note": "Completing your MSc thesis to forecast footfall required you to define and solve a specific analytical problem."
+      },
+      {
+       "need": "Strong communication and teamwork skills",
+       "match": "transferable",
+       "facts": [
+        "rm10"
+       ],
+       "note": "Serving as a class representative shows you have experience communicating and working within a group setting."
+      },
+      {
+       "need": "Familiarity with big data technologies or scalable real time systems",
+       "match": "gap",
+       "facts": [],
+       "note": "There is no explicit mention of experience with technologies like Hadoop or Spark or large scale streaming systems."
+      }
+     ],
+     "angle": "Lead with your practical experience applying analytical models in your MSc thesis and your achievements in data reporting at Lantern Logistics."
+    },
+    "fitEvents": [],
+    "kit": {
+     "cv": {
+      "header": {
+       "name": "Rahul Menon",
+       "email": "rahul.menon@example.com",
+       "phone": "+353 87 000 0000",
+       "location": "Galway, Ireland",
+       "links": [
+        "linkedin.com/in/example-rahul"
+       ]
+      },
+      "objective": [
+       {
+        "text": "To secure the Machine Learning Intern 2027 (Dublin) position at Pinterest, applying practical analytical modelling skills developed through MSc studies and industry data analysis.",
+        "facts": [
+         "rm1"
+        ]
+       }
+      ],
+      "summary": [
+       {
+        "text": "A recent graduate of the MSc Data Analytics program at the University of Galway, possessing foundational experience in data manipulation and business intelligence.",
+        "facts": [
+         "rm1"
+        ]
+       },
+       {
+        "text": "Experience includes automating reporting processes using Python, leading to weekly time savings, and cleansing large datasets using SQL to identify operational issues.",
+        "facts": [
+         "rm6",
+         "rm7"
+        ]
+       },
+       {
+        "text": "A background in applying analytical methods is demonstrated through an MSc thesis forecasting retail footfall using Python, Prophet, and sensor data.",
+        "facts": [
+         "rm3"
+        ]
+       },
+       {
+        "text": "Proficient in data analysis, visualisation via Power BI, and core programming languages such as Python, as demonstrated in industry roles.",
+        "facts": [
+         "rm5",
+         "rm11"
+        ]
+       }
+      ],
+      "competencies": [
+       {
+        "label": "Data analysis and modelling",
+        "text": "Forecasted weekly footfall for 3 Galway retail units using Python, Prophet, and two years of sensor data in MSc thesis work.",
+        "facts": [
+         "rm3"
+        ]
+       },
+       {
+        "label": "Data cleansing and synthesis",
+        "text": "Cleaned and joined two years of shipment data in SQL to determine the root causes of late deliveries.",
+        "facts": [
+         "rm7"
+        ]
+       },
+       {
+        "label": "Automated reporting solutions",
+        "text": "Automated a weekly Excel report using Python, successfully saving approximately 3 hours per week.",
+        "facts": [
+         "rm6"
+        ]
+       },
+       {
+        "label": "Business insight visualisation",
+        "text": "Built Power BI dashboards providing visibility into delivery times for 5 regional managers.",
+        "facts": [
+         "rm5"
+        ]
+       },
+       {
+        "label": "Analytical problem solving",
+        "text": "Developed capabilities in analytical problem solving through coursework culminating in an MSc from the University of Galway.",
+        "facts": [
+         "rm1",
+         "rm2"
+        ]
+       },
+       {
+        "label": "Technical coding proficiency",
+        "text": "Skilled in key technical languages including Python, pandas, SQL, and R.",
+        "facts": [
+         "rm11"
+        ]
+       }
+      ],
+      "experience": [
+       {
+        "title": "Junior Data Analyst",
+        "org": "Lantern Logistics",
+        "where": "Kochi, India",
+        "dates": "Jul 2023 – Jul 2024",
+        "bullets": [
+         {
+          "text": "Developed Power BI dashboards to present delivery time metrics to 5 regional managers.",
+          "facts": [
+           "rm5"
+          ]
+         },
+         {
+          "text": "Streamlined workflow by automating a weekly Excel report using Python, resulting in time savings of about 3 hours weekly.",
+          "facts": [
+           "rm6"
+          ]
+         },
+         {
+          "text": "Analysed and processed two years of shipment data using SQL to pinpoint causes contributing to late deliveries.",
+          "facts": [
+           "rm7"
+          ]
+         }
+        ]
+       },
+       {
+        "title": "Customer Assistant",
+        "org": "Corrib Grocers",
+        "where": "Galway",
+        "dates": "Oct 2024 – Present",
+        "bullets": [
+         {
+          "text": "Managed stock counts and handled customer inquiries during 20-hour weekly shifts while completing MSc studies.",
+          "facts": [
+           "rm9"
+          ]
+         }
+        ]
+       }
+      ],
+      "projects": [
+       {
+        "text": "MSc thesis focusing on forecasting weekly footfall for 3 Galway retail units, built using Python, Prophet, and analysis of two years of sensor data.",
+        "facts": [
+         "rm3"
+        ]
+       },
+       {
+        "text": "Class representative for the MSc Data Analytics cohort",
+        "facts": [
+         "rm10"
+        ]
+       }
+      ],
+      "leadership": true,
+      "education": [
+       {
+        "text": "MSc Data Analytics, University of Galway",
+        "dates": "2024 – 2025",
+        "facts": [
+         "rm1"
+        ]
+       },
+       {
+        "text": "BTech Information Technology, Cochin University of Science and Technology",
+        "dates": "2019 – 2023",
+        "facts": [
+         "rm2"
+        ]
+       }
+      ],
+      "skills": [
+       "Python",
+       "SQL",
+       "Power BI",
+       "Pandas",
+       "R",
+       "Tableau"
+      ],
+      "languages": [
+       "English (fluent), Hindi, Malayalam"
+      ],
+      "achievements": []
+     },
+     "letter": {
+      "paragraphs": [
+       {
+        "text": "I am keen to contribute to Pinterest's mission of igniting creativity by applying data-driven insights to product and discovery experiences, particularly as you look for interns ready to build out ML-powered features.",
+        "facts": []
+       },
+       {
+        "text": "My MSc in Data Analytics at the University of Galway has allowed me to apply these concepts practically, for instance, forecasting weekly footfall for retail units using Python and Prophet on two years of sensor data. Furthermore, during my time as a Junior Data Analyst at Lantern Logistics, I automated a weekly Excel report using Python, saving about three hours each week, while also cleaning and joining two years of shipment data in SQL to identify late-delivery causes.",
+        "facts": [
+         "rm3",
+         "rm6",
+         "rm7"
+        ]
+       },
+       {
+        "text": "I also bring proficiency in Python, SQL, and Power BI, which I used to build dashboards tracking delivery times for five regional managers. While my background has not extensively involved big data technologies like Spark or building large-scale real time stream systems, I am adept at quickly learning new technical stacks. My strong analytical problem solving skills and rapid learning ability will allow me to rapidly bridge this gap.",
+        "facts": [
+         "rm5",
+         "rm11"
+        ]
+       },
+       {
+        "text": "I am ready to contribute to your team in Dublin starting May 2027. I am eager for the opportunity to discuss how my practical analytical experience can support Pinterest's machine learning goals.",
+        "facts": []
+       }
+      ]
+     },
+     "answers": {
+      "answers": [
+       {
+        "question": "Why do you want to work at Pinterest?",
+        "answer": "I am interested in Pinterest because of its mission to bring people inspiration for a life they love. I am eager to contribute to a company where AI is a core part of the product, and I want to gain experience applying machine learning to real-world challenges in product and discovery experiences, as mentioned in the job description.",
+        "facts": [
+         "rm1",
+         "rm3"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "Why are you a good fit for this role?",
+        "answer": "My studies in MSc Data Analytics and my previous experience as a Junior Data Analyst have given me relevant analytical and data processing skills. I have experience using Python for projects like forecasting footfall, and I possess skills in SQL and data analysis, which align with the need to collect and analyse data for ML models.",
+        "facts": [
+         "rm1",
+         "rm3",
+         "rm4",
+         "rm11"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "Tell us about a project or achievement you're proud of.",
+        "answer": "I am proud of my MSc thesis where I forecasted weekly footfall for three Galway retail units using Python, Prophet, and two years of sensor data. Additionally, while at Lantern Logistics, I automated a weekly Excel report using Python, which saved approximately three hours each week.",
+        "facts": [
+         "rm3",
+         "rm6"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "What are your salary expectations?",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       },
+       {
+        "question": "What is your notice period or earliest start date?",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       }
+      ]
+     },
+     "events": [],
+     "usage": {
+      "inputTokens": 6308,
+      "outputTokens": 1953,
+      "ms": 39549
+     },
+     "errors": []
+    }
+   },
+   "quality": {
+    "factsCited3Plus": 5,
+    "dupFactRate": 0.667,
+    "nearCopyPairs": 1,
+    "postingCopy": {
+     "cv": 0,
+     "letter": 0,
+     "answers": 0
+    },
+    "bracketLeaks": [],
+    "tenseErrors": [],
+    "untraceableProse": [],
+    "repairs": 0,
+    "letterNamesGap": false,
+    "words": {
+     "profile": 110,
+     "competencies": 94,
+     "experience": 76,
+     "projects": 32,
+     "education": 15,
+     "skills": 7,
+     "languages": 4,
+     "cv": 300,
+     "letter": 211,
+     "answerAvg": 53
+    },
+    "removed": []
+   }
+  },
+  {
+   "persona": "Rahul Menon",
+   "job": "Software Engineering Graduate Programme FY28",
+   "company": "Accenture",
+   "ms": 70533,
+   "tokensIn": 8574,
+   "tokensOut": 3032,
+   "kept": 35,
+   "removed": 1,
+   "byRule": {
+    "unsupported_tool": 1
+   },
+   "untraceable": [],
+   "output": {
+    "jobId": "yteg1p",
+    "card": {
+     "why": [
+      {
+       "kind": "strong",
+       "text": "Developed and deployed data solutions using Python and SQL",
+       "facts": [
+        "rm7",
+        "rm6",
+        "rm3"
+       ]
+      },
+      {
+       "kind": "transferable",
+       "text": "Created business dashboards using Power BI for various managers",
+       "facts": [
+        "rm5"
+       ]
+      },
+      {
+       "kind": "gap",
+       "text": "Direct experience in core software engineering is not detailed",
+       "facts": []
+      }
+     ],
+     "score": 75
+    },
+    "fit": {
+     "verdict": "good",
+     "requirements": [
+      {
+       "need": "Interest in hands-on technology and a strong willingness to learn new technical skills.",
+       "match": "strong",
+       "facts": [
+        "rm1",
+        "rm2",
+        "rm3",
+        "rm11"
+       ],
+       "note": "You have foundational degrees in IT and Data Analytics, and your thesis involved programming (Python), showing clear technical interest."
+      },
+      {
+       "need": "Demonstrated experience or interest in software engineering, end-to-end design, and coding.",
+       "match": "transferable",
+       "facts": [
+        "rm3",
+        "rm6",
+        "rm7",
+        "rm11"
+       ],
+       "note": "While your experience is in data analysis, building automated reports and handling data workflows shows practical application of technical skills that is transferable."
+      },
+      {
+       "need": "Academic qualification in IT, Computer Science, or related field (minimum 2:1, or equivalent passion/flair if non-STEM).",
+       "match": "strong",
+       "facts": [
+        "rm2",
+        "rm1"
+       ],
+       "note": "You hold both a BTech in IT and an MSc in Data Analytics, meeting the educational subject requirement."
+      },
+      {
+       "need": "Ability to work on projects, understand client requirements, and collaborate in teams.",
+       "match": "strong",
+       "facts": [
+        "rm4",
+        "rm10",
+        "rm5"
+       ],
+       "note": "Your role as a Junior Data Analyst and your involvement as a class representative show experience in project environments and collaboration."
+      },
+      {
+       "need": "Interest in business and consulting aspects alongside technical work.",
+       "match": "transferable",
+       "facts": [
+        "rm5",
+        "rm7"
+       ],
+       "note": "Building dashboards for regional managers and finding root causes for delivery issues demonstrates an understanding of business operations."
+      },
+      {
+       "need": "High motivation to grow, self-improve, and maintain a strong work ethic.",
+       "match": "transferable",
+       "facts": [
+        "rm1",
+        "rm4"
+       ],
+       "note": "Completing higher education while working demonstrates a commitment to continuous development."
+      },
+      {
+       "need": "Familiarity with relevant technical tools (programming, data analysis, visualisation).",
+       "match": "strong",
+       "facts": [
+        "rm11",
+        "rm3",
+        "rm5"
+       ],
+       "note": "You list specific programming, data, and visualisation tools (Python, SQL, Power BI) in your skills and applied them in projects."
+      },
+      {
+       "need": "Willingness to adapt to an evolving technological landscape.",
+       "match": "transferable",
+       "facts": [
+        "rm3",
+        "rm11"
+       ],
+       "note": "Your work involving modern technologies like Prophet and Python suggests you are comfortable working with evolving tools."
+      }
+     ],
+     "angle": "Lead with your practical experience using Python, SQL, and Power BI to solve real-world logistics and forecasting problems, demonstrating your immediate capability to apply technical skills."
+    },
+    "fitEvents": [],
+    "kit": {
+     "cv": {
+      "header": {
+       "name": "Rahul Menon",
+       "email": "rahul.menon@example.com",
+       "phone": "+353 87 000 0000",
+       "location": "Galway, Ireland",
+       "links": [
+        "linkedin.com/in/example-rahul"
+       ]
+      },
+      "objective": [
+       {
+        "text": "To secure a place in the Software Engineering Graduate Programme FY28 at Accenture, applying hands-on experience in data analysis, programming, and business reporting to drive transformation.",
+        "facts": [
+         "rm1"
+        ]
+       }
+      ],
+      "summary": [
+       {
+        "text": "Graduate of the MSc Data Analytics programme at the University of Galway, possessing a strong foundation in IT through a BTech from Cochin University of Science and Technology. Demonstrated ability to apply technical skills to real-world challenges, including building data-driven insights and automating processes. Possesses experience in data manipulation using SQL and analytical tools like Python.",
+        "facts": [
+         "rm1",
+         "rm2",
+         "rm5",
+         "rm6",
+         "rm7",
+         "rm3"
+        ]
+       }
+      ],
+      "competencies": [
+       {
+        "label": "Data analysis and modelling",
+        "text": "Used Python and Prophet to forecast weekly footfall for 3 Galway retail units using 2 years of sensor data.",
+        "facts": [
+         "rm3"
+        ]
+       },
+       {
+        "label": "Database query and data cleansing",
+        "text": "Cleaned and joined 2 years of shipment data in SQL to identify causes for late deliveries.",
+        "facts": [
+         "rm7"
+        ]
+       },
+       {
+        "label": "Business reporting and visualisation",
+        "text": "Built Power BI dashboards to track delivery times for 5 regional managers at Lantern Logistics.",
+        "facts": [
+         "rm5"
+        ]
+       },
+       {
+        "label": "Process automation with code",
+        "text": "Automated a weekly Excel report using Python, which saved approximately 3 hours of manual work per week.",
+        "facts": [
+         "rm6"
+        ]
+       },
+       {
+        "label": "Team representation and leadership",
+        "text": "Served as the class representative for the MSc Data Analytics cohort at the University of Galway.",
+        "facts": [
+         "rm10"
+        ]
+       },
+       {
+        "label": "Technical subject understanding",
+        "text": "Completed a BTech in Information Technology from Cochin University of Science and Technology.",
+        "facts": [
+         "rm2"
+        ]
+       },
+       {
+        "label": "Stakeholder support in role",
+        "text": "Managed stock counts and handled customer queries during 20-hour weekly shifts at Corrib Grocers.",
+        "facts": [
+         "rm9"
+        ]
+       }
+      ],
+      "experience": [
+       {
+        "title": "Junior Data Analyst",
+        "org": "Lantern Logistics",
+        "where": "Kochi, India",
+        "dates": "Jul 2023 – Jul 2024",
+        "bullets": [
+         {
+          "text": "Cleaned and joined 2 years of shipment data in SQL to determine the root causes of late deliveries.",
+          "facts": [
+           "rm7"
+          ]
+         },
+         {
+          "text": "Developed Power BI dashboards for 5 regional managers, tracking key metrics related to delivery times.",
+          "facts": [
+           "rm5"
+          ]
+         },
+         {
+          "text": "Automated a recurring weekly Excel report by developing a Python solution, achieving a saving of about 3 hours weekly.",
+          "facts": [
+           "rm6"
+          ]
+         }
+        ]
+       },
+       {
+        "title": "Customer Assistant",
+        "org": "Corrib Grocers",
+        "where": "Galway",
+        "dates": "Oct 2024 – Present",
+        "bullets": [
+         {
+          "text": "Managed stock counts and addressed customer queries whilst working 20-hour weekly shifts during MSc studies.",
+          "facts": [
+           "rm9"
+          ]
+         }
+        ]
+       }
+      ],
+      "projects": [
+       {
+        "text": "MSc thesis focused on forecasting weekly footfall for 3 Galway retail units using Python, Prophet, and analysing 2 years of sensor data.",
+        "facts": [
+         "rm3"
+        ]
+       },
+       {
+        "text": "Class representative for the MSc Data Analytics cohort",
+        "facts": [
+         "rm10"
+        ]
+       }
+      ],
+      "leadership": true,
+      "education": [
+       {
+        "text": "MSc Data Analytics, University of Galway",
+        "dates": "2024 – 2025",
+        "facts": [
+         "rm1"
+        ]
+       },
+       {
+        "text": "BTech Information Technology, Cochin University of Science and Technology",
+        "dates": "2019 – 2023",
+        "facts": [
+         "rm2"
+        ]
+       }
+      ],
+      "skills": [
+       "Python",
+       "SQL",
+       "Power BI",
+       "Pandas",
+       "Excel",
+       "Tableau",
+       "R"
+      ],
+      "languages": [
+       "English (fluent), Hindi, Malayalam"
+      ],
+      "achievements": []
+     },
+     "letter": {
+      "paragraphs": [
+       {
+        "text": "Accenture's commitment to driving business transformation by applying advanced technology aligns strongly with my practical background in data analysis. I am keen to join the Software Engineering Graduate Programme to contribute to projects that deliver tangible solutions for clients.",
+        "facts": []
+       },
+       {
+        "text": "During my time as a Junior Data Analyst at Lantern Logistics, I applied technical skills to real-world logistics challenges. I cleaned and joined two years of shipment data in SQL to investigate causes of late deliveries, and I built Power BI dashboards detailing delivery times for five regional managers. Furthermore, I automated a weekly Excel report using Python, saving approximately three hours weekly.",
+        "facts": [
+         "rm7",
+         "rm5",
+         "rm6"
+        ]
+       },
+       {
+        "text": "My academic focus has also involved applying data science to forecasting. For my MSc thesis at the University of Galway, I used Python, Prophet, and two years of sensor data to forecast weekly footfall for three local retail units. I have a solid foundation in the technical skills required, including Python, SQL, Power BI, and Tableau.",
+        "facts": [
+         "rm3",
+         "rm11"
+        ]
+       },
+       {
+        "text": "While my direct experience is heavily focused on data analysis rather than core software engineering development, I bring strong problem-solving skills, as demonstrated by my BTech in IT.",
+        "facts": [
+         "rm2"
+        ]
+       }
+      ]
+     },
+     "answers": {
+      "answers": [
+       {
+        "question": "Why do you want to work at Accenture?",
+        "answer": "I am drawn to Accenture because of the opportunity to work with advanced technologies and help deliver business transformation for leading companies across various industries (posting). I am eager to learn and grow in a diverse culture, as described in the posting (posting). My educational background and professional experiences have given me a strong interest in applying technology to solve real-world problems, and I believe Accenture provides the environment for extraordinary things (posting).",
+        "facts": [
+         "rm1",
+         "rm2"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "Why are you a good fit for this role?",
+        "answer": "I possess a strong interest in technology, demonstrated through my MSc in Data Analytics and my work experience. I have technical skills in Python, SQL, Power BI, and Tableau, and I have applied these to projects such as forecasting footfall using Python and building Power BI dashboards. My experience automating reports with Python shows my capability to get hands-on with technology and improve processes, which aligns with the requirements for this Analyst role (posting).",
+        "facts": [
+         "rm1",
+         "rm3",
+         "rm4",
+         "rm5",
+         "rm6",
+         "rm11"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "Tell us about a project or achievement you're proud of.",
+        "answer": "I am proud of my MSc thesis project where I forecasted weekly footfall for three Galway retail units. I used Python, Prophet, and two years of sensor data to complete this analysis. Separately, in my role at Lantern Logistics, I cleaned and joined two years of shipment data using SQL to help identify the causes of late deliveries. These projects allowed me to apply my analytical skills to complex datasets.",
+        "facts": [
+         "rm3",
+         "rm7"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "What are your salary expectations?",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       },
+       {
+        "question": "What is your notice period or earliest start date?",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       }
+      ]
+     },
+     "events": [
+      {
+       "rule": "unsupported_tool",
+       "text": "I am eager to develop in the areas of Java/J2EE and other programming technologies Accenture trains in, and I look forward to contributing to your team."
+      }
+     ],
+     "usage": {
+      "inputTokens": 6485,
+      "outputTokens": 2220,
+      "ms": 41301
+     },
+     "errors": []
+    }
+   },
+   "quality": {
+    "factsCited3Plus": 4,
+    "dupFactRate": 1,
+    "nearCopyPairs": 3,
+    "postingCopy": {
+     "cv": 0.003,
+     "letter": 0.005,
+     "answers": 0
+    },
+    "bracketLeaks": [
+     "(posting)",
+     "(posting)",
+     "(posting)",
+     "(posting)"
+    ],
+    "tenseErrors": [],
+    "untraceableProse": [],
+    "repairs": 0,
+    "letterNamesGap": false,
+    "words": {
+     "profile": 82,
+     "competencies": 110,
+     "experience": 79,
+     "projects": 30,
+     "education": 15,
+     "skills": 8,
+     "languages": 4,
+     "cv": 289,
+     "letter": 186,
+     "answerAvg": 72
+    },
+    "removed": [
+     {
+      "rule": "unsupported_tool",
+      "text": "I am eager to develop in the areas of Java/J2EE and other programming technologies Accenture trains in, and I look forward to contributing to your team."
+     }
+    ]
+   }
+  },
+  {
+   "persona": "Rahul Menon",
+   "job": "IT Graduate Development Programme 2027 - Software",
+   "company": "ESB",
+   "ms": 59603,
+   "tokensIn": 8150,
+   "tokensOut": 2480,
+   "kept": 32,
+   "removed": 0,
+   "byRule": {},
+   "untraceable": [],
+   "output": {
+    "jobId": "x3tukc",
+    "card": {
+     "why": [
+      {
+       "kind": "strong",
+       "text": "Thesis involved forecasting using Python, Prophet and sensor data.",
+       "facts": [
+        "rm3"
+       ]
+      },
+      {
+       "kind": "transferable",
+       "text": "Used SQL to clean and join shipment data to find causes.",
+       "facts": [
+        "rm7"
+       ]
+      },
+      {
+       "kind": "gap",
+       "text": "Experience delivering software within full product lifecycle is not shown.",
+       "facts": []
+      }
+     ],
+     "score": 75
+    },
+    "fit": {
+     "verdict": "good",
+     "requirements": [
+      {
+       "need": "Minimum 2.1 Honours Degree in an IT/CS/Engineering field or equivalent.",
+       "match": "strong",
+       "facts": [
+        "rm1",
+        "rm2"
+       ],
+       "note": "You hold both an MSc and a BTech, suggesting you meet or exceed this academic requirement."
+      },
+      {
+       "need": "At least 6 months of work experience related to the stream you are applying to.",
+       "match": "strong",
+       "facts": [
+        "rm4"
+       ],
+       "note": "You have experience as a Junior Data Analyst for a year, which demonstrates relevant work history."
+      },
+      {
+       "need": "Proven ability to deliver results in a fast-paced team environment.",
+       "match": "strong",
+       "facts": [
+        "rm4",
+        "rm5"
+       ],
+       "note": "Your role as a Junior Data Analyst and building Power BI dashboards for managers shows you can deliver results in a professional setting."
+      },
+      {
+       "need": "Excellent analytical skills combined with the ability to learn quickly.",
+       "match": "strong",
+       "facts": [
+        "rm1",
+        "rm3",
+        "rm7"
+       ],
+       "note": "Your MSc and thesis work, involving data forecasting and cleaning/joining datasets, clearly show strong analytical capabilities."
+      },
+      {
+       "need": "Completed a work placement during your undergraduate degree.",
+       "match": "gap",
+       "facts": [],
+       "note": "There is no explicit mention of you completing a formal work placement during your undergraduate studies."
+      },
+      {
+       "need": "Completed modules in Computer Science and/or Software Engineering, or a closely related discipline.",
+       "match": "strong",
+       "facts": [
+        "rm2"
+       ],
+       "note": "Your BTech in Information Technology strongly suggests you have covered these technical disciplines."
+      },
+      {
+       "need": "Strong communication and interpersonal skills.",
+       "match": "transferable",
+       "facts": [
+        "rm10",
+        "rm8"
+       ],
+       "note": "Being a class representative and handling customer queries indicates you possess good interpersonal and communication skills."
+      }
+     ],
+     "angle": "Lead with your analytical projects, such as your MSc thesis, to demonstrate how you apply technical skills to solve complex business problems."
+    },
+    "fitEvents": [],
+    "kit": {
+     "cv": {
+      "header": {
+       "name": "Rahul Menon",
+       "email": "rahul.menon@example.com",
+       "phone": "+353 87 000 0000",
+       "location": "Galway, Ireland",
+       "links": [
+        "linkedin.com/in/example-rahul"
+       ]
+      },
+      "objective": [
+       {
+        "text": "To secure the IT Graduate Development Programme 2027 - Software at ESB, applying strong analytical skills demonstrated through MSc data analytics projects.",
+        "facts": [
+         "rm1"
+        ]
+       }
+      ],
+      "summary": [
+       {
+        "text": "Recent MSc Data Analytics graduate from the University of Galway, holding a BTech in Information Technology from Cochin University of Science and Technology.",
+        "facts": [
+         "rm1",
+         "rm2"
+        ]
+       },
+       {
+        "text": "Applied analytical techniques, including Python, to forecast footfall for 3 Galway retail units using sensor data.",
+        "facts": [
+         "rm3"
+        ]
+       },
+       {
+        "text": "Developed data analysis capabilities while working as a Junior Data Analyst at Lantern Logistics, where SQL was used to investigate late delivery causes.",
+        "facts": [
+         "rm4",
+         "rm7"
+        ]
+       },
+       {
+        "text": "Possesses experience in creating actionable reports using data visualisation tools such as Power BI.",
+        "facts": [
+         "rm5"
+        ]
+       }
+      ],
+      "competencies": [
+       {
+        "label": "Analytical Problem Solving",
+        "text": "Applied analytical methods to forecast weekly footfall for 3 Galway retail units using Python and Prophet.",
+        "facts": [
+         "rm3"
+        ]
+       },
+       {
+        "label": "Data Cleaning and Management",
+        "text": "Cleaned and joined 2 years of shipment data using SQL to identify reasons for late deliveries.",
+        "facts": [
+         "rm7"
+        ]
+       },
+       {
+        "label": "Delivering Business Insights",
+        "text": "Built Power BI dashboards to present delivery time information to 5 regional managers at Lantern Logistics.",
+        "facts": [
+         "rm5"
+        ]
+       },
+       {
+        "label": "Process Automation",
+        "text": "Automated a weekly Excel report using Python, reducing manual time expenditure by approximately 3 hours per week.",
+        "facts": [
+         "rm6"
+        ]
+       },
+       {
+        "label": "Team Collaboration",
+        "text": "Acted as a class representative for the MSc Data Analytics cohort at the University of Galway.",
+        "facts": [
+         "rm10"
+        ]
+       }
+      ],
+      "experience": [
+       {
+        "title": "Customer Assistant",
+        "org": "Corrib Grocers",
+        "where": "Galway",
+        "dates": "Oct 2024 – Present",
+        "bullets": [
+         {
+          "text": "Managed stock counts and handled customer queries while working on 20-hour weekly shifts during the MSc.",
+          "facts": [
+           "rm9"
+          ]
+         }
+        ]
+       },
+       {
+        "title": "Junior Data Analyst",
+        "org": "Lantern Logistics",
+        "where": "Kochi, India",
+        "dates": "Jul 2023 – Jul 2024",
+        "bullets": [
+         {
+          "text": "Cleaned and joined 2 years of shipment data in SQL to determine causes of late deliveries.",
+          "facts": [
+           "rm7"
+          ]
+         },
+         {
+          "text": "Developed Power BI dashboards detailing delivery times for 5 regional managers.",
+          "facts": [
+           "rm5"
+          ]
+         },
+         {
+          "text": "Automated a weekly Excel report using Python, saving approximately 3 hours weekly.",
+          "facts": [
+           "rm6"
+          ]
+         }
+        ]
+       }
+      ],
+      "projects": [
+       {
+        "text": "MSc thesis focused on forecasting weekly footfall for 3 Galway retail units, using Python, Prophet, and 2 years of sensor data gathered at the University of Galway.",
+        "facts": [
+         "rm3"
+        ]
+       },
+       {
+        "text": "Class representative for the MSc Data Analytics cohort",
+        "facts": [
+         "rm10"
+        ]
+       }
+      ],
+      "leadership": true,
+      "education": [
+       {
+        "text": "MSc Data Analytics, University of Galway",
+        "dates": "2024 – 2025",
+        "facts": [
+         "rm1"
+        ]
+       },
+       {
+        "text": "BTech Information Technology, Cochin University of Science and Technology",
+        "dates": "2019 – 2023",
+        "facts": [
+         "rm2"
+        ]
+       }
+      ],
+      "skills": [
+       "Python",
+       "SQL",
+       "Power BI",
+       "Pandas",
+       "Excel",
+       "R",
+       "Tableau"
+      ],
+      "languages": [
+       "English (fluent), Hindi, Malayalam"
+      ],
+      "achievements": []
+     },
+     "letter": {
+      "paragraphs": [
+       {
+        "text": "ESB’s drive towards a net zero future requires individuals who can transform operations into data driven and digital solutions. My background in data analysis and technical problem solving aligns directly with the need for skilled graduates ready to contribute to this essential organisational shift.",
+        "facts": []
+       },
+       {
+        "text": "My MSc thesis involved forecasting weekly footfall for three Galway retail units by analysing two years of sensor data using Python and Prophet. Furthermore, my professional experience at Lantern Logistics included cleaning and joining two years of shipment data in SQL to identify the causes of late deliveries, demonstrating my capability to tackle complex business challenges.",
+        "facts": [
+         "rm3",
+         "rm7"
+        ]
+       },
+       {
+        "text": "During my time at Lantern Logistics, I developed analytical capabilities by building Power BI dashboards detailing delivery times for five regional managers and automating a weekly Excel report using Python, which saved approximately three hours weekly. These achievements showcase my ability to deliver tangible improvements in operational analysis.",
+        "facts": [
+         "rm5",
+         "rm6"
+        ]
+       },
+       {
+        "text": "My professional journey included a work placement during my undergraduate studies. Currently, I am working part time as a Customer Assistant at Corrib Grocers. Coupled with my technical skills in Python, SQL, and Power BI, I am ready to apply my skills immediately to grow within your IT Graduate Development Programme.",
+        "facts": [
+         "rm8",
+         "rm11"
+        ]
+       }
+      ]
+     },
+     "answers": {
+      "answers": [
+       {
+        "question": "Why do you want to work at ESB?",
+        "answer": "I am drawn to ESB because of the significant role technology plays in enabling your purpose to deliver a brighter future for customers and communities (posting). I am keen to contribute to an organisation driven by making a difference, such as the commitment to net zero by 2040 (posting). I am eager to join a team where I can help transform ESB into a data driven and digital utility (posting).",
+        "facts": [
+         "rm1",
+         "rm2"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "Why are you a good fit for this role?",
+        "answer": "I possess a strong foundation in data analytics and IT from my BTech and ongoing MSc. My practical experience includes building Power BI dashboards, automating reports using Python, and performing data cleaning in SQL. These skills align well with the need to deliver digital and data solutions within your multidisciplinary teams (posting).",
+        "facts": [
+         "rm1",
+         "rm2",
+         "rm5",
+         "rm6",
+         "rm7",
+         "rm11"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "Tell us about a project or achievement you're proud of.",
+        "answer": "I am proud of my MSc thesis, where I forecasted weekly footfall for three Galway retail units using Python, Prophet, and two years of sensor data. Furthermore, during my time at Lantern Logistics, I automated a weekly Excel report using Python, which saved approximately three hours of manual work each week.",
+        "facts": [
+         "rm3",
+         "rm6"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "What are your salary expectations?",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       },
+       {
+        "question": "What is your notice period or earliest start date?",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       }
+      ]
+     },
+     "events": [],
+     "usage": {
+      "inputTokens": 6164,
+      "outputTokens": 1890,
+      "ms": 36158
+     },
+     "errors": []
+    }
+   },
+   "quality": {
+    "factsCited3Plus": 3,
+    "dupFactRate": 0.667,
+    "nearCopyPairs": 3,
+    "postingCopy": {
+     "cv": 0.015,
+     "letter": 0,
+     "answers": 0.03
+    },
+    "bracketLeaks": [
+     "(posting)",
+     "(posting)",
+     "(posting)",
+     "(posting)"
+    ],
+    "tenseErrors": [
+     "ongoing MSc"
+    ],
+    "untraceableProse": [],
+    "repairs": 0,
+    "letterNamesGap": false,
+    "words": {
+     "profile": 98,
+     "competencies": 81,
+     "experience": 67,
+     "projects": 35,
+     "education": 15,
+     "skills": 8,
+     "languages": 4,
+     "cv": 269,
+     "letter": 199,
+     "answerAvg": 58
+    },
+    "removed": []
+   }
+  },
+  {
+   "persona": "Rahul Menon",
+   "job": "Workday Analyst",
+   "company": "Stripe",
+   "ms": 59699,
+   "tokensIn": 7424,
+   "tokensOut": 2533,
+   "kept": 33,
+   "removed": 1,
+   "byRule": {
+    "unsupported_tool": 1
+   },
+   "untraceable": [],
+   "output": {
+    "jobId": "1gr6lzj",
+    "card": {
+     "why": [
+      {
+       "kind": "strong",
+       "text": "Automated reporting tasks using Python, saving time for a team.",
+       "facts": [
+        "rm6"
+       ]
+      },
+      {
+       "kind": "transferable",
+       "text": "Managed and cleaned large datasets using SQL for analysis.",
+       "facts": [
+        "rm7"
+       ]
+      },
+      {
+       "kind": "gap",
+       "text": "No direct experience administering Workday HR systems is evident.",
+       "facts": []
+      }
+     ],
+     "score": 55
+    },
+    "fit": {
+     "verdict": "stretch",
+     "requirements": [
+      {
+       "need": "3+ years of hands-on experience with Workday configuration, administration, or another HRIS.",
+       "match": "gap",
+       "facts": [],
+       "note": "You do not currently show the required 3+ years of specific Workday experience."
+      },
+      {
+       "need": "Experience configuring or supporting specific Workday modules like HCM, Reporting, Security, Time Tracking, or Absence.",
+       "match": "gap",
+       "facts": [],
+       "note": "You lack direct experience with these specific Workday modules."
+      },
+      {
+       "need": "Experience supporting data loads, reporting requests, system changes, testing, or operational workflows within an enterprise HRIS.",
+       "match": "transferable",
+       "facts": [
+        "rm3",
+        "rm7"
+       ],
+       "note": "Your project work in data analysis and cleaning large datasets in SQL shows you can handle data workflows and reporting needs."
+      },
+      {
+       "need": "Experience working with confidential information and business-critical processes with extreme attention to detail.",
+       "match": "strong",
+       "facts": [
+        "rm4",
+        "rm7"
+       ],
+       "note": "Your role as a Junior Data Analyst and your work cleaning sensitive shipment data suggest you can handle confidential, critical processes with care."
+      },
+      {
+       "need": "Clear written and verbal communication skills, including the ability to document work, partner with stakeholders, and raise risks.",
+       "match": "strong",
+       "facts": [
+        "rm5",
+        "rm10"
+       ],
+       "note": "You have experience building dashboards for managers and acting as a class representative, showing stakeholder interaction and communication skills."
+      },
+      {
+       "need": "Experience managing operational tasks or system support (e.g., queues, access updates, lifecycle processes).",
+       "match": "transferable",
+       "facts": [
+        "rm7"
+       ],
+       "note": "Your experience tracking shipment data and finding causes for delays is relevant to operational monitoring and process maintenance."
+      },
+      {
+       "need": "Ability to perform functional impact analyses and support change management.",
+       "match": "gap",
+       "facts": [],
+       "note": "While you have project experience, you do not show specific experience in conducting functional impact analyses for system changes."
+      },
+      {
+       "need": "Proficiency in technical tools applicable to data administration and reporting.",
+       "match": "strong",
+       "facts": [
+        "rm11"
+       ],
+       "note": "You have strong technical skills in Python, SQL, Power BI, and R, which are highly transferable to system support and reporting tasks."
+      }
+     ],
+     "angle": "Lead with your analytical project work, highlighting how you used data to find causes for issues and streamline processes."
+    },
+    "fitEvents": [],
+    "kit": {
+     "cv": {
+      "header": {
+       "name": "Rahul Menon",
+       "email": "rahul.menon@example.com",
+       "phone": "+353 87 000 0000",
+       "location": "Galway, Ireland",
+       "links": [
+        "linkedin.com/in/example-rahul"
+       ]
+      },
+      "objective": [],
+      "summary": [
+       {
+        "text": "Graduate of MSc Data Analytics from University of Galway. Possesses experience supporting data processes, including cleaning and joining 2 years of shipment data using SQL to identify late delivery causes. Demonstrated ability to build system reports through Power BI dashboards for regional managers. Experience in process automation using Python, which saved approximately 3 hours weekly.",
+        "facts": [
+         "rm1",
+         "rm7",
+         "rm5",
+         "rm6"
+        ]
+       }
+      ],
+      "competencies": [
+       {
+        "label": "Data Querying and Integrity",
+        "text": "Cleaned and joined 2 years of shipment data using SQL to successfully identify causes for late deliveries.",
+        "facts": [
+         "rm7"
+        ]
+       },
+       {
+        "label": "Operational Reporting & Display",
+        "text": "Built Power BI dashboards detailing delivery times for 5 regional managers at Lantern Logistics.",
+        "facts": [
+         "rm5"
+        ]
+       },
+       {
+        "label": "Process Automation",
+        "text": "Automated a weekly Excel report using Python, resulting in a weekly time saving of about 3 hours.",
+        "facts": [
+         "rm6"
+        ]
+       },
+       {
+        "label": "Data Analysis for Insight",
+        "text": "Developed an MSc thesis forecasting weekly footfall for 3 Galway retail units using Python, Prophet and 2 years of sensor data.",
+        "facts": [
+         "rm3"
+        ]
+       },
+       {
+        "label": "Handling Sensitive Data",
+        "text": "Managed stock counts and customer queries during demanding 20-hour weekly shifts at Corrib Grocers.",
+        "facts": [
+         "rm9"
+        ]
+       },
+       {
+        "label": "Stakeholder Communication",
+        "text": "Served as a class representative for the MSc Data Analytics cohort at University of Galway.",
+        "facts": [
+         "rm10"
+        ]
+       }
+      ],
+      "experience": [
+       {
+        "title": "Junior Data Analyst",
+        "org": "Lantern Logistics",
+        "where": "Kochi, India",
+        "dates": "Jul 2023 – Jul 2024",
+        "bullets": [
+         {
+          "text": "Built Power BI dashboards presenting delivery times for 5 regional managers.",
+          "facts": [
+           "rm5"
+          ]
+         },
+         {
+          "text": "Automated a weekly Excel report using Python, saving about 3 hours per week.",
+          "facts": [
+           "rm6"
+          ]
+         },
+         {
+          "text": "Cleaned and joined 2 years of shipment data within SQL to ascertain late delivery causes.",
+          "facts": [
+           "rm7"
+          ]
+         }
+        ]
+       },
+       {
+        "title": "Customer Assistant",
+        "org": "Corrib Grocers",
+        "where": "Galway",
+        "dates": "Oct 2024 – Present",
+        "bullets": [
+         {
+          "text": "Handled stock counts and addressed customer queries across 20-hour weekly shifts during the MSc.",
+          "facts": [
+           "rm9"
+          ]
+         }
+        ]
+       }
+      ],
+      "projects": [
+       {
+        "text": "MSc thesis involved forecasting weekly footfall for 3 Galway retail units by applying Python, Prophet, and analysing 2 years of sensor data.",
+        "facts": [
+         "rm3"
+        ]
+       },
+       {
+        "text": "Class representative for the MSc Data Analytics cohort",
+        "facts": [
+         "rm10"
+        ]
+       }
+      ],
+      "leadership": true,
+      "education": [
+       {
+        "text": "MSc Data Analytics, University of Galway",
+        "dates": "2024 – 2025",
+        "facts": [
+         "rm1"
+        ]
+       },
+       {
+        "text": "BTech Information Technology, Cochin University of Science and Technology",
+        "dates": "2019 – 2023",
+        "facts": [
+         "rm2"
+        ]
+       }
+      ],
+      "skills": [
+       "Python",
+       "SQL",
+       "Power BI",
+       "Pandas",
+       "Excel",
+       "R",
+       "Tableau"
+      ],
+      "languages": [
+       "English (fluent), Hindi, Malayalam"
+      ],
+      "achievements": [
+       {
+        "text": "Completed MSc Data Analytics at University of Galway.",
+        "facts": [
+         "rm1"
+        ]
+       }
+      ]
+     },
+     "letter": {
+      "paragraphs": [
+       {
+        "text": "I recognise that Stripe's People Systems team acts as internal consultants, transforming ambiguity into scalable solutions by helping to build a strong employee experience through technology. I am keen to contribute to the operational and change management work that keeps essential systems running reliably.",
+        "facts": []
+       },
+       {
+        "text": "My background includes significant data analysis, such as forecasting retail footfall using Python and Prophet based on two years of sensor data. Furthermore, at Lantern Logistics, I analysed two years of shipment data in SQL to pinpoint the causes of late deliveries and automated a weekly Excel report with Python, saving roughly three hours per week.",
+        "facts": [
+         "rm3",
+         "rm7",
+         "rm6"
+        ]
+       },
+       {
+        "text": "During my time as a Junior Data Analyst at Lantern Logistics, I demonstrated my ability to handle data operations by building Power BI dashboards tracking delivery times for five regional managers. I also gained direct experience in data management while completing my MSc at the University of Galway.",
+        "facts": [
+         "rm5",
+         "rm1"
+        ]
+       },
+       {
+        "text": "While my experience is not in Workday configuration, I bring strong analytical skills, proficiency in tools like SQL, Python, and Power BI, and meticulous attention to data integrity. I can quickly adapt to learning the specific administration and functional impact analysis required for this role. I look forward to discussing how my skills fit your team.",
+        "facts": [
+         "rm11"
+        ]
+       }
+      ]
+     },
+     "answers": {
+      "answers": [
+       {
+        "question": "Why do you want to work at Stripe?",
+        "answer": "I am interested in Stripe because of its mission to increase the GDP of the internet [posting]. I am keen to contribute to a company that is building such a substantial financial infrastructure [posting]. I believe I can bring technical rigour and problem-solving skills to your People Systems team [posting].",
+        "facts": [],
+        "needsYou": false
+       },
+       {
+        "question": "Why are you a good fit for this role?",
+        "answer": "My background includes experience in data analysis and building technical solutions, such as automating reports with Python and cleaning large datasets in SQL. I have experience managing operational tasks, such as building Power BI dashboards. I am adept at working with detailed data and understanding system requirements, which aligns with the need to bring clarity to system administration [posting].",
+        "facts": [
+         "rm5",
+         "rm6",
+         "rm7"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "Tell us about a project or achievement you're proud of.",
+        "answer": "I am proud of my MSc thesis where I forecast weekly footfall for three Galway retail units using Python and Prophet on two years of sensor data. Additionally, during my time at Lantern Logistics, I automated a weekly Excel report using Python, which saved approximately three hours of manual work each week.",
+        "facts": [
+         "rm3",
+         "rm6"
+        ],
+        "needsYou": false
+       },
+       {
+        "question": "What are your salary expectations?",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       },
+       {
+        "question": "What is your notice period or earliest start date?",
+        "answer": "",
+        "facts": [],
+        "needsYou": true
+       }
+      ]
+     },
+     "events": [
+      {
+       "rule": "unsupported_tool",
+       "text": "To contribute to the Workday Analyst role at Stripe by applying strong analytical capabilities and experience in system data management."
+      }
+     ],
+     "usage": {
+      "inputTokens": 5760,
+      "outputTokens": 1840,
+      "ms": 35052
+     },
+     "errors": []
+    }
+   },
+   "quality": {
+    "factsCited3Plus": 3,
+    "dupFactRate": 1,
+    "nearCopyPairs": 5,
+    "postingCopy": {
+     "cv": 0,
+     "letter": 0.015,
+     "answers": 0.019
+    },
+    "bracketLeaks": [
+     "[posting]",
+     "[posting]",
+     "[posting]",
+     "[posting]"
+    ],
+    "tenseErrors": [],
+    "untraceableProse": [],
+    "repairs": 0,
+    "letterNamesGap": false,
+    "words": {
+     "profile": 55,
+     "competencies": 98,
+     "experience": 65,
+     "projects": 30,
+     "education": 15,
+     "skills": 8,
+     "achievements": 8,
+     "languages": 4,
+     "cv": 244,
+     "letter": 204,
+     "answerAvg": 54
+    },
+    "removed": [
+     {
+      "rule": "unsupported_tool",
+      "text": "To contribute to the Workday Analyst role at Stripe by applying strong analytical capabilities and experience in system data management."
+     }
+    ]
+   }
+  }
+ ]
+}

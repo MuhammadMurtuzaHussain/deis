@@ -4,7 +4,7 @@ import Dexie, { type EntityTable } from "dexie";
 import type { CardWhy } from "../ai/schema";
 import type { Answers, Fit, Letter } from "../cv/schema";
 import type { CvDocument } from "../cv/compose";
-import type { GuardEvent } from "../cv/guard";
+import type { GuardEvent, GuardRepair } from "../cv/guard";
 import type { ScoredJob } from "../jobs/types";
 import { emptyPreferences, type Fact, type FactKind, type Header, type Preferences, type Profile } from "../profile/types";
 
@@ -27,6 +27,12 @@ export type Kit = {
   usage: { inputTokens: number; outputTokens: number; ms: number };
   model: string;
   at: number;
+  /** Optional: kits saved before 16 Oct 2026 have none of these. */
+  repairs?: GuardRepair[];
+  /** A part that failed (letter, answers) while the rest was written. */
+  errors?: string[];
+  /** Which guard rules checked this kit (GUARD_VERSION). */
+  guardVersion?: number;
 };
 
 export type Application = {

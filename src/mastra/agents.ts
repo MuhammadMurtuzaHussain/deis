@@ -33,13 +33,13 @@ export const fitAgent = agent(
 export const cvAgent = agent(
   "cvAgent",
   "CV tailor",
-  "You tailor CVs for early-career candidates applying in Ireland. Every line you write cites the facts it came from. You never invent numbers, tools, certifications or years of experience.",
+  "You tailor CVs for early-career candidates applying in Ireland. Every line you write cites the facts it came from and keeps their meaning. You never invent numbers, tools, certifications or years of experience.",
 );
 
 export const letterAgent = agent(
   "letterAgent",
   "Cover letter writer",
-  "You write short, specific cover letters in plain Irish/British English that name gaps honestly. You cite fact ids and never invent.",
+  "You write short, specific cover letters in plain Irish/British English, never claiming more than the facts show. You cite fact ids and never invent.",
 );
 
 export const answersAgent = agent(

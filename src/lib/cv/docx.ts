@@ -1,5 +1,5 @@
 import { AlignmentType, BorderStyle, Document, Packer, Paragraph, TabStopType, TextRun } from "docx";
-import { projectsHeading, type CvDocument } from "./compose";
+import { cvSections, REFERENCES, type CvDocument } from "./compose";
 import type { Letter } from "./schema";
 import type { Header } from "../profile/types";
 
@@ -27,67 +27,43 @@ const heading = (text: string) =>
 const para = (text: string, after = 60) => new Paragraph({ spacing: { after }, children: [run(text)] });
 const bullet = (children: TextRun[]) => new Paragraph({ bullet: { level: 0 }, spacing: { after: 40 }, children });
 
-function headerBlock(h: Header): Paragraph[] {
-  const contact = [h.location, h.email, h.phone, ...(h.links ?? [])].filter(Boolean).join(" | ");
+function headerBlock(name: string, contact: string): Paragraph[] {
   return [
-    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [run(h.name || "Your name", { bold: true, size: 40, color: INK })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [run(name || "Your name", { bold: true, size: 40, color: INK })] }),
     new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 120 }, children: [run(contact, { size: 20, color: "333333" })] }),
   ];
 }
+const contactOf = (h: Header) => [h.location, h.email, h.phone, ...(h.links ?? [])].filter(Boolean).join(" | ");
 
-export function cvDocx(cv: CvDocument): Document {
-  const children: Paragraph[] = [...headerBlock(cv.header)];
-  if (cv.objective?.length) {
-    children.push(heading("Career objective"), para(cv.objective.map((s) => s.text).join(" "), 80));
-  }
-  if (cv.summary.length) {
-    children.push(heading("Professional summary"), para(cv.summary.map((s) => s.text).join(" "), 80));
-  }
-  if (cv.competencies.length) {
-    children.push(heading("Core competencies"));
-    for (const c of cv.competencies) children.push(bullet([run(`${c.label}: `, { bold: true }), run(c.text)]));
-  }
-  if (cv.experience.length) {
-    children.push(heading("Work experience"));
-    for (const r of cv.experience) {
-      children.push(
-        new Paragraph({
-          spacing: { before: 100, after: 40 },
-          tabStops: [{ type: TabStopType.RIGHT, position: RIGHT_TAB }],
-          children: [run([r.title, r.org, r.where].filter(Boolean).join(", "), { bold: true }), run(`\t${r.dates}`, { bold: true })],
-        }),
-      );
-      for (const b of r.bullets) children.push(bullet([run(b.text)]));
+/** Heading on the left, dates on a right tab stop: a job or a degree. */
+const entry = (heading: string, dates: string) =>
+  new Paragraph({
+    spacing: { before: 100, after: 40 },
+    tabStops: [{ type: TabStopType.RIGHT, position: RIGHT_TAB }],
+    children: [run(heading, { bold: true }), run(dates ? `\t${dates}` : "", { bold: true })],
+  });
+
+export function cvDocx(cv: CvDocument, header: Header = cv.header): Document {
+  const children: Paragraph[] = [];
+  for (const s of cvSections(cv, header)) {
+    if (s.id === "header") {
+      children.push(...headerBlock(s.name, s.contact));
+      continue;
     }
+    children.push(heading(s.title));
+    if (s.paragraph?.length) children.push(para(s.paragraph.map((l) => l.text).join(" "), 80));
+    for (const e of s.entries ?? []) {
+      children.push(entry(e.heading, e.dates));
+      for (const l of e.lines) children.push(bullet([run(l.text)]));
+    }
+    for (const b of s.bullets ?? []) children.push(bullet(b.label ? [run(`${b.label}: `, { bold: true }), run(b.text)] : [run(b.text)]));
+    for (const l of s.lists ?? [])
+      children.push(new Paragraph({ spacing: { after: 60 }, children: l.label ? [run(`${l.label}: `, { bold: true }), run(l.items.join(", "))] : [run(l.items.join(", "))] }));
   }
-  if (cv.projects.length) {
-    children.push(heading(projectsHeading(cv)));
-    for (const p of cv.projects) children.push(bullet([run(p.text)]));
-  }
-  if (cv.education.length) {
-    children.push(heading("Education"));
-    for (const e of cv.education)
-      children.push(
-        new Paragraph({
-          spacing: { after: 40 },
-          tabStops: [{ type: TabStopType.RIGHT, position: RIGHT_TAB }],
-          children: [run(e.text, { bold: true }), run(e.dates ? `\t${e.dates}` : "")],
-        }),
-      );
-  }
-  if (cv.skills.length || cv.languages?.length) {
-    children.push(heading("Skills"));
-    if (cv.skills.length) children.push(para(cv.skills.join(", ")));
-    if (cv.languages?.length) children.push(new Paragraph({ spacing: { after: 60 }, children: [run("Languages: ", { bold: true }), run(cv.languages.join("; "))] }));
-  }
-  if (cv.achievements.length) {
-    children.push(heading("Achievements"));
-    for (const a of cv.achievements) children.push(bullet([run(a.text)]));
-  }
-  children.push(new Paragraph({ spacing: { before: 200 }, children: [run("References available on request.", { italics: true })] }));
+  children.push(new Paragraph({ spacing: { before: 200 }, children: [run(REFERENCES, { italics: true })] }));
   return new Document({
-    creator: cv.header.name || "Deis",
-    title: `CV ${cv.header.name}`,
+    creator: header.name || "Deis",
+    title: `CV ${header.name}`,
     sections: [{ properties: { page: { size: A4, margin: MARGIN } }, children }],
   });
 }
@@ -95,7 +71,7 @@ export function cvDocx(cv: CvDocument): Document {
 export function letterDocx(letter: Letter, h: Header, jobTitle: string, date = new Date()): Document {
   const when = date.toLocaleDateString("en-IE", { day: "numeric", month: "long", year: "numeric" });
   const children = [
-    ...headerBlock(h),
+    ...headerBlock(h.name, contactOf(h)),
     para(when, 160),
     para("Dear Hiring Team,", 120),
     new Paragraph({ spacing: { after: 160 }, children: [run(`Re: ${jobTitle}`, { bold: true })] }),

@@ -3,12 +3,13 @@
 import { ArrowLeft, ArrowsLeftRight, CheckCircle, CircleDashed, Copy, DownloadSimple, Printer, ShieldCheck } from "@phosphor-icons/react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { GapQuestions, Proposals } from "@/lib/cv/schema";
+import { createPortal } from "react-dom";
+import { GUARD_VERSION, type GapQuestions, type Proposals } from "@/lib/cv/schema";
 import { api, ApiError } from "@/lib/client/api";
 import { db, loadProfile, STATUS_LABEL, STATUSES, type Application, type Kit, type Status } from "@/lib/client/db";
 import { runFit, runKit, updateApplication } from "@/lib/client/kit";
 import { routeHref, useStore } from "@/lib/client/store";
-import { projectsHeading, type CvDocument } from "@/lib/cv/compose";
+import { cvSections, cvText, REFERENCES, type CvDocument } from "@/lib/cv/compose";
 import { cvDocx, cvFileName, letterDocx, letterFileName, toBlob } from "@/lib/cv/docx";
 import type { GuardRule } from "@/lib/cv/guard";
 import { readRightToWork, workFit, WORK_FIT_COPY, WORK_STATUS_LABEL } from "@/lib/jobs/rightToWork";
@@ -35,7 +36,12 @@ export const RULE_COPY: Record<GuardRule, string> = {
   fit_demoted: "A claimed match with nothing behind it",
   past_as_present: "Said you're still studying a finished degree",
   work_status: "A claim about your visa or right to work",
+  added_claim: "Claimed more than your facts say",
+  posting_copy: "Copied from the job posting",
 };
+
+/** Kit part names in the server's `errors` lines. */
+const PART_COPY: Record<string, string> = { cv: "CV", letter: "cover letter", answers: "form answers" };
 
 const VERDICT: Record<string, string> = { close: "Close fit", good: "Good fit", stretch: "A stretch, worth a go", major_stretch: "A big stretch" };
 
@@ -70,7 +76,7 @@ function Sources({ ids, facts }: { ids: string[]; facts: Map<string, Fact> }) {
   const found = ids.map((id) => facts.get(id)).filter((f): f is Fact => Boolean(f));
   if (!found.length) return null;
   return (
-    <span className="mt-1 block font-sans text-[11px] leading-snug text-[#11553f]">
+    <span className="mt-1 block font-sans text-[11px] leading-snug text-[#11553f] print:hidden">
       From: {found.map((f) => f.text).join(" | ")}
     </span>
   );
@@ -80,143 +86,88 @@ function H({ children }: { children: string }) {
   return <h3 className="mt-4 border-b border-[#1F2A2E] pb-0.5 text-[13px] font-bold uppercase tracking-wide text-[#1F2A2E]">{children}</h3>;
 }
 
-function CvPaper({ cv, facts, showSources }: { cv: CvDocument; facts: Map<string, Fact>; showSources: boolean }) {
+function CvPaper({ cv, facts, showSources, id, className = "" }: { cv: CvDocument; facts: Map<string, Fact>; showSources: boolean; id?: string; className?: string }) {
   const S = (ids: string[]) => (showSources ? <Sources ids={ids} facts={facts} /> : null);
   return (
-    <div id="cv-print" className="rounded-surface border border-line bg-white p-8 font-[Arial,Helvetica,sans-serif] text-[13px] leading-relaxed text-[#1a1a1a] shadow-lift sm:p-10">
-      <p className="text-center text-2xl font-bold text-[#1F2A2E]">{cv.header.name || "Your name"}</p>
-      <p className="mt-1 text-center text-[12px] text-[#333]">{[cv.header.location, cv.header.email, cv.header.phone, ...(cv.header.links ?? [])].filter(Boolean).join(" | ")}</p>
-      {cv.objective && cv.objective.length > 0 && (
-        <>
-          <H>Career objective</H>
-          <p className="mt-1.5">{cv.objective.map((s) => s.text).join(" ")}</p>
-          {S([...new Set(cv.objective.flatMap((s) => s.facts))])}
-        </>
-      )}
-      {cv.summary.length > 0 && (
-        <>
-          <H>Professional summary</H>
-          <p className="mt-1.5">
-            {cv.summary.map((s, i) => (
-              <span key={i} title={showSources ? undefined : "Hover any line with sources on to see where it came from"}>
-                {s.text}{" "}
-              </span>
+    <div id={id} className={`rounded-surface border border-line bg-white p-8 font-[Arial,Helvetica,sans-serif] text-[13px] leading-relaxed text-[#1a1a1a] shadow-lift sm:p-10 ${className}`}>
+      {cvSections(cv).map((s) =>
+        s.id === "header" ? (
+          <div key="header">
+            <p className="text-center text-2xl font-bold text-[#1F2A2E]">{s.name}</p>
+            <p className="mt-1 text-center text-[12px] text-[#333]">{s.contact}</p>
+          </div>
+        ) : (
+          <div key={s.id}>
+            <H>{s.title}</H>
+            {s.paragraph && s.paragraph.length > 0 && (
+              <>
+                <p className="mt-1.5">{s.paragraph.map((l) => l.text).join(" ")}</p>
+                {S([...new Set(s.paragraph.flatMap((l) => l.facts))])}
+              </>
+            )}
+            {s.entries?.map((e, i) => (
+              <div key={i} className="mt-2">
+                <p className="flex justify-between gap-4 font-bold">
+                  <span>{e.heading}</span>
+                  <span className="shrink-0">{e.dates}</span>
+                </p>
+                {e.lines.length > 0 && (
+                  <ul className="list-disc pl-5">
+                    {e.lines.map((l, j) => (
+                      <li key={j}>
+                        {l.text}
+                        {S(l.facts)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             ))}
-          </p>
-          {S([...new Set(cv.summary.flatMap((s) => s.facts))])}
-        </>
-      )}
-      {cv.competencies.length > 0 && (
-        <>
-          <H>Core competencies</H>
-          <ul className="mt-1.5 list-disc pl-5">
-            {cv.competencies.map((c, i) => (
-              <li key={i}>
-                <strong>{c.label}:</strong> {c.text}
-                {S(c.facts)}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-      {cv.experience.length > 0 && (
-        <>
-          <H>Work experience</H>
-          {cv.experience.map((r, i) => (
-            <div key={i} className="mt-2">
-              <p className="flex justify-between gap-4 font-bold">
-                <span>{[r.title, r.org, r.where].filter(Boolean).join(", ")}</span>
-                <span className="shrink-0">{r.dates}</span>
-              </p>
-              <ul className="list-disc pl-5">
-                {r.bullets.map((b, j) => (
-                  <li key={j}>
+            {s.bullets && s.bullets.length > 0 && (
+              <ul className="mt-1.5 list-disc pl-5">
+                {s.bullets.map((b, i) => (
+                  <li key={i}>
+                    {b.label && <strong>{b.label}: </strong>}
                     {b.text}
                     {S(b.facts)}
                   </li>
                 ))}
               </ul>
-            </div>
-          ))}
-        </>
-      )}
-      {cv.projects.length > 0 && (
-        <>
-          <H>{projectsHeading(cv)}</H>
-          <ul className="mt-1.5 list-disc pl-5">
-            {cv.projects.map((p, i) => (
-              <li key={i}>
-                {p.text}
-                {S(p.facts)}
-              </li>
+            )}
+            {s.lists?.map((l, i) => (
+              <p key={i} className="mt-1.5">
+                {l.label && <strong>{l.label}: </strong>}
+                {l.items.join(", ")}
+              </p>
             ))}
-          </ul>
-        </>
+          </div>
+        ),
       )}
-      {cv.education.length > 0 && (
-        <>
-          <H>Education</H>
-          {cv.education.map((e, i) => (
-            <p key={i} className="mt-1.5 flex justify-between gap-4">
-              <strong>{e.text}</strong>
-              <span className="shrink-0">{e.dates}</span>
-            </p>
-          ))}
-        </>
-      )}
-      {(cv.skills.length > 0 || (cv.languages?.length ?? 0) > 0) && (
-        <>
-          <H>Skills</H>
-          {cv.skills.length > 0 && <p className="mt-1.5">{cv.skills.join(", ")}</p>}
-          {cv.languages && cv.languages.length > 0 && (
-            <p className="mt-1">
-              <strong>Languages:</strong> {cv.languages.join("; ")}
-            </p>
-          )}
-        </>
-      )}
-      {cv.achievements.length > 0 && (
-        <>
-          <H>Achievements</H>
-          <ul className="mt-1.5 list-disc pl-5">
-            {cv.achievements.map((a, i) => (
-              <li key={i}>
-                {a.text}
-                {S(a.facts)}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-      <p className="mt-5 italic">References available on request.</p>
+      <p className="mt-5 italic">{REFERENCES}</p>
     </div>
   );
 }
 
-function cvText(cv: CvDocument): string {
-  const out = [cv.header.name, [cv.header.location, cv.header.email, cv.header.phone].filter(Boolean).join(" | "), ""];
-  if (cv.objective?.length) out.push("CAREER OBJECTIVE", cv.objective.map((s) => s.text).join(" "), "");
-  if (cv.summary.length) out.push("PROFESSIONAL SUMMARY", cv.summary.map((s) => s.text).join(" "), "");
-  if (cv.competencies.length) out.push("CORE COMPETENCIES", ...cv.competencies.map((c) => `- ${c.label}: ${c.text}`), "");
-  if (cv.experience.length) {
-    out.push("WORK EXPERIENCE");
-    for (const r of cv.experience) out.push(`${[r.title, r.org, r.where].filter(Boolean).join(", ")} (${r.dates})`, ...r.bullets.map((b) => `- ${b.text}`), "");
-  }
-  if (cv.projects.length) out.push(projectsHeading(cv).toUpperCase(), ...cv.projects.map((p) => `- ${p.text}`), "");
-  if (cv.education.length) out.push("EDUCATION", ...cv.education.map((e) => `${e.text} (${e.dates})`), "");
-  if (cv.skills.length || cv.languages?.length) {
-    out.push("SKILLS");
-    if (cv.skills.length) out.push(cv.skills.join(", "));
-    if (cv.languages?.length) out.push(`Languages: ${cv.languages.join("; ")}`);
-    out.push("");
-  }
-  if (cv.achievements.length) out.push("ACHIEVEMENTS", ...cv.achievements.map((a) => `- ${a.text}`));
-  return out.join("\n");
+/**
+ * "Save as PDF" prints this copy alone: the CV sheet with no source notes, and nothing
+ * else on the page in the layout, so no blank pages follow it.
+ */
+function PrintSheet({ cv }: { cv: CvDocument }) {
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <>
+      <style>{"@media print { body > :not(#cv-print) { display: none !important; } }"}</style>
+      <CvPaper cv={cv} facts={new Map()} showSources={false} id="cv-print" className="hidden print:block" />
+    </>,
+    document.body,
+  );
 }
 
 function KitView({ app, kit, facts }: { app: Application; kit: Kit; facts: Map<string, Fact> }) {
-  const { profile } = useStore();
+  const { profile, licence } = useStore();
   const [tab, setTab] = useState<"cv" | "letter" | "answers" | "checks">("cv");
+  const [again, setAgain] = useState<{ since: number } | null>(null);
+  const [againError, setAgainError] = useState<string | null>(null);
   const [showSources, setShowSources] = useState(false);
   const name = profile?.header.name ?? kit.cv.header.name;
   const tabs = [
@@ -225,6 +176,31 @@ function KitView({ app, kit, facts }: { app: Application; kit: Kit; facts: Map<s
     ...(kit.answers ? [["answers", "Form answers"]] : []),
     ["checks", `Checks${kit.events.length ? ` (${kit.events.length})` : ""}`],
   ] as [typeof tab, string][];
+  // Parts the server couldn't write ("letter: ..."), and kits checked by older guard rules.
+  const missing = [...new Set((kit.errors ?? []).map((e) => PART_COPY[e.split(":")[0]] ?? "part of the kit"))];
+  // Rewriting needs a fit and a licence that isn't locked. The older-rules note is only for a kit not yet sent.
+  const canRewrite = licence?.state !== "locked" && Boolean(app.fit);
+  const older = (kit.guardVersion ?? 1) < GUARD_VERSION && app.status === "ready";
+  const repairs = kit.repairs ?? [];
+  // The kit on screen stays until the new one is saved, so a failed rewrite loses nothing.
+  const writeAgain = async () => {
+    if (!app.fit || again) return;
+    setAgain({ since: Date.now() });
+    setAgainError(null);
+    try {
+      const next = await runKit(app.job, await loadProfile(), app.fit);
+      await updateApplication(app.id, { kit: next, kitError: null });
+    } catch (e) {
+      setAgainError(e instanceof ApiError ? e.message : "The kit couldn't be written again. This one is unchanged.");
+    } finally {
+      setAgain(null);
+    }
+  };
+  const againButton = canRewrite && !again && (
+    <button className="font-medium underline" onClick={writeAgain}>
+      Write it again
+    </button>
+  );
 
   return (
     <section aria-labelledby="kit" className="grid gap-4">
@@ -236,6 +212,22 @@ function KitView({ app, kit, facts }: { app: Application; kit: Kit; facts: Map<s
           {kit.model}, <span className="num">{(kit.usage.ms / 1000).toFixed(0)} s</span>, <span className="num">{(kit.usage.inputTokens + kit.usage.outputTokens).toLocaleString("en-IE")}</span> tokens
         </p>
       </div>
+      {missing.length > 0 && (
+        <Notice tone="warn">
+          Gemma couldn&apos;t write the {missing.join(" or the ")} this time. {againButton}
+        </Notice>
+      )}
+      {older && !missing.length && (
+        <Notice>
+          This kit was checked by an older version of Deis&apos;s rules.{againButton && <> {againButton} to check it with the current ones.</>}
+        </Notice>
+      )}
+      {again && (
+        <Notice>
+          Writing it again. This kit stays until the new one is ready. <Elapsed since={again.since} />
+        </Notice>
+      )}
+      {againError && <Notice tone="error">{againError}</Notice>}
       <div role="tablist" aria-label="Kit" className="flex flex-wrap gap-1 border-b border-line">
         {tabs.map(([id, label]) => (
           <button key={id} role="tab" type="button" aria-selected={tab === id} onClick={() => setTab(id)} className={`-mb-px h-11 border-b-2 px-4 text-[15px] ${tab === id ? "border-accent font-bold text-ink" : "border-transparent text-ink-2 hover:text-ink"}`}>
@@ -262,6 +254,7 @@ function KitView({ app, kit, facts }: { app: Application; kit: Kit; facts: Map<s
             </label>
           </div>
           <CvPaper cv={kit.cv} facts={facts} showSources={showSources} />
+          <PrintSheet cv={kit.cv} />
         </div>
       )}
 
@@ -322,6 +315,21 @@ function KitView({ app, kit, facts }: { app: Application; kit: Kit; facts: Map<s
                 </li>
               ))}
             </ul>
+          )}
+          {repairs.length > 0 && (
+            <div className="grid gap-2">
+              <p className="text-[15px] text-ink-2">
+                Deis kept {repairs.length === 1 ? "this line" : `these ${repairs.length} lines`} by adding one more of your facts as {repairs.length === 1 ? "its source" : "their source"}. Check {repairs.length === 1 ? "it says" : "they say"} only what that fact says.
+              </p>
+              <ul className="grid gap-2">
+                {repairs.map((r, i) => (
+                  <li key={i} className="rounded-control border border-line bg-surface p-3 text-[15px]">
+                    {r.text}
+                    <Sources ids={r.ids} facts={facts} />
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
           <p className="max-w-[70ch] text-sm text-ink-3">
             Code checks numbers, tools, certificates, employers and dates. It can&apos;t judge every shade of meaning, so read the CV once before you send it. Turn on &ldquo;Show where each line came from&rdquo; to check any line in a second.
@@ -488,6 +496,7 @@ export function ApplicationScreen({ id }: { id: string }) {
   const factsList = useLiveQuery(() => db.facts.toArray(), [], []);
   const facts = useMemo(() => new Map(factsList.map((f) => [f.id, f])), [factsList]);
   const queue = useKitQueue();
+  const locked = useStore().licence?.state === "locked";
   const [fitState, setFitState] = useState<{ since: number } | null>(null);
   const [fitError, setFitError] = useState<string | null>(null);
   const [fitAttempt, setFitAttempt] = useState(0);
@@ -500,7 +509,7 @@ export function ApplicationScreen({ id }: { id: string }) {
 
   // The Careful lane runs the fit check here; the Quick lane's background queue does its own.
   useEffect(() => {
-    if (!app || app.fit || app.lane !== "careful" || started.current) return;
+    if (!app || app.fit || app.lane !== "careful" || locked || started.current) return;
     started.current = true;
     setFitState({ since: Date.now() });
     (async () => {
@@ -513,7 +522,7 @@ export function ApplicationScreen({ id }: { id: string }) {
         setFitState(null);
       }
     })();
-  }, [app, fitAttempt]);
+  }, [app, fitAttempt, locked]);
 
   if (app === undefined) return null;
   if (!app)
@@ -575,7 +584,7 @@ export function ApplicationScreen({ id }: { id: string }) {
                 Try again
               </button>
             </Notice>
-          ) : app.kitError ? (
+          ) : app.kitError || locked ? (
             <p className="text-ink-2">Not checked yet.</p>
           ) : (
             <Notice>
@@ -613,7 +622,7 @@ export function ApplicationScreen({ id }: { id: string }) {
       {app.kit ? (
         <KitView app={app} kit={app.kit} facts={facts} />
       ) : app.lane === "careful" ? (
-        app.fit && <Coach app={app} onBuilt={() => undefined} />
+        app.fit && !locked && <Coach app={app} onBuilt={() => undefined} />
       ) : app.kitError ? (
         <Notice tone="error">
           {app.kitError}{" "}
