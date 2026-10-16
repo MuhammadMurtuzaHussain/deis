@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DownloadPicker } from "@/components/DownloadPicker";
+import { Credit } from "@/components/Credit";
 import { OfferNote } from "@/components/OfferNote";
 import { Wordmark } from "@/components/ui";
 
@@ -132,6 +133,9 @@ export default function DownloadPage() {
           </dl>
         </section>
       </main>
+      <footer className="mx-auto w-full max-w-[880px] border-t border-line px-4 py-8 md:px-8">
+        <Credit />
+      </footer>
     </div>
   );
 }

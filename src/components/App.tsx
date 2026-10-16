@@ -14,6 +14,7 @@ import { ApiError } from "@/lib/client/api";
 import { PERSONAS, type PersonaId } from "@/lib/demo/personas";
 import { ApplicationScreen } from "./ApplicationScreen";
 import { CheckIn } from "./CheckIn";
+import { Credit } from "./Credit";
 import { Deck } from "./Deck";
 import { LaneSwitch } from "./deck/LaneSwitch";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -178,18 +179,19 @@ function Shell() {
           <ErrorBoundary resetKey={key}>{screen}</ErrorBoundary>
         </div>
       </main>
-      <footer className="mx-auto w-full max-w-[1200px] px-4 pb-8 md:px-8">
+      <footer className="mx-auto flex w-full max-w-[1200px] flex-wrap items-center gap-x-6 px-4 pb-8 md:px-8">
         <a href={SOURCE_URL} target="_blank" rel="noreferrer noopener" className="inline-flex min-h-11 items-center gap-2 text-caption text-ink-3 hover:text-ink">
           <GithubLogo size={16} aria-hidden />
           <span className="underline underline-offset-2">Source code</span> (AGPL-3.0)
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
         {status && !status.desktop && (
-          <a href="/download" className="ml-6 inline-flex min-h-11 items-center gap-2 text-caption text-ink-3 hover:text-ink">
+          <a href="/download" className="inline-flex min-h-11 items-center gap-2 text-caption text-ink-3 hover:text-ink">
             <DownloadSimple size={16} aria-hidden />
             <span className="underline underline-offset-2">Desktop app</span> for Mac, Windows and Linux
           </a>
         )}
+        <Credit className="py-3 sm:ml-auto" />
       </footer>
       <TabBar active={active} />
     </div>

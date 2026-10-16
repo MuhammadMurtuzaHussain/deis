@@ -8,6 +8,7 @@ import { routeHref, useStore } from "@/lib/client/store";
 import { PERSONAS, type PersonaId } from "@/lib/demo/personas";
 import { AutoDeck } from "./onboarding/AutoDeck";
 import { StoryScroll } from "./onboarding/StoryScroll";
+import { Credit } from "./Credit";
 import { OfferNote } from "./OfferNote";
 import { buttonClass, Button, CompanyMark, Dialog, MOTION, Pill, useMotion, Wordmark } from "./ui";
 
@@ -189,7 +190,7 @@ export function Welcome() {
           </span>{" "}
           (said &ldquo;desh&rdquo;) is Irish for opportunity.
         </p>
-        <p>Built in Galway for the DEV Hacktoberfest challenge.</p>
+        <Credit />
       </footer>
 
       <Dialog open={demoOpen} onClose={() => setDemoOpen(false)} title="Try Deis as someone else" description="Two fictional graduates, real Irish jobs. Nothing you do here touches your own profile.">
