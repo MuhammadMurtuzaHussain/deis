@@ -32,7 +32,11 @@ async function googleFont(family: string): Promise<ArrayBuffer | null> {
     const url = /src: url\((.+?)\) format\('(?:opentype|truetype)'\)/.exec(css)?.[1];
     if (!url) return null;
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    return res.ok ? await res.arrayBuffer() : null;
+    if (!res.ok) return null;
+    const data = await res.arrayBuffer();
+    // Only a real TTF or OTF: anything else (a woff2, an error page) breaks the build's render.
+    const tag = new DataView(data).getUint32(0);
+    return data.byteLength > 1000 && (tag === 0x00010000 || tag === 0x4f54544f || tag === 0x74727565) ? data : null;
   } catch {
     return null;
   }
