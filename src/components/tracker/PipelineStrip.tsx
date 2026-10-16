@@ -27,7 +27,7 @@ export function PipelineStrip({ counts, filter, onFilter }: { counts: Record<Sta
             <span className={`display text-[28px] leading-none sm:text-[40px] ${on ? "" : due ? "" : empty ? "text-ink-3" : "text-ink"}`}>
               <RollingNumber value={counts[s]} />
             </span>
-            <span className={`text-caption leading-tight ${on ? "text-surface/80" : due ? "font-semibold" : "text-ink-2"}`}>{STAGE_LABEL[s]}</span>
+            <span className={`whitespace-nowrap text-[11px] leading-tight sm:text-caption ${on ? "text-surface/80" : due ? "font-semibold" : "text-ink-2"}`}>{STAGE_LABEL[s]}</span>
           </button>
         );
       })}

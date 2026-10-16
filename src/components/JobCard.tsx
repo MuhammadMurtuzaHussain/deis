@@ -246,6 +246,8 @@ export function JobCard({
           ))}
         </ul>
       )}
+      {/* The card scrolls inside when a posting runs long; this fade says there's more below. */}
+      <div aria-hidden className="pointer-events-none sticky -bottom-5 -mx-5 -mb-5 mt-auto h-10 shrink-0 bg-gradient-to-t from-surface to-transparent sm:-bottom-6 sm:-mx-6 sm:-mb-6" />
     </article>
   );
 }

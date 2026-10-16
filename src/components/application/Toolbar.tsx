@@ -55,7 +55,7 @@ function HighlightToggle() {
 
 function Bar({ children }: { children: ReactNode }) {
   return (
-    <div data-print-hidden className="sticky top-(--top-bar) z-10 -mx-1 flex flex-wrap items-center gap-1.5 bg-bg/90 px-1 py-2 backdrop-blur-md">
+    <div data-print-hidden className="sticky top-(--top-bar) z-10 -mx-1 flex flex-nowrap items-center gap-1.5 overflow-x-auto bg-bg px-1 py-2 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible sm:bg-bg/90 sm:backdrop-blur-md [&>*]:shrink-0">
       {children}
     </div>
   );

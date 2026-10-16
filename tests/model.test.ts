@@ -45,7 +45,7 @@ describe("demo chain", () => {
     expect(chain.tier).toBe("demo");
     expect(ids(chain)).toEqual(["demo:gemma-4-26b-a4b-it", "openai:inference.do-ai.run:gemma-4-26b", "openai:openrouter.ai:google/gemma-4-26b-a4b-it"]);
     expect(chain.models.every((m) => m.maxRetries === 0)).toBe(true);
-    expect(demoHosts().map((h) => h.label)).toEqual(["Google AI Studio", "inference.do-ai.run", "openrouter.ai"]);
+    expect(demoHosts().map((h) => h.label)).toEqual(["Google AI Studio", "DigitalOcean", "OpenRouter"]);
   });
 
   it("keeps 31B as AI Studio's second try only when there's no other host", async () => {

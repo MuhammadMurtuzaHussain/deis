@@ -171,9 +171,17 @@ function fallbacks(): Fallback[] {
 const hasDemoHosts = () => Boolean(process.env.GOOGLE_GENERATIVE_AI_API_KEY) || fallbacks().length > 0;
 
 /** For /api/status: which hosts the demo would ask, and which are resting after a failure. No keys, no URLs. */
+/** A name a person recognises, not "127.0.0.1:11434", for the hosts the demo asks. */
+const HOST_NAMES: Record<string, string> = { "openrouter.ai": "OpenRouter", "inference.do-ai.run": "DigitalOcean", "api.groq.com": "Groq", "api.together.xyz": "Together AI", "api.deepinfra.com": "DeepInfra", "api.fireworks.ai": "Fireworks", "api.mistral.ai": "Mistral" };
+function hostLabel(baseUrl: string): string {
+  const { hostname, host } = new URL(baseUrl);
+  if (/^(localhost|127\.|\[?::1\]?$)/.test(hostname)) return "Gemma on this computer";
+  return HOST_NAMES[hostname] ?? host;
+}
+
 export function demoHosts(): { label: string; model: string; healthy: boolean }[] {
   const out = process.env.GOOGLE_GENERATIVE_AI_API_KEY ? [{ label: "Google AI Studio", model: process.env.GOOGLE_MODEL || DEFAULTS.google, healthy: healthy(AISTUDIO) }] : [];
-  return [...out, ...fallbacks().map((f) => ({ label: new URL(f.baseUrl).host, model: f.model, healthy: healthy(f.key) }))];
+  return [...out, ...fallbacks().map((f) => ({ label: hostLabel(f.baseUrl), model: f.model, healthy: healthy(f.key) }))];
 }
 
 // AI Studio's Gemma 4 has bad days (500s, some taking 50 s). A tiny probe, at most every two
