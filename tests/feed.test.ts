@@ -155,6 +155,12 @@ describe("hosted feed on the desktop", () => {
     expect(config.feedUrl).toBe("https://deiscareers.tech");
     expect(readFileSync("desktop/main.mjs", "utf8")).not.toContain("deis.onrender.com");
   });
+
+  it("builds installers with the release's version, so the updater sees them as new", () => {
+    // electron-builder takes the version from the app folder (desktop/), not the root package.
+    const version = (path: string) => (JSON.parse(readFileSync(path, "utf8")) as { version: string }).version;
+    expect(version("desktop/package.json")).toBe(version("package.json"));
+  });
 });
 
 describe("Google Jobs pages", () => {
