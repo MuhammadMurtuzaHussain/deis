@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DownloadPicker } from "@/components/DownloadPicker";
+import { OllamaDownload } from "@/components/LocalGemma";
 import { Credit } from "@/components/Credit";
 import { OfferNote } from "@/components/OfferNote";
 import { Wordmark } from "@/components/ui";
@@ -64,6 +65,36 @@ export default function DownloadPage() {
           <DownloadPicker />
         </section>
 
+        <section id="gemma" aria-labelledby="gemma-title" className="grid scroll-mt-6 gap-5 rounded-panel border border-ink p-5 sm:p-6">
+          <div className="grid max-w-[60ch] gap-2">
+            <h2 id="gemma-title" className="text-lead font-semibold text-ink">
+              For the best results, run Gemma on your computer
+            </h2>
+            <p className="text-body text-ink-2">
+              The web demo shares one Gemma between everyone trying Deis, so it hits its limit and slows down at busy times. On your own computer there are no limits, no queue, and your facts never leave it. About ten minutes, most of it the download.
+            </p>
+          </div>
+          <ol className="grid gap-4 sm:grid-cols-3">
+            <li className="grid content-start gap-3 rounded-panel bg-sunken p-5">
+              <span className="font-mono text-[12px] text-ink-3">1</span>
+              <h3 className="text-body font-semibold text-ink">Get Deis</h3>
+              <p className="text-body text-ink-2">Use the download button above, then open Deis once (see the first-open steps below).</p>
+            </li>
+            <li className="grid content-start gap-3 rounded-panel bg-sunken p-5">
+              <span className="font-mono text-[12px] text-ink-3">2</span>
+              <h3 className="text-body font-semibold text-ink">Install Ollama</h3>
+              <p className="text-body text-ink-2">The free app that runs Gemma. Install it and open it once.</p>
+              <OllamaDownload short />
+            </li>
+            <li className="grid content-start gap-3 rounded-panel bg-sunken p-5">
+              <span className="font-mono text-[12px] text-ink-3">3</span>
+              <h3 className="text-body font-semibold text-ink">Download Gemma</h3>
+              <p className="text-body text-ink-2">In Deis, go to Settings, choose On this computer, then Download Gemma. About 7 GB, once. No terminal needed.</p>
+            </li>
+          </ol>
+          <p className="text-caption text-ink-3">Needs about 8 GB of memory. On a phone, or a computer with less, a free Google AI Studio key in Settings works too and isn&apos;t shared with anyone.</p>
+        </section>
+
         <section aria-labelledby="first-open" className="grid gap-5">
           <div className="grid max-w-[60ch] gap-2">
             <h2 id="first-open" className="text-lead font-semibold text-ink">
@@ -103,7 +134,7 @@ export default function DownloadPage() {
                 <a href="https://ollama.com" className="underline underline-offset-2 hover:text-ink">
                   Ollama
                 </a>{" "}
-                and run the one command Deis shows you to get Gemma: about 8 GB of memory and a 7 GB download. Or use the demo&apos;s Gemma or your own free Google AI Studio key.
+                and Deis downloads Gemma for you in one click: about 8 GB of memory and a 7 GB download. Or use the demo&apos;s Gemma or your own free Google AI Studio key.
               </dd>
             </div>
             <div>

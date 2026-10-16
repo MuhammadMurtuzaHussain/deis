@@ -18,10 +18,10 @@ const PERSON_HOURLY = 150;
 const cap = (v: string | undefined, fallback: number) => (Number(v) > 0 ? Number(v) : fallback);
 
 export const LIMIT_MESSAGES: Record<Limit, string> = {
-  route: "You've used this hour's demo allowance for this step. Add your own free Google AI Studio key in Settings to keep going, or try again in an hour.",
-  person: "You've used this hour's demo allowance. Add your own free Google AI Studio key in Settings to keep going, or try again in an hour.",
-  hourly: "The demo's free Gemma has used its budget for this hour, shared by everyone trying Deis. Add your own free Google AI Studio key in Settings to keep going, or try again later.",
-  daily: "The demo's free Gemma has used today's budget, shared by everyone trying Deis. Add your own free Google AI Studio key in Settings to keep going, or try again tomorrow.",
+  route: "You've used this hour's demo allowance for this step. For the best results, run Gemma on your own computer with the Deis app (no limits), or add your own free Google AI Studio key in Settings. Or try again in an hour.",
+  person: "You've used this hour's demo allowance. For the best results, run Gemma on your own computer with the Deis app (no limits), or add your own free Google AI Studio key in Settings. Or try again in an hour.",
+  hourly: "The demo's free Gemma has used its budget for this hour, shared by everyone trying Deis. Run Gemma on your own computer with the Deis app (no limits), or add your own free Google AI Studio key in Settings. Or try again later.",
+  daily: "The demo's free Gemma has used today's budget, shared by everyone trying Deis. Run Gemma on your own computer with the Deis app (no limits), or add your own free Google AI Studio key in Settings. Or try again tomorrow.",
 };
 
 /** Which limit this request is over, or null. Only the hosted demo's key is counted. */

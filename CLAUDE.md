@@ -71,6 +71,7 @@ Local Gemma: `ollama pull gemma4:e4b` (6.6 GB). `.env.local` points the demo's f
 - Installers for macOS, Windows and Linux build in GitHub Actions (`Desktop installers`, run by hand). Only the macOS one has been run on a real machine.
 - v0.1.4 (16 Oct) adds a signed Android APK (Capacitor shell over deiscareers.tech) and a PWA manifest for iPhone's Add to Home Screen. The APK has run on an emulator in CI, not yet on a real phone.
 - October offer (`src/lib/offer.ts`, `OfferNote`): 80% off with code HACKTOBERFEST beside every price until 1 Nov. The code must exist in Polar; checkout applies it only if the Polar token has `discounts:read`.
+- 16 Oct: local Gemma is the recommended path. Testers on the web demo hit the shared key's limits, so the hosted app shows "run Gemma on your own computer" on the welcome hero, as a dismissible banner (`DemoModelBanner`), on the model page and in the 429 messages, with three steps on `/download#gemma`. In the desktop app, `ModelSetup` links the Ollama installer for this OS, re-checks every 4 s until Ollama runs, then downloads Gemma in one click (`POST /api/ollama` streams Ollama's pull progress; `src/components/LocalGemma.tsx`).
 - DEV post draft: `../deis-dev-post.md` (outside the repo). Remaining TODOs are author-only: own words, tester quotes, video link, screenshots.
 
 ## Open items

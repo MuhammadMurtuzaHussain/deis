@@ -20,6 +20,7 @@ import { LaneSwitch } from "./deck/LaneSwitch";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { KitQueue } from "./KitQueue";
 import { LicenceScreen } from "./Licence";
+import { DemoModelBanner } from "./LocalGemma";
 import { ModelSetup } from "./ModelSetup";
 import { ProfileScreen } from "./ProfileScreen";
 import { Settings } from "./Settings";
@@ -173,6 +174,7 @@ function Shell() {
       <div className="mx-auto grid w-full max-w-[1200px] gap-2 px-4 empty:hidden md:px-8 [&:not(:empty)]:pt-3">
         {locked && <LicenceBar />}
         <OfflineBanner />
+        <DemoModelBanner />
       </div>
       <main id="main" ref={mainRef} tabIndex={-1} className="mx-auto w-full max-w-[1200px] px-4 py-6 outline-none md:px-8 lg:py-10">
         <div key={key} className="route-fade">

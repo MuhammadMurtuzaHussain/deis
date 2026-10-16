@@ -105,10 +105,22 @@ export function Welcome() {
               )}
             </div>
             {hosted && (
-              <a href="/download" className="link mt-5 inline-flex min-h-11 items-center gap-2 text-body font-medium">
-                <DownloadSimple size={18} weight="bold" aria-hidden />
-                Get the app for Mac, Windows, Linux or Android
-              </a>
+              <>
+                <a href="/download" className="link mt-5 inline-flex min-h-11 items-center gap-2 text-body font-medium">
+                  <DownloadSimple size={18} weight="bold" aria-hidden />
+                  Get the app for Mac, Windows, Linux or Android
+                </a>
+                <p className="mt-3 flex max-w-[48ch] items-start gap-2 rounded-panel bg-accent-soft px-4 py-3 text-body text-ink">
+                  <Laptop size={18} aria-hidden className="mt-0.5 shrink-0" />
+                  <span>
+                    <span className="font-semibold">For the best results, run Gemma on your own computer.</span> The demo&apos;s Gemma is shared by everyone, so it can hit its limit.{" "}
+                    <a href="/download#gemma" className="underline underline-offset-2">
+                      Set it up in three steps
+                    </a>
+                    .
+                  </span>
+                </p>
+              </>
             )}
           </div>
 

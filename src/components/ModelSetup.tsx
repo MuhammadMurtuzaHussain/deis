@@ -1,11 +1,12 @@
 "use client";
 
 import { Check, Cloud, Desktop, HardDrives, Sparkle } from "@phosphor-icons/react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { DEFAULTS, type AiSettings } from "@/lib/ai/settings";
 import { api, ApiError } from "@/lib/client/api";
 import { effectiveModel, type EffectiveModel } from "@/lib/client/model";
 import { useStore } from "@/lib/client/store";
+import { GemmaPull, LocalSteps, OllamaDownload } from "./LocalGemma";
 import { CopyLine, PrivacyBadge, SpringSwitch } from "./settings/parts";
 import { betterWritingDefault, useOllama } from "./settings/useOllama";
 import { Button, Elapsed, Field, inputClass, Notice, PageHeader, Pill, selectClass } from "./ui";
@@ -85,6 +86,13 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
   const [customModel, setCustomModel] = useState(ai?.provider === "openai" ? ai.model : "");
   const [customKey, setCustomKey] = useState(ai?.provider === "openai" ? (ai.apiKey ?? "") : "");
   const { info: ollama, checking, refresh } = useOllama(hosted);
+  // Waiting for Ollama to be installed and opened: look again every few seconds, so the next step appears by itself.
+  const waiting = !hosted && ollama !== null && !ollama.running;
+  useEffect(() => {
+    if (!waiting) return;
+    const t = setInterval(() => void refresh(), 4000);
+    return () => clearInterval(t);
+  }, [waiting, refresh]);
   // "Better writing": the 12B model writes the kit. null: not decided by the user yet.
   const [betterPicked, setBetterWriting] = useState<boolean | null>(ai?.provider === "ollama" ? Boolean(ai.kitModel) : null);
   const [test, setTest] = useState<{ state: "idle" | "running" | "ok" | "error"; message?: string; since?: number }>({ state: "idle" });
@@ -157,6 +165,17 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
         <span className="mt-1 block">{current.privacy.sentence}</span>
       </Notice>
 
+      {hosted && (
+        <section aria-labelledby="run-local" className="mb-4 grid gap-3 rounded-panel border border-ink p-4 sm:p-5">
+          <h2 id="run-local" className="text-lead font-semibold text-ink">
+            For the best results, run Gemma on your own computer
+          </h2>
+          <p className="text-body text-ink-2">No shared limits, no waiting on a busy host, and your facts never leave your laptop. Three steps, about ten minutes, most of it the download.</p>
+          <LocalSteps />
+          <p className="text-caption text-ink-3">On a phone, or just want to try it now? A free Google AI Studio key, below, takes two minutes and isn&apos;t shared with anyone.</p>
+        </section>
+      )}
+
       <fieldset className="grid gap-3">
         <legend className="sr-only">AI model</legend>
 
@@ -167,7 +186,7 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
             setChoice={setPicked}
             icon={<Sparkle size={20} />}
             title="The demo's Gemma, in the cloud"
-            sub="Nothing to set up. Shared and rate limited, so it can be slow at busy times."
+            sub="Nothing to set up, but shared by everyone trying Deis and rate limited. Fine for a quick look; expect waits and limits at busy times."
             model={modelOf("demo")}
             inUse={inUse("demo")}
             disabled={!modelOf("demo").usable}
@@ -180,7 +199,7 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
           setChoice={setPicked}
           icon={<Desktop size={20} />}
           title="On this computer, with Ollama"
-          sub="Free and private. Needs about 8 GB of memory and a 7 GB download, and works offline."
+          sub="Recommended. Free, private, no limits, and works offline. Needs about 8 GB of memory and a 7 GB download, once."
           model={ollamaOpt}
           inUse={inUse("ollama")}
           disabled={hosted}
@@ -188,18 +207,27 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
           {ollama === null ? (
             <p className="text-body text-ink-2">Looking for Ollama…</p>
           ) : !ollama.running ? (
-            <div className="grid gap-3 text-body">
-              <p className="text-ink">Ollama isn&apos;t running. Install it from ollama.com, open it, then fetch Gemma once in a terminal:</p>
-              <CopyLine text={`ollama pull ${DEFAULTS.ollama}`} />
-              <div>
-                <Button size="sm" busy={checking} onClick={refresh}>
-                  Check again
-                </Button>
-              </div>
-            </div>
+            <ol className="grid list-decimal gap-4 pl-5 text-body text-ink-2 marker:font-mono marker:text-[12px] marker:text-ink-3">
+              <li>
+                <div className="grid gap-2">
+                  <span className="text-ink">Install Ollama, the free app that runs Gemma, then open it once.</span>
+                  <OllamaDownload />
+                </div>
+              </li>
+              <li>
+                <div className="grid gap-2">
+                  <span>Deis notices when Ollama is running and offers to download Gemma for you. No terminal needed.</span>
+                  <span>
+                    <Button size="sm" busy={checking} onClick={refresh}>
+                      Check now
+                    </Button>
+                  </span>
+                </div>
+              </li>
+            </ol>
           ) : (
             <div className="grid gap-4">
-              <Field label="Model" help={gemmaInstalled ? "Downloaded and ready." : "Not downloaded yet. Run this once in a terminal, then check again:"}>
+              <Field label="Model" help={gemmaInstalled ? "Downloaded and ready." : "Not downloaded yet. One click fetches it, once."}>
                 {(id, d) => (
                   <select id={id} aria-describedby={d} value={ollamaModel} onChange={(e) => setOllamaModel(e.target.value)} className={selectClass}>
                     {[...new Set([DEFAULTS.ollama, ...ollama.models.map((m) => m.name)])].map((m) => {
@@ -215,13 +243,19 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
                 )}
               </Field>
               {!gemmaInstalled && (
-                <div className="grid gap-2">
-                  <CopyLine text={`ollama pull ${ollamaModel}`} />
-                  <div>
-                    <Button size="sm" busy={checking} onClick={refresh}>
-                      Check again
-                    </Button>
-                  </div>
+                <div className="grid gap-3">
+                  <GemmaPull model={ollamaModel} sizeLabel={ollamaModel === DEFAULTS.ollama ? "about 7 GB" : ollamaModel === DEFAULTS.kitModel ? "about 8 GB" : "a few GB"} onDone={refresh} />
+                  <details className="text-caption text-ink-3">
+                    <summary className="cursor-pointer">Or fetch it in a terminal</summary>
+                    <div className="mt-2 grid gap-2">
+                      <CopyLine text={`ollama pull ${ollamaModel}`} />
+                      <div>
+                        <Button size="sm" busy={checking} onClick={refresh}>
+                          Check again
+                        </Button>
+                      </div>
+                    </div>
+                  </details>
                 </div>
               )}
               {ollamaModel !== DEFAULTS.kitModel && (
@@ -234,10 +268,10 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
                     description={
                       kitInstalled
                         ? `The larger ${DEFAULTS.kitModel} writes your CV, letter and answers. Best with 24 GB of memory or more${ollama.memoryGb ? `; this computer has ${ollama.memoryGb} GB` : ""}.`
-                        : `Needs ${DEFAULTS.kitModel}, which isn't downloaded yet. Fetch it once in a terminal (about 8 GB), then check again.`
+                        : `Needs ${DEFAULTS.kitModel}, which isn't downloaded yet.`
                     }
                   />
-                  {!kitInstalled && <CopyLine text={`ollama pull ${DEFAULTS.kitModel}`} />}
+                  {!kitInstalled && <GemmaPull model={DEFAULTS.kitModel} sizeLabel="about 8 GB" onDone={refresh} primary={false} />}
                 </div>
               )}
             </div>

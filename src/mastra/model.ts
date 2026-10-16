@@ -239,6 +239,15 @@ export async function localModels(): Promise<LocalModel[] | null> {
   return installed.models;
 }
 
+/**
+ * Ask Ollama on this computer to download a model: its own NDJSON progress stream
+ * ({status, total, completed} lines, then {status: "success"} or {error}).
+ */
+export async function pullLocalModel(model: string, signal?: AbortSignal): Promise<Response> {
+  installed = null;
+  return netFetch("ollama", `${ollamaUrl()}/pull`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ model, stream: true }), signal });
+}
+
 /** The Gemma to use on this computer: a name, false when Ollama has none, null when we don't know yet. */
 function localGemma(): string | false | null {
   if (!installed || Date.now() - installed.at > 60_000) void localModels();
