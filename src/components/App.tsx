@@ -1,6 +1,6 @@
 "use client";
 
-import { Cards, CloudSlash, Gear, GithubLogo, IdentificationCard, ListChecks, LockSimple, WifiSlash } from "@phosphor-icons/react";
+import { Cards, CloudSlash, DownloadSimple, Gear, GithubLogo, IdentificationCard, ListChecks, LockSimple, WifiSlash } from "@phosphor-icons/react";
 import { LayoutGroup, motion } from "motion/react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -103,7 +103,7 @@ function DemoRoute({ persona }: { persona: string }) {
 }
 
 function Shell() {
-  const { route, profile, licence, setLicence, locked } = useStore();
+  const { route, profile, licence, setLicence, locked, status } = useStore();
   const mainRef = useRef<HTMLElement>(null);
   const r: Route | null = profile ? (route ?? (isOnboarded(profile) ? { name: "deck" } : { name: "welcome" })) : null;
   // A locked licence is read-only (OFF-9): anything that leads to new kits shows the licence screen.
@@ -184,6 +184,12 @@ function Shell() {
           <span className="underline underline-offset-2">Source code</span> (AGPL-3.0)
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
+        {status && !status.desktop && (
+          <a href="/download" className="ml-6 inline-flex min-h-11 items-center gap-2 text-caption text-ink-3 hover:text-ink">
+            <DownloadSimple size={16} aria-hidden />
+            <span className="underline underline-offset-2">Desktop app</span> for Mac, Windows and Linux
+          </a>
+        )}
       </footer>
       <TabBar active={active} />
     </div>

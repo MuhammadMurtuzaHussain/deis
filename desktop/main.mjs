@@ -7,6 +7,7 @@ import { createServer } from "node:net";
 import path from "node:path";
 import { mkdirSync, openSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { startUpdates } from "./updates.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ORIGIN = "deis://app";
@@ -21,6 +22,9 @@ const config = (() => {
 const FEED_URL = process.env.DEIS_FEED_URL ?? config.feedUrl ?? "https://deis-bu83.onrender.com";
 // `--offline` locks offline mode on for this run; otherwise File > Work offline switches it.
 const FORCED_OFFLINE = process.argv.includes("--offline");
+// CI's launch test: start the server, load the window, exit 0. Any failure exits 1 with no dialog.
+const SMOKE = Boolean(process.env.DEIS_SMOKE);
+let checkForUpdates = () => {};
 
 protocol.registerSchemesAsPrivileged([{ scheme: "deis", privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } }]);
 
@@ -108,6 +112,11 @@ async function recover() {
 
 function fail(e, title = "Deis couldn't start") {
   console.error(e);
+  if (SMOKE) {
+    server?.kill();
+    app.exit(1);
+    return;
+  }
   dialog.showErrorBox(title, `${e?.message ?? e}\n\nThe server's log is at:\n${logFile()}`);
   app.isQuitting = true;
   server?.kill();
@@ -164,6 +173,7 @@ function buildMenu() {
       { role: "editMenu" },
       { role: "viewMenu" },
       { role: "windowMenu" },
+      { role: "help", submenu: [{ label: "Check for updates…", click: () => void checkForUpdates(true) }, { label: "Download page", click: () => openOutside(`${FEED_URL}/download`) }] },
     ]),
   );
 }
@@ -240,6 +250,14 @@ app.whenReady().then(async () => {
     // Settings can switch offline mode too; the window filter follows within a few seconds.
     setInterval(() => void readOffline(), 5000).unref();
     await createWindow();
+    if (SMOKE) {
+      console.log("[deis] smoke test passed: server answered and the window loaded");
+      app.isQuitting = true;
+      server?.kill();
+      app.exit(0);
+      return;
+    }
+    checkForUpdates = startUpdates({ app, dialog, shell, isOffline: () => offline, downloadPage: `${FEED_URL}/download` });
   } catch (e) {
     fail(e);
   }

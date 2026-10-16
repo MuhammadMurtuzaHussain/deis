@@ -57,3 +57,6 @@ CLAUDE.local.md
 # Offline: the generated starter job list and the server's local state (offline.json)
 /public/starter-jobs.json
 /.deis-state/
+
+# desktop: bundled at build time by scripts/desktop-prepare.mjs
+/desktop/updater.cjs

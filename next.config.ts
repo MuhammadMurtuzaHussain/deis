@@ -1,5 +1,6 @@
 import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
+import path from "node:path";
 
 // Defence in depth: no page renders untrusted HTML, but nothing should frame Deis or
 // change where its links and forms point. No script-src: Next's inline scripts and the
@@ -19,6 +20,8 @@ const nextConfig: NextConfig = {
   // Loaded from node_modules at runtime, so every route shares one Key Value connection.
   serverExternalPackages: ["ioredis"],
   poweredByHeader: false,
+  // The desktop app's server lives inside the signed app bundle, so its cache stays in memory.
+  ...(process.env.DEIS_DESKTOP_BUILD === "1" ? { cacheHandler: path.join(process.cwd(), "desktop-cache-handler.cjs"), cacheMaxMemorySize: 0 } : {}),
   // Bottom left covers the "AI model" label in the nav.
   devIndicators: { position: "bottom-right" },
   headers: async () => [{ source: "/:path*", headers: security }],

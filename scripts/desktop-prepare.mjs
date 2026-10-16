@@ -14,11 +14,15 @@ if (process.argv.includes("--build")) {
   } catch {
     console.warn(existsSync("public/starter-jobs.json") ? "Feed snapshot failed; keeping the last public/starter-jobs.json." : "Feed snapshot failed; building without starter jobs.");
   }
-  execSync("next build", { stdio: "inherit", env: { ...process.env, NEXT_PUBLIC_SENTRY_DSN: "" } });
+  execSync("next build", { stdio: "inherit", env: { ...process.env, NEXT_PUBLIC_SENTRY_DSN: "", DEIS_DESKTOP_BUILD: "1" } });
 }
 
 const out = ".next/standalone";
 if (!existsSync(`${out}/server.js`)) throw new Error("Run `next build` first (output: standalone).");
+// Without the in-memory cache the server writes pages into the signed app bundle (next.config.ts).
+if (!readFileSync(`${out}/.next/required-server-files.json`, "utf8").includes("desktop-cache-handler")) {
+  throw new Error("This build has no desktop cache handler. Build with DEIS_DESKTOP_BUILD=1 (`pnpm desktop:build` does).");
+}
 rmSync(`${out}/.next/static`, { recursive: true, force: true });
 cpSync(".next/static", `${out}/.next/static`, { recursive: true });
 cpSync("public", `${out}/public`, { recursive: true });
@@ -55,3 +59,8 @@ for (let round = 0, left = links(ship); left.length; left = links(ship)) {
   }
 }
 console.log("standalone server ready in", out, "and, without symlinks, in", ship);
+
+// The packaged app ships no node_modules, so electron-updater (Windows and Linux updates,
+// desktop/updates.mjs) goes in as one bundled file. Electron itself stays external.
+execSync("npx esbuild node_modules/electron-updater/out/main.js --bundle --platform=node --format=cjs --target=node22 --external:electron --minify --log-level=warning --outfile=desktop/updater.cjs", { stdio: "inherit" });
+console.log("bundled electron-updater into desktop/updater.cjs");

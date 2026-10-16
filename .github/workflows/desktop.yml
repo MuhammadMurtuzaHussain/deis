@@ -1,6 +1,10 @@
-# Desktop installers for macOS, Windows and Linux. Run by hand from the Actions tab (the
-# installers are kept as artifacts for 14 days), or by pushing a v* tag, which also
-# publishes them as a GitHub Release. Unsigned for now: the README says how to open them.
+# Desktop installers for macOS (Apple Silicon and Intel), Windows and Linux. Run by hand from
+# the Actions tab (installers kept as artifacts for 14 days), or by pushing a v* tag, which
+# also publishes them as a GitHub Release. Each packaged app is launched once before it's
+# kept (scripts/smoke-desktop.mjs). File names don't change between versions, so
+# releases/latest/download/<name> always points at the newest one (the /download page uses it),
+# and latest.yml / latest-linux.yml let installed copies on Windows and Linux update themselves.
+# Unsigned for now: the README and /download say how to open them.
 name: Desktop installers
 
 on:
@@ -20,6 +24,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - run: pnpm exec tsc --noEmit
       - run: pnpm test
 
   build:
@@ -29,14 +34,32 @@ jobs:
       matrix:
         include:
           - os: macos-latest
+            name: mac-arm64
             target: --mac dmg --arm64
-            files: release/*.dmg
+            app: release/mac-arm64/Deis.app/Contents/MacOS/Deis
+            files: |
+              release/*.dmg
+          - os: macos-15-intel
+            name: mac-x64
+            target: --mac dmg --x64
+            app: release/mac/Deis.app/Contents/MacOS/Deis
+            files: |
+              release/*.dmg
           - os: windows-latest
+            name: windows-x64
             target: --win nsis --x64
-            files: release/*.exe
+            app: release/win-unpacked/Deis.exe
+            files: |
+              release/*.exe
+              release/*.exe.blockmap
+              release/latest.yml
           - os: ubuntu-latest
+            name: linux-x64
             target: --linux AppImage --x64
-            files: release/*.AppImage
+            app: release/linux-unpacked/deis
+            files: |
+              release/*.AppImage
+              release/latest-linux.yml
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -46,17 +69,25 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # desktop:build also writes the starter jobs for an offline first run (soft-fails).
-      # The window never reports to Sentry; desktop-prepare fails the build if a DSN got inlined.
+      # desktop:build also writes the starter jobs for an offline first run (soft-fails) and bundles
+      # electron-updater. The window never reports to Sentry; desktop-prepare fails the build if a DSN got inlined.
       - run: pnpm desktop:build
         env:
           NEXT_PUBLIC_SENTRY_DSN: ""
       - run: pnpm exec electron-builder ${{ matrix.target }} --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - name: Launch test
+        if: runner.os != 'Linux'
+        run: node scripts/smoke-desktop.mjs "${{ matrix.app }}"
+      - name: Launch test (virtual display)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb > /dev/null
+          xvfb-run -a node scripts/smoke-desktop.mjs "${{ matrix.app }}" --no-sandbox
       - uses: actions/upload-artifact@v4
         with:
-          name: deis-${{ matrix.os }}
+          name: deis-${{ matrix.name }}
           path: ${{ matrix.files }}
           retention-days: 14
 

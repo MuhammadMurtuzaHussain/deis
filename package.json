@@ -50,6 +50,7 @@
     "@types/react-dom": "^19.3.0",
     "electron": "^44.7.0",
     "electron-builder": "^26.15.3",
+    "electron-updater": "^6.8.9",
     "eslint": "^9.39.5",
     "eslint-config-next": "16.3.8",
     "tailwindcss": "^4.3.3",
@@ -71,12 +72,14 @@
         "dmg"
       ],
       "category": "public.app-category.productivity",
-      "identity": "-"
+      "identity": "-",
+      "artifactName": "Deis-mac-${arch}.${ext}"
     },
     "win": {
       "target": [
         "nsis"
-      ]
+      ],
+      "artifactName": "Deis-windows-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": true,
@@ -86,14 +89,25 @@
       "target": [
         "AppImage"
       ],
-      "category": "Office"
+      "category": "Office",
+      "artifactName": "Deis-linux-${arch}.${ext}"
     },
     "files": [
       "main.mjs",
+      "updates.mjs",
+      "updater.cjs",
       "package.json",
       "config.json",
       "!**/node_modules/**"
     ],
-    "afterPack": "scripts/after-pack.cjs"
+    "afterPack": "scripts/after-pack.cjs",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "MuhammadMurtuzaHussain",
+        "repo": "deis",
+        "releaseType": "release"
+      }
+    ]
   }
 }

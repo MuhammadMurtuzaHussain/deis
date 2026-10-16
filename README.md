@@ -68,13 +68,15 @@ Your profile never leaves the browser except as the facts sent with a request to
 
 The desktop app for macOS, Windows and Linux runs everything on your computer: your profile, the job deck and, with [Ollama](https://ollama.com), Gemma itself. It's €9 once, after a 14-day free trial with everything included. The money pays for the signed app, updates and the daily Irish job feed.
 
+**[Download Deis](https://deis-bu83.onrender.com/download)** for a Mac (Apple silicon or Intel), Windows or Linux. Windows and Linux copies update themselves; on a Mac, Deis tells you when a new version is out.
+
 The installers aren't signed with an Apple or Microsoft certificate yet, so the first time you open Deis:
 
 - **macOS:** open the app once, then go to System Settings, Privacy & Security, and choose *Open Anyway* next to Deis.
 - **Windows:** on the SmartScreen warning, choose *More info*, then *Run anyway*.
 - **Linux:** make the AppImage executable (`chmod +x Deis-*.AppImage`) and run it.
 
-Builds come from the [Desktop installers](.github/workflows/desktop.yml) workflow.
+Builds come from the [Desktop installers](.github/workflows/desktop.yml) workflow: each one is launched once in CI before it's kept, and a `v*` tag publishes them as a [GitHub Release](https://github.com/MuhammadMurtuzaHussain/deis/releases). To release an update, bump `version` in `desktop/package.json` and push a new tag.
 
 ## Run it from source
 
