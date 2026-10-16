@@ -1,162 +1,133 @@
 "use client";
 
-import { ArrowLeft, ArrowRight } from "@phosphor-icons/react";
-import { useState, type ReactNode } from "react";
+import { ArrowLeft, ArrowRight, PencilSimple } from "@phosphor-icons/react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/lib/client/store";
-import { CATEGORIES } from "@/lib/jobs/categories";
-import { LANGUAGES, type Language } from "@/lib/jobs/languages";
-import { WORK_STATUS_LABEL, WORK_STATUSES } from "@/lib/jobs/rightToWork";
-import { STAGE_LABEL, STAGES, emptyPreferences, type Preferences } from "@/lib/profile/types";
-import { Wordmark } from "./App";
-import { Button, Chip } from "./ui";
+import { emptyPreferences, type Preferences } from "@/lib/profile/types";
+import { STEPS, summary } from "./onboarding/steps";
+import { Button, Notice, StepBar, Wordmark } from "./ui";
 
-// The 90-second check-in. One question per screen, tap to answer, every answer
-// changeable later in Profile. Each question says why it's asked: everything here
-// is a filter on the deck, nothing is sent anywhere.
+// The 90-second check-in. One question per screen, tap to answer, then a summary to check
+// before going on. Every answer can be changed later in Profile. There's no PageHeader
+// here, so moving between steps sets the focus and document.title itself (the shell only
+// does that on a route change).
 
-const CITY_CHOICES = ["Dublin", "Cork", "Galway", "Limerick", "Waterford", "Athlone", "Sligo", "Kilkenny"];
-const COMMON_LANGUAGES: Language[] = ["Irish", "French", "German", "Spanish", "Italian", "Polish", "Portuguese", "Dutch", "Ukrainian", "Chinese", "Hindi", "Arabic"];
-
-type Step = { title: string; why: string; valid: (p: Preferences) => boolean; body: (p: Preferences, set: (p: Preferences) => void) => ReactNode };
-
-const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
-
-const STEPS: Step[] = [
-  {
-    title: "Where in Ireland could you work?",
-    why: "Pick as many as you like. Deis only shows jobs in these places, plus remote ones if you want them.",
-    valid: (p) => p.cities.length > 0 || p.remoteOk,
-    body: (p, set) => (
-      <>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {CITY_CHOICES.map((c) => (
-            <Chip key={c} on={p.cities.includes(c)} onClick={() => set({ ...p, cities: toggle(p.cities, c) })}>
-              {c}
-            </Chip>
-          ))}
-        </div>
-        <div className="mt-4">
-          <Chip on={p.remoteOk} onClick={() => set({ ...p, remoteOk: !p.remoteOk })}>
-            Remote roles in Ireland are fine too
-          </Chip>
-        </div>
-      </>
-    ),
-  },
-  {
-    title: "Where are you at?",
-    why: "Deis hides jobs that ask for 3 or more years, and labels the ones that ask for 2.",
-    valid: (p) => Boolean(p.stage),
-    body: (p, set) => (
-      <div className="grid gap-2 sm:grid-cols-3">
-        {STAGES.map((s) => (
-          <Chip key={s} on={p.stage === s} onClick={() => set({ ...p, stage: s })}>
-            {STAGE_LABEL[s]}
-          </Chip>
-        ))}
-      </div>
-    ),
-  },
-  {
-    title: "Can you work in Ireland now?",
-    why: "Some postings rule out sponsorship or limit who can apply. Deis reads that for you and hides the ones that rule you out. This stays on your device.",
-    valid: (p) => Boolean(p.workStatus),
-    body: (p, set) => (
-      <div className="grid gap-2 sm:grid-cols-2">
-        {WORK_STATUSES.map((s) => (
-          <Chip key={s} on={p.workStatus === s} onClick={() => set({ ...p, workStatus: s })}>
-            {WORK_STATUS_LABEL[s]}
-          </Chip>
-        ))}
-      </div>
-    ),
-  },
-  {
-    title: "What kind of work are you after?",
-    why: "Up to five. Each one is a shared search across Ireland, so pick the ones you'd really apply for.",
-    valid: (p) => p.roles.length > 0,
-    body: (p, set) => (
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {CATEGORIES.map((c) => (
-          <Chip key={c.id} on={p.roles.includes(c.id)} disabled={!p.roles.includes(c.id) && p.roles.length >= 5} onClick={() => set({ ...p, roles: toggle(p.roles, c.id) })}>
-            {c.label}
-          </Chip>
-        ))}
-      </div>
-    ),
-  },
-  {
-    title: "Any languages besides English?",
-    why: "Lots of Dublin roles need a second language. Deis hides the ones that need a language you don't have. Skip if it's just English.",
-    valid: () => true,
-    body: (p, set) => (
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {COMMON_LANGUAGES.filter((l) => LANGUAGES.includes(l)).map((l) => (
-          <Chip key={l} on={p.languages.includes(l)} onClick={() => set({ ...p, languages: toggle(p.languages, l) })}>
-            {l}
-          </Chip>
-        ))}
-      </div>
-    ),
-  },
-  {
-    title: "Show roles that ask for 2 years?",
-    why: "Plenty of graduates get these. Deis labels them as a stretch so you can decide card by card.",
-    valid: () => true,
-    body: (p, set) => (
-      <div className="grid gap-2 sm:grid-cols-2">
-        <Chip on={p.showStretch} onClick={() => set({ ...p, showStretch: true })}>
-          Yes, show me stretch roles
-        </Chip>
-        <Chip on={!p.showStretch} onClick={() => set({ ...p, showStretch: false })}>
-          No, early career only
-        </Chip>
-      </div>
-    ),
-  },
-];
+const TOTAL = STEPS.length + 1;
 
 export function CheckIn() {
-  const { profile, setPreferences, go, ai, status } = useStore();
+  const { profile, setPreferences, go, ai, status, effectiveModel } = useStore();
   const [prefs, setPrefs] = useState<Preferences>(() => ({ ...emptyPreferences(), ...profile?.preferences }));
   const [i, setI] = useState(0);
+  // From the summary, "Change" goes to one step and Continue comes straight back.
+  const [returnToSummary, setReturnToSummary] = useState(false);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const first = useRef(true);
+  const atSummary = i === STEPS.length;
   const step = STEPS[i];
-  const last = i === STEPS.length - 1;
+  const title = atSummary ? "Check your answers" : step.title;
+
+  useEffect(() => {
+    document.title = `${title} · Deis`;
+    // The first step is focused by the shell's route change; later ones by us.
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    window.scrollTo({ top: 0 });
+    heading.current?.focus({ preventScroll: true });
+  }, [i, title]);
 
   const next = async () => {
     await setPreferences(prefs);
-    if (!last) return setI(i + 1);
+    setI(returnToSummary ? STEPS.length : i + 1);
+    setReturnToSummary(false);
+  };
+
+  const finish = async () => {
+    await setPreferences(prefs);
     // Next: get a profile in. That needs a model unless the web demo's own Gemma is there.
-    const needsModel = !ai && !(status?.hosted && status.demoModel);
+    const needsModel = !ai && !(status?.hosted && status.demoModel) && !effectiveModel.standIn;
     go({ name: needsModel ? "model" : "profile" });
   };
 
+  const back = () => (i === 0 ? go({ name: "welcome" }) : setI(i - 1));
+  const said = summary(prefs);
+  const allValid = STEPS.every((s) => s.valid(prefs));
+
   return (
-    <main className="mx-auto flex min-h-[100dvh] max-w-3xl flex-col px-4 sm:px-8">
-      <header className="flex h-20 items-center justify-between">
-        <Wordmark />
-        <p className="num text-sm text-ink-3" aria-live="polite">
-          {i + 1} of {STEPS.length}
-        </p>
+    <main className="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 sm:px-8">
+      <header className="grid gap-3 pt-5 pb-2">
+        <div className="flex items-center justify-between gap-4">
+          <Wordmark />
+          <p className="num text-caption text-ink-2">
+            Step {i + 1} of {TOTAL}
+          </p>
+        </div>
+        <StepBar total={TOTAL} current={i + 1} label="Check-in progress" />
       </header>
 
-      <section aria-labelledby="q" className="flex-1 py-8">
-        <h1 id="q" className="text-3xl font-bold leading-tight text-balance md:text-4xl">
-          {step.title}
+      <section aria-labelledby="q" className="flex-1 py-8 sm:py-12">
+        <p aria-hidden="true" lang="ga" className="eyebrow mb-1">
+          {atSummary ? "Achoimre" : "Ceisteanna"}
+        </p>
+        <h1 id="q" ref={heading} tabIndex={-1} data-page-title className="display text-title text-ink text-balance outline-none sm:text-page">
+          {title}
         </h1>
-        <p className="mt-3 max-w-[60ch] text-ink-2">{step.why}</p>
-        <div className="mt-8">{step.body(prefs, setPrefs)}</div>
+
+        {atSummary ? (
+          <>
+            <p className="mt-3 max-w-[60ch] text-body text-ink-2 sm:text-[16px]">This is what Deis filters the deck by. You can change any of it later in Profile.</p>
+            <dl className="mt-8 divide-y divide-line rounded-surface border border-line bg-raised shadow-card">
+              {STEPS.map((s, n) => (
+                <div key={s.id} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-3 sm:px-5">
+                  <div className="min-w-0 flex-1">
+                    <dt className="text-caption text-ink-3">{s.short}</dt>
+                    <dd className="text-body text-ink">{said[s.id]}</dd>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setReturnToSummary(true);
+                      setI(n);
+                    }}
+                  >
+                    <PencilSimple size={16} aria-hidden />
+                    Change<span className="sr-only"> {s.short.toLowerCase()}</span>
+                  </Button>
+                </div>
+              ))}
+            </dl>
+            {!allValid && (
+              <Notice tone="warn" className="mt-4">
+                A question still needs an answer. Use Change to go back to it.
+              </Notice>
+            )}
+          </>
+        ) : (
+          <>
+            <p className="mt-3 max-w-[60ch] text-body text-ink-2 sm:text-[16px]">{step.why}</p>
+            <div className="mt-8">{step.body(prefs, setPrefs)}</div>
+          </>
+        )}
       </section>
 
-      <footer className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-line bg-bg py-4">
-        <Button variant="ghost" onClick={() => (i === 0 ? go({ name: "welcome" }) : setI(i - 1))}>
+      <footer className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-line bg-bg py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <Button variant="ghost" onClick={back}>
           <ArrowLeft size={18} aria-hidden />
           Back
         </Button>
-        <Button variant="primary" onClick={next} disabled={!step.valid(prefs)}>
-          {last ? "Now, your CV" : "Continue"}
-          <ArrowRight size={18} aria-hidden />
-        </Button>
+        {atSummary ? (
+          <Button variant="primary" onClick={finish} disabled={!allValid}>
+            Now, your CV
+            <ArrowRight size={18} aria-hidden />
+          </Button>
+        ) : (
+          <Button variant="primary" onClick={next} disabled={!step.valid(prefs)}>
+            {returnToSummary ? "Back to the summary" : "Continue"}
+            <ArrowRight size={18} aria-hidden />
+          </Button>
+        )}
       </footer>
     </main>
   );

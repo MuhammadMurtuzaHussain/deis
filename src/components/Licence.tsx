@@ -1,33 +1,36 @@
 "use client";
 
-import { Key } from "@phosphor-icons/react";
+import { Check, GithubLogo, Key } from "@phosphor-icons/react";
 import { useState } from "react";
 import { api, ApiError } from "@/lib/client/api";
 import { routeHref, useStore, type Licence as LicenceInfo } from "@/lib/client/store";
-import { Button, Field, inputClass, LinkButton, Notice } from "./ui";
+import { Button, EYEBROW, Field, inputClass, LinkButton, Notice, PageHeader, Surface } from "./ui";
 
 // The desktop app's licence: try everything for 14 days, then a Polar licence key.
-// The code is AGPL, so this is honest about what the money pays for.
+// The code is AGPL, so this is honest about what the money pays for. LicenceScreen is
+// the read-only lock bar's "Buy or enter a key" page (#/licence, inside the shell).
+
+const SOURCE_URL = "https://github.com/MuhammadMurtuzaHussain/deis";
 
 export function LicenceForm({ licence, onChange }: { licence: LicenceInfo; onChange: (l: LicenceInfo) => void }) {
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
-  // Checking a key needs Polar, so it waits until offline mode is off.
-  const offline = (useStore().status?.offline?.mode ?? "off") !== "off";
+  // Checking a key needs Polar, so it waits until offline mode is off and the network is back.
+  const { isOffline } = useStore();
 
   if (licence.state === "off") return null;
-  if (licence.state === "licensed") return <p className="text-ink-2">Licensed{licence.customer ? ` to ${licence.customer}` : ""}. Thank you for supporting Deis.</p>;
+  if (licence.state === "licensed") return <p className="text-body text-ink-2">Licensed{licence.customer ? ` to ${licence.customer}` : ""}. Thank you for supporting Deis.</p>;
 
   return (
     <div className="grid gap-4">
       {licence.state === "trial" && (
-        <p className="text-ink-2">
-          Free trial: <span className="num font-bold text-ink">{licence.daysLeft}</span> {licence.daysLeft === 1 ? "day" : "days"} left with everything included.
+        <p className="text-body text-ink-2">
+          Free trial: <span className="display num text-lead text-ink">{licence.daysLeft}</span> {licence.daysLeft === 1 ? "day" : "days"} left with everything included.
         </p>
       )}
       <form
-        className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end"
+        className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start"
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
@@ -43,39 +46,79 @@ export function LicenceForm({ licence, onChange }: { licence: LicenceInfo; onCha
           }
         }}
       >
-        <Field label="Licence key" help="It's in your receipt email from Polar.">
+        <Field label="Licence key" help={isOffline ? "Checking a key needs the internet. Turn offline mode off, or reconnect, to unlock." : "It's in your receipt email from Polar."}>
           {(id, d) => <input id={id} aria-describedby={d} value={key} onChange={(e) => setKey(e.target.value)} className={inputClass} autoComplete="off" spellCheck={false} />}
         </Field>
-        <Button type="submit" variant="primary" disabled={busy || offline || key.trim().length < 8}>
-          <Key size={18} aria-hidden />
-          {busy ? "Checking…" : "Unlock"}
+        <Button type="submit" variant="primary" busy={busy} disabled={isOffline || key.trim().length < 8} className="sm:mt-[30px]">
+          {!busy && <Key size={18} aria-hidden />}
+          {busy ? "Checking" : "Unlock"}
         </Button>
       </form>
-      {offline && <p className="text-sm text-ink-2">Deis is in offline mode. Turn it off to check a key.</p>}
       {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
       {licence.buyUrl && (
         <div className="flex flex-wrap items-center gap-3">
           <LinkButton href={licence.buyUrl}>Get a key, €9 once</LinkButton>
-          <span className="text-sm text-ink-3">Or build Deis yourself from the open source code, free.</span>
+          <span className="text-caption text-ink-2">Or build Deis yourself from the open source code, free.</span>
         </div>
       )}
     </div>
   );
 }
 
+const PAYS_FOR = [
+  "The signed desktop app, so your computer trusts it without a terminal",
+  "Updates as job boards and models change",
+  "The daily Irish job feed the app reads",
+];
+
 export function LicenceScreen({ licence, onChange }: { licence: LicenceInfo; onChange: (l: LicenceInfo) => void }) {
+  const ended = licence.state === "locked";
   return (
-    <main className="mx-auto grid min-h-[100dvh] max-w-xl content-center gap-6 px-6">
-      <span className="ga text-3xl">Deis</span>
-      <h1 className="text-3xl font-bold">Your free trial has ended</h1>
-      <p className="text-ink-2">
-        Your profile and applications are safe on this computer. A licence key keeps the app, its updates and the daily Irish job feed going, for €9 once. No subscription.
-      </p>
-      <LicenceForm licence={licence} onChange={onChange} />
-      <p className="text-ink-2">
-        You can still <a href={routeHref({ name: "tracker" })} className="font-medium underline">read your applications</a> and{" "}
-        <a href={routeHref({ name: "settings" })} className="font-medium underline">export your data</a>.
-      </p>
-    </main>
+    <div className="max-w-3xl">
+      <PageHeader
+        eyebrow={EYEBROW.licence}
+        title={ended ? "Your free trial has ended" : "Licence"}
+        description={
+          ended
+            ? "Your profile and applications are safe on this computer. Deis is read-only until you enter a key: you can still read, export and change settings."
+            : "Try everything for 14 days. After that, a key keeps Deis building kits."
+        }
+      />
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <Surface raised className="grid content-start gap-5 p-5 sm:p-6">
+          <p className="display text-title text-ink">
+            <span className="num">€9</span> once. No subscription.
+          </p>
+          <LicenceForm licence={licence} onChange={onChange} />
+        </Surface>
+
+        <div className="grid content-start gap-4">
+          <div>
+            <h2 className="text-body font-bold text-ink">What the €9 pays for</h2>
+            <ul className="mt-2 grid gap-2">
+              {PAYS_FOR.map((t) => (
+                <li key={t} className="flex items-start gap-2 text-body text-ink-2">
+                  <Check size={16} weight="bold" aria-hidden className="mt-1 shrink-0 text-ink" />
+                  {t}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="text-body text-ink-2">
+            The code is free under AGPL-3.0: you can read every line, build it and run it yourself.{" "}
+            <a href={SOURCE_URL} target="_blank" rel="noreferrer noopener" className="link inline-flex items-center gap-1">
+              <GithubLogo size={16} aria-hidden />
+              Source code<span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          </p>
+          {ended && (
+            <p className="text-body text-ink-2">
+              Meanwhile, <a href={routeHref({ name: "tracker" })} className="link">read your applications</a> or <a href={routeHref({ name: "settings" })} className="link">export your data</a>.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

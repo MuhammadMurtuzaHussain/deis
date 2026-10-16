@@ -1,31 +1,40 @@
 "use client";
 
-import { ArrowArcLeft, ArrowClockwise, BookmarkSimple, Check, X } from "@phosphor-icons/react";
+import { Cards, WarningCircle } from "@phosphor-icons/react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { animate, motion, useMotionValue, useReducedMotion, useTransform, type PanInfo } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence } from "motion/react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { CardWhy } from "@/lib/ai/schema";
-import { api, ApiError } from "@/lib/client/api";
-import { db, getMeta, setMeta, type CardCache, type Swipe } from "@/lib/client/db";
+import { api, ApiError, isAbort, isPausable } from "@/lib/client/api";
+import { db, factsKey, getCard, getMeta, putCard, setMeta, type CardCache } from "@/lib/client/db";
 import { newApplication } from "@/lib/client/kit";
 import { useStore } from "@/lib/client/store";
 import { categoryById } from "@/lib/jobs/categories";
-import { buildDeck, HIDDEN_COPY, type DeckEntry, type HiddenReason } from "@/lib/jobs/rank";
+import { buildDeck, profileTerms, type DeckEntry } from "@/lib/jobs/rank";
+import { workFit } from "@/lib/jobs/rightToWork";
 import type { ScoredJob } from "@/lib/jobs/types";
+import { AddJobButton } from "./AddJob";
+import { ActionBar, KeyHint } from "./deck/ActionBar";
+import { Inspector } from "./deck/Inspector";
+import { hiddenBars, pastedFirst, type Dir } from "./deck/logic";
+import { SwipeCard } from "./deck/SwipeCard";
+import { useFeed } from "./deck/useFeed";
+import { useSwipeDeck } from "./deck/useSwipeDeck";
 import { JobCard } from "./JobCard";
-import { useKitQueue } from "./KitQueue";
-import { Button, Dialog, LinkButton, Notice } from "./ui";
+import { Button, dismissToast, Dialog, EmptyState, EYEBROW, LinkButton, Notice, PageHeader, Skeleton, toast } from "./ui";
 
 // The deck. Code decides which cards you see and in what order (src/lib/jobs/rank.ts);
-// Gemma only writes the "why" lines, and only for the next three cards, so the model
-// never reads a job you won't see. Swipe, drag, click or use the arrow keys.
+// Gemma only writes the "how you match" lines, and only for the next three cards, so the
+// model never reads a job you won't see. Drag, the round buttons or the arrow keys decide.
+// Jobs come from this device first (useFeed), so the deck works offline.
 
-const FEED_TTL = 6 * 3600_000;
-type FeedState = { jobs: ScoredJob[]; at: number } | null;
 type Lane = "quick" | "careful";
+type Decision = { id: string; dir: Dir; job: ScoredJob };
+type WhyError = { message: string; retry: boolean };
 
 const SKIP_REASONS = ["Too senior", "Wrong place", "Not my field", "Pay too low", "Company"];
 
+/** The first visit: no saved jobs yet, so say what Deis is doing while the boards are read. */
 function DeckLoading({ categories }: { categories: string[] }) {
   const lines = ["Reading the job boards of 30 employers in Ireland", ...categories.map((c) => `Searching Google Jobs for ${categoryById(c)?.label.toLowerCase() ?? c} roles`), "Hiding senior roles and ones that rule you out", "Ranking what's left by your profile"];
   const [i, setI] = useState(0);
@@ -34,103 +43,61 @@ function DeckLoading({ categories }: { categories: string[] }) {
     return () => clearInterval(t);
   }, [lines.length]);
   return (
-    <div className="mx-auto w-full max-w-md" aria-busy="true">
-      <div className="relative h-[520px]">
-        <div aria-hidden className="absolute inset-x-8 top-6 bottom-0 rounded-card border border-line bg-surface-2" />
-        <div aria-hidden className="absolute inset-x-4 top-3 bottom-3 rounded-card border border-line bg-surface-2" />
-        <div className="absolute inset-0 bottom-6 grid content-start gap-4 rounded-card border border-line bg-surface p-6 shadow-lift">
-          <div className="skeleton h-4 w-1/3" />
-          <div className="skeleton h-8 w-4/5" />
-          <div className="skeleton h-4 w-1/2" />
-          <div className="mt-6 skeleton h-4 w-11/12" />
-          <div className="skeleton h-4 w-3/4" />
-        </div>
-      </div>
-      <p className="mt-6 text-center text-ink-2" aria-live="polite">
+    <div aria-busy="true">
+      <CardSkeleton />
+      <p className="mt-5 text-center text-body text-ink-2" role="status">
         {lines[i]}
       </p>
     </div>
   );
 }
 
-function SwipeCard({ entry, why, whyError, onDecide, onDetails, register }: { entry: DeckEntry; why: CardCache | null; whyError: string | null; onDecide: (dir: Swipe["dir"]) => void; onDetails: () => void; register: (fly: (dir: Swipe["dir"]) => void) => void }) {
-  const reduce = useReducedMotion();
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const rotate = useTransform(x, [-320, 320], [-10, 10]);
-  const applyOpacity = useTransform(x, [30, 130], [0, 1]);
-  const skipOpacity = useTransform(x, [-130, -30], [1, 0]);
-  const saveOpacity = useTransform(y, [-130, -30], [1, 0]);
-  const done = useRef(false);
-
-  const fly = useCallback(
-    (dir: Swipe["dir"]) => {
-      if (done.current) return;
-      done.current = true;
-      if (reduce) return onDecide(dir);
-      const to = dir === "apply" ? { x: 640, y: 40 } : dir === "skip" ? { x: -640, y: 40 } : { x: 0, y: -720 };
-      void Promise.all([animate(x, to.x, { duration: 0.28, ease: [0.4, 0, 1, 1] }), animate(y, to.y, { duration: 0.28, ease: [0.4, 0, 1, 1] })]).then(() => onDecide(dir));
-    },
-    [onDecide, reduce, x, y],
-  );
-
-  // A block body on purpose: returning register()'s result would hand React a "cleanup" that flies the card.
-  useEffect(() => {
-    register(fly);
-  }, [fly, register]);
-
-  const onDragEnd = (_: unknown, info: PanInfo) => {
-    const { offset, velocity } = info;
-    if (offset.x > 120 || velocity.x > 700) return fly("apply");
-    if (offset.x < -120 || velocity.x < -700) return fly("skip");
-    if (offset.y < -120 || velocity.y < -700) return fly("save");
-    void animate(x, 0, { type: "spring", stiffness: 400, damping: 30 });
-    void animate(y, 0, { type: "spring", stiffness: 400, damping: 30 });
-  };
-
+function CardSkeleton() {
   return (
-    <motion.div drag dragMomentum={false} onDragEnd={onDragEnd} style={{ x, y, rotate }} className="absolute inset-0 bottom-6 cursor-grab touch-none active:cursor-grabbing">
-      <JobCard job={entry.job} work={entry.work} why={why} whyError={whyError} onDetails={onDetails} />
-      <motion.span aria-hidden style={{ opacity: applyOpacity }} className="pointer-events-none absolute left-6 top-6 rounded-control border-2 border-accent bg-surface px-3 py-1 text-lg font-bold text-accent-text">
-        Apply
-      </motion.span>
-      <motion.span aria-hidden style={{ opacity: skipOpacity }} className="pointer-events-none absolute right-6 top-6 rounded-control border-2 border-ink-3 bg-surface px-3 py-1 text-lg font-bold text-ink-2">
-        Skip
-      </motion.span>
-      <motion.span aria-hidden style={{ opacity: saveOpacity }} className="pointer-events-none absolute inset-x-0 top-6 mx-auto w-fit rounded-control border-2 border-ink-3 bg-surface px-3 py-1 text-lg font-bold text-ink-2">
-        Save for later
-      </motion.span>
-    </motion.div>
+    <div aria-hidden className="relative mx-auto h-[420px] w-full max-w-[460px]">
+      <div className="absolute inset-x-4 top-3 bottom-0 rounded-card border border-line bg-surface" />
+      <div className="absolute inset-0 bottom-3 grid content-start gap-4 rounded-card border border-line bg-raised p-6 shadow-card">
+        <Skeleton className="h-3 w-1/3" />
+        <Skeleton className="h-8 w-4/5" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="mt-6 h-4 w-11/12" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+    </div>
   );
 }
 
 export function Deck() {
-  const { profile, go, setPreferences } = useStore();
-  const queue = useKitQueue();
+  const { profile, go, setPreferences, isOffline, feedSavedAt, effectiveModel } = useStore();
+  const prefs = profile?.preferences;
+  const categories = useMemo(() => [...(prefs?.roles ?? [])].sort(), [prefs?.roles]);
+  const feed = useFeed(categories, isOffline);
   const swipes = useLiveQuery(() => db.swipes.toArray(), [], null);
-  const cards = useLiveQuery(() => db.cards.toArray(), [], []);
-  const [feed, setFeed] = useState<FeedState>(null);
-  const [feedError, setFeedError] = useState<string | null>(null);
-  const [whyErrors, setWhyErrors] = useState<Record<string, string>>({});
+  const hintId = useId();
+
+  // This session's decisions, newest last: they leave the deck at once (the database catches
+  // up a moment later), they count towards "n of N", and Undo walks back through them.
+  const [decided, setDecided] = useState<Decision[]>([]);
+  const decidedRef = useRef(decided);
+  useEffect(() => {
+    decidedRef.current = decided;
+  }, [decided]);
+  const createdApp = useRef(new Set<string>());
+  // Each decision's toast, closed when that decision is undone some other way.
+  const toasts = useRef(new Map<string, number>());
+
   const [details, setDetails] = useState<ScoredJob | null>(null);
   const [laneAsk, setLaneAsk] = useState<ScoredJob | null>(null);
   const [lastSkip, setLastSkip] = useState<ScoredJob | null>(null);
   const [announce, setAnnounce] = useState("");
-  const [toast, setToast] = useState<string | null>(null);
+  const [whyErrors, setWhyErrors] = useState<Record<string, WhyError>>({});
   const [lane, setLaneState] = useState<Lane | null>(null);
-  // The fly-out animation finishes after the dialog closes, so decide() reads the lane from a ref.
+  // Decisions can finish after the lane dialog closes, so they read the lane from a ref.
   const laneRef = useRef<Lane | null>(null);
   const setLane = (l: Lane | null) => {
     laneRef.current = l;
     setLaneState(l);
   };
-  const [tick, setTick] = useState(0);
-  const flyRef = useRef<((d: Swipe["dir"]) => void) | null>(null);
-  const history = useRef<string[]>([]);
-  const [canUndo, setCanUndo] = useState(false);
-  // Swiped cards leave the deck at once; the database catches up a moment later.
-  const [gone, setGone] = useState<Set<string>>(() => new Set());
-
   useEffect(() => {
     void getMeta<Lane | null>("lane", null).then((l) => {
       laneRef.current = l;
@@ -138,331 +105,332 @@ export function Deck() {
     });
   }, []);
 
-  const prefs = profile?.preferences;
-  const categories = useMemo(() => [...(prefs?.roles ?? [])].sort(), [prefs?.roles]);
-  const feedKey = `feed:${categories.join(",")}`;
-
-  const loadFeed = useCallback(
-    async (force = false) => {
-      const cached = await db.feed.get(feedKey);
-      setFeedError(null);
-      if (cached && !force && Date.now() - cached.at < FEED_TTL) return setFeed({ jobs: cached.jobs, at: cached.at });
-      setFeed(null);
-      try {
-        const out = await api<{ jobs: ScoredJob[]; sources: unknown; stale?: boolean; offline?: boolean; savedAt?: string }>("/api/feed", { categories, includeSenior: false });
-        // Saved jobs from the server keep the time they were saved, so they're asked for again next time.
-        const at = (out.stale || out.offline) && out.savedAt ? Date.parse(out.savedAt) || Date.now() : Date.now();
-        // Never swap saved jobs for an empty list, or, offline, for an older copy than this device already has.
-        // Online, a stale answer still carries every source that did refresh, so it wins.
-        if (cached?.jobs.length && (!out.jobs.length || (out.offline && cached.at >= at))) return setFeed({ jobs: cached.jobs, at: cached.at });
-        await db.feed.put({ key: feedKey, jobs: out.jobs, at, sources: out.sources });
-        setFeed({ jobs: out.jobs, at });
-      } catch (e) {
-        if (cached) setFeed({ jobs: cached.jobs, at: cached.at });
-        setFeedError(e instanceof ApiError ? e.message : "Couldn't load jobs.");
-      }
-    },
-    [categories, feedKey],
-  );
-
-  // First load: the cached feed if it's fresh, otherwise the server. Only re-runs when the searches change.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const cached = await db.feed.get(feedKey);
-      if (cancelled) return;
-      if (cached && Date.now() - cached.at < FEED_TTL) setFeed({ jobs: cached.jobs, at: cached.at });
-      else await loadFeed(true);
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [feedKey]);
+  // ---- which cards, in what order
 
   const deck = useMemo(() => {
-    if (!feed || !profile || !swipes) return null;
-    return buildDeck(feed.jobs, profile.preferences, profile.facts, new Set([...swipes.map((s) => s.jobId), ...gone]));
-  }, [feed, profile, swipes, gone]);
+    if (!feed.jobs || !profile || !swipes) return null;
+    const seen = new Set([...swipes.map((s) => s.jobId), ...decided.map((d) => d.id)]);
+    const built = buildDeck(
+      feed.jobs.filter((j) => j.source !== "pasted"),
+      profile.preferences,
+      profile.facts,
+      seen,
+    );
+    // Pasted jobs skip the filters (the user asked for them) and go on top.
+    const terms = profileTerms(profile.facts);
+    const toEntry = (job: ScoredJob): DeckEntry => {
+      const words = new Set(`${job.title} ${job.description}`.toLowerCase().split(/[^a-z0-9+#.]+/));
+      return { job, rank: Infinity, work: workFit(job.rightToWork.stance, profile.preferences.workStatus), matched: [...terms].filter((t) => words.has(t)).slice(0, 8) };
+    };
+    return { entries: pastedFirst(built.entries, feed.pasted, seen, toEntry), hidden: built.hidden };
+  }, [feed.jobs, feed.pasted, profile, swipes, decided]);
 
-  const top = deck?.entries.slice(0, 3) ?? [];
-  const current = top[0];
-  const cardFor = (id: string) => cards.find((c) => c.jobId === id) ?? null;
+  const entries = useMemo(() => deck?.entries ?? [], [deck]);
+  const current = entries[0] ?? null;
+  const position = current ? { n: decided.length + 1, total: entries.length + decided.length } : null;
+  const bars = useMemo(() => (deck ? hiddenBars(deck.hidden, feed.hiddenSenior) : []), [deck, feed.hiddenSenior]);
 
-  // Gemma writes the "why" lines for the next three cards, one at a time.
+  const keys = useRef<(a: Dir | "undo") => void>(() => undefined);
+  const onKey = useCallback((a: Dir | "undo") => keys.current(a), []);
+  const swipe = useSwipeDeck({ enabled: Boolean(current) && !details && !laneAsk, onKey });
+  const { setFlow, clear: clearIntent } = swipe;
+
+  // ---- Gemma's "how you match" lines, for the next three cards, one call at a time
+
+  const key = useMemo(() => factsKey(profile?.facts ?? []), [profile?.facts]);
+  const next3 = entries.slice(0, 3).map((e) => e.job.id);
+  const idsKey = next3.join(",");
+  const cards = useLiveQuery(() => Promise.all(idsKey.split(",").filter(Boolean).map((id) => getCard(id, key))), [idsKey, key]);
+  const cardMap = useMemo(() => new Map((cards ?? []).filter((c): c is CardCache => Boolean(c)).map((c) => [c.jobId, c])), [cards]);
+  const noFacts = !profile?.facts.some((f) => f.confirmed);
+  const cantAsk = isOffline && !effectiveModel.worksOffline;
   const asking = useRef(false);
+  const askCtl = useRef<AbortController | null>(null);
+  const [tick, setTick] = useState(0);
+
   useEffect(() => {
-    if (!profile || asking.current) return;
-    const next = top.find((e) => !cardFor(e.job.id) && !whyErrors[e.job.id]);
+    if (!profile || !cards || asking.current || noFacts || cantAsk) return;
+    const next = entries.slice(0, 3).find((e) => !cardMap.has(e.job.id) && !whyErrors[e.job.id]);
     if (!next) return;
-    const confirmed = profile.facts.filter((f) => f.confirmed);
-    if (!confirmed.length) return;
     asking.current = true;
-    api<CardWhy>("/api/card", { job: next.job, facts: confirmed, neverClaim: profile.neverClaim })
-      .then((r) => db.cards.put({ jobId: next.job.id, why: r.why, score: r.score, at: Date.now() }))
-      .catch((e) => setWhyErrors((m) => ({ ...m, [next.job.id]: e instanceof ApiError ? e.message : "Gemma couldn't read this one." })))
+    const ctl = new AbortController();
+    askCtl.current = ctl;
+    const confirmed = profile.facts.filter((f) => f.confirmed);
+    api<CardWhy>("/api/card", { job: next.job, facts: confirmed, neverClaim: profile.neverClaim }, { signal: ctl.signal })
+      .then((r) => putCard({ jobId: next.job.id, why: r.why, score: r.score, at: Date.now(), factsKey: key }))
+      .catch((e) => {
+        if (isAbort(e)) return;
+        const message = e instanceof ApiError ? e.message : "Gemma couldn't read this one.";
+        setWhyErrors((m) => ({ ...m, [next.job.id]: { message, retry: isPausable(e) } }));
+      })
       .finally(() => {
         asking.current = false;
         setTick((t) => t + 1);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [top.map((e) => e.job.id).join(","), cards.length, profile?.facts.length, whyErrors, tick]);
+  }, [idsKey, cardMap, key, whyErrors, tick, noFacts, cantAsk, Boolean(cards)]);
+  useEffect(() => () => askCtl.current?.abort(), []);
 
-  const decide = useCallback(
-    async (dir: Swipe["dir"]) => {
-      if (!current) return;
-      const job = current.job;
-      setGone((g) => new Set(g).add(job.id));
-      await db.swipes.put({ jobId: job.id, dir, at: Date.now(), job: dir === "save" ? job : undefined });
-      history.current.push(job.id);
-      setCanUndo(true);
-      const next = deck?.entries[1]?.job;
-      const nextText = next ? ` Next: ${next.title} at ${next.company}.` : "";
-      if (dir === "skip") {
-        setLastSkip(job);
-        setAnnounce(`Skipped ${job.title}.${nextText}`);
-      } else setLastSkip(null);
-      if (dir === "save") setAnnounce(`Saved ${job.title} for later.${nextText}`);
-      const lane = laneRef.current;
-      if (dir === "apply" && lane) {
-        if (!(await db.applications.get(job.id))) await db.applications.put(newApplication(job, lane));
-        if (lane === "careful") return go({ name: "application", id: job.id });
-        setToast(`Building a kit for ${job.title} at ${job.company}. Find it in Applications.`);
-        setAnnounce(`Applying to ${job.title}. Kit queued.${nextText}`);
-      }
-    },
-    [current, deck, go],
-  );
+  // Back online: try again the cards that failed for want of a network.
+  useEffect(() => {
+    if (cantAsk) return;
+    const retry = () => setWhyErrors((m) => Object.fromEntries(Object.entries(m).filter(([, v]) => !v.retry)));
+    retry();
+    window.addEventListener("online", retry);
+    return () => window.removeEventListener("online", retry);
+  }, [cantAsk]);
 
-  // Ask how to apply before the card leaves, so closing the question leaves the card in place.
-  const act = useCallback(
-    (dir: Swipe["dir"], chosen?: Lane) => {
-      if (!current) return;
-      if (dir === "apply" && !(chosen ?? lane)) return setLaneAsk(current.job);
-      return flyRef.current ? flyRef.current(dir) : void decide(dir);
-    },
-    [current, decide, lane],
-  );
+  const whyErrorFor = (id: string) => {
+    if (noFacts) return "Add and confirm a few facts in your profile, and Gemma will say how you match.";
+    if (cantAsk && !cardMap.has(id)) return "You're offline. Gemma will read this one when you're back online.";
+    return whyErrors[id]?.message ?? null;
+  };
 
-  const undo = useCallback(async () => {
-    const id = history.current.pop();
-    setCanUndo(history.current.length > 0);
-    if (!id) return;
-    setGone((g) => {
-      const n = new Set(g);
-      n.delete(id);
-      return n;
-    });
-    await db.swipes.delete(id);
-    const app = await db.applications.get(id);
-    if (app && !app.kit && app.status === "ready") await db.applications.delete(id);
-    setLastSkip(null);
-    setAnnounce("Undone.");
+  // ---- deciding and undoing
+
+  const describe = useCallback((list: DeckEntry[], done: number) => {
+    const e = list[0];
+    return e ? `${e.job.title} at ${e.job.company}. Card ${done + 1} of ${list.length + done}.` : "That's every match for now.";
   }, []);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (details || laneAsk) return;
-      const t = e.target instanceof HTMLElement ? e.target : null;
-      if (t?.closest("input, textarea, select, [contenteditable], [role=dialog]")) return;
-      if (e.key === "ArrowRight") act("apply");
-      else if (e.key === "ArrowLeft") act("skip");
-      else if (e.key === "ArrowUp") act("save");
-      else if (e.key.toLowerCase() === "z" && !e.metaKey && !e.ctrlKey) void undo();
-      else return;
-      e.preventDefault();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [act, undo, details, laneAsk]);
+  const undoId = useCallback(
+    async (id: string) => {
+      const d = decidedRef.current.find((x) => x.id === id);
+      if (!d) return;
+      setFlow({ dir: d.dir, kind: "undo", id });
+      setDecided((list) => list.filter((x) => x.id !== id));
+      setLastSkip(null);
+      setAnnounce(`Back: ${d.job.title} at ${d.job.company}.`);
+      const shown = toasts.current.get(id);
+      if (shown) dismissToast(shown);
+      toasts.current.delete(id);
+      await db.swipes.delete(id);
+      if (createdApp.current.has(id)) {
+        createdApp.current.delete(id);
+        const app = await db.applications.get(id);
+        if (app && !app.kit) await db.applications.delete(id);
+      }
+    },
+    [setFlow],
+  );
 
+  const undo = useCallback(() => {
+    const last = decidedRef.current.at(-1);
+    if (last) void undoId(last.id);
+  }, [undoId]);
+
+  const decide = useCallback(
+    async (dir: Dir, chosen?: Lane) => {
+      const e = entries[0];
+      if (!e) return;
+      const job = e.job;
+      const useLane = chosen ?? laneRef.current;
+      // Ask how to apply before the card leaves, so closing the question leaves it in place.
+      if (dir === "apply" && !useLane) return setLaneAsk(job);
+      setFlow({ dir, kind: "decide", id: job.id });
+      clearIntent();
+      setDecided((list) => [...list, { id: job.id, dir, job }]);
+      setLastSkip(dir === "skip" ? job : null);
+      setAnnounce(describe(entries.slice(1), decidedRef.current.length + 1));
+      await db.swipes.put({ jobId: job.id, dir, at: Date.now(), job: dir === "save" ? job : undefined });
+      const name = `${job.title} at ${job.company}`;
+      const say = (message: string) => toasts.current.set(job.id, toast({ message, undo: () => undoId(job.id) }));
+      if (dir === "skip") say(`Skipped. ${name}.`);
+      if (dir === "save") say(`Kept for later: ${name}. It's in Applications.`);
+      if (dir === "apply" && useLane) {
+        if (!(await db.applications.get(job.id))) {
+          await db.applications.put(newApplication(job, useLane));
+          createdApp.current.add(job.id);
+        }
+        if (useLane === "careful") return go({ name: "application", id: job.id });
+        say(`Building a kit for ${name}. Find it in Applications.`);
+      }
+    },
+    [entries, go, describe, undoId, setFlow, clearIntent],
+  );
+
+  // The keys reach the latest decide and undo through a ref, so the listener isn't re-bound each render.
   useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 5000);
-    return () => clearTimeout(t);
-  }, [toast]);
+    keys.current = (a) => (a === "undo" ? undo() : void decide(a));
+  }, [undo, decide]);
 
   if (!profile || !prefs) return null;
-  const noFacts = !profile.facts.some((f) => f.confirmed);
-  const hiddenEntries = deck ? (Object.entries(deck.hidden) as [HiddenReason, number][]).filter(([k, n]) => n > 0 && k !== "seen") : [];
+
+  const matches = deck?.entries.length ?? 0;
+  const firstRun = feed.jobs !== null && feed.jobs.length === 0;
+  const visible = entries.slice(0, 2);
+
+  let body;
+  if (feed.jobs === null || !deck) {
+    body = <CardSkeleton />;
+  } else if (firstRun && feed.refreshing) {
+    body = <DeckLoading categories={categories} />;
+  } else if (firstRun && feed.error) {
+    body = (
+      <div className="grid gap-4">
+        <Notice tone="error" action={!isOffline && <Button size="sm" onClick={feed.refresh}>Try again</Button>}>
+          {feed.error.message}
+        </Notice>
+        <EmptyState icon={<WarningCircle size={24} />} title="No jobs on this device yet" action={<AddJobButton variant="primary" />}>
+          {isOffline ? "Deis needs the internet once to fetch jobs. Until then, paste a job you found and Deis will tailor it here." : "While the job boards are out of reach, paste a job you found and Deis will tailor it here."}
+        </EmptyState>
+      </div>
+    );
+  } else if (!current) {
+    body = (
+      <EmptyState icon={<Cards size={24} />} title="That's every match for now" action={<AddJobButton variant="primary" label="Paste a job you found" />}>
+        New jobs come in daily. Found one somewhere else? Paste it and Deis will tailor a kit for it.
+        {!prefs.showStretch && deck.hidden.stretch > 0 && " You can also show stretch roles from the list beside this."}
+      </EmptyState>
+    );
+  } else {
+    body = (
+      <>
+        <div
+          role="group"
+          aria-roledescription="card deck"
+          aria-label="Job cards"
+          aria-describedby={hintId}
+          tabIndex={0}
+          className="relative mx-auto h-[clamp(360px,calc(100dvh-var(--mobile-nav)-19.5rem),620px)] w-full max-w-[460px] rounded-card lg:h-[clamp(420px,calc(100dvh-22rem),600px)]"
+        >
+          <span id={hintId} className="sr-only">
+            Right arrow applies, left arrow skips, up arrow keeps it for later. Z or Backspace undoes.
+          </span>
+          <AnimatePresence custom={swipe.flow} initial={false}>
+            {visible
+              .map((e, depth) => (
+                <SwipeCard
+                  key={e.job.id}
+                  id={e.job.id}
+                  depth={depth as 0 | 1}
+                  intent={swipe.intent}
+                  flow={swipe.flow}
+                  label={`${e.job.title} at ${e.job.company}`}
+                  onTrack={swipe.track}
+                  onRelease={(dir) => dir && void decide(dir)}
+                >
+                  <JobCard job={e.job} work={e.work} why={cardMap.get(e.job.id) ?? null} whyError={whyErrorFor(e.job.id)} onDetails={() => setDetails(e.job)} />
+                </SwipeCard>
+              ))
+              // The top card last in the DOM, so a leaving card paints over the one rising underneath.
+              .reverse()}
+          </AnimatePresence>
+        </div>
+
+        <ActionBar onDecide={(d) => void decide(d)} onUndo={undo} canUndo={decided.length > 0} disabled={!current} />
+        <KeyHint />
+
+        {lastSkip && (
+          <div className="mx-auto mt-4 flex max-w-[460px] flex-wrap items-center justify-center gap-2" role="group" aria-label="Why did you skip it? Optional.">
+            <span className="text-caption text-ink-2">Why skip? Optional:</span>
+            {SKIP_REASONS.map((r) => (
+              <Button
+                key={r}
+                size="sm"
+                className="rounded-full"
+                onClick={async () => {
+                  await db.swipes.update(lastSkip.id, { reason: r });
+                  setLastSkip(null);
+                }}
+              >
+                {r}
+              </Button>
+            ))}
+          </div>
+        )}
+      </>
+    );
+  }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,440px)_1fr] lg:items-start lg:gap-12">
-      <section aria-label="Job cards" className="mx-auto w-full max-w-md lg:mx-0">
-        <p className="sr-only" aria-live="polite">
-          {announce}
-        </p>
-        {!feed ? (
-          feedError ? (
-            <Notice tone="error">
-              {feedError}{" "}
-              <button className="underline" onClick={() => loadFeed(true)}>
-                Try again
-              </button>
-            </Notice>
+    <div className="pb-32 lg:pb-0">
+      <PageHeader
+        eyebrow={EYEBROW.deck}
+        title="Jobs for you"
+        description={
+          deck ? (
+            <>
+              <span className="num">{matches}</span> {matches === 1 ? "match" : "matches"}
+              <span className="hidden sm:inline"> in Ireland</span>, best first.
+            </>
           ) : (
-            <DeckLoading categories={categories} />
+            "Finding jobs in Ireland that fit you."
           )
-        ) : !current ? (
-          <div className="grid gap-4 rounded-card border border-line bg-surface p-8">
-            <h2 className="text-2xl font-bold">That&apos;s every match for now</h2>
-            <p className="text-ink-2">New jobs come in daily. Check back tomorrow, or widen your search.</p>
-            <div className="flex flex-wrap gap-2">
-              {!prefs.showStretch && (
-                <Button variant="primary" onClick={() => setPreferences({ ...prefs, showStretch: true })}>
-                  Show stretch roles too
-                </Button>
-              )}
-              <Button onClick={() => go({ name: "checkin" })}>Change what I&apos;m looking for</Button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="relative h-[560px] sm:h-[540px]">
-              {top[2] && <div aria-hidden className="absolute inset-x-8 bottom-0 top-6 rounded-card border border-line bg-surface-2" />}
-              {top[1] && <div aria-hidden className="absolute inset-x-4 bottom-3 top-3 rounded-card border border-line bg-surface-2" />}
-              <SwipeCard
-                key={current.job.id}
-                entry={current}
-                why={cardFor(current.job.id)}
-                whyError={noFacts ? "Add and confirm a few facts in Profile, and Gemma will say how you match." : (whyErrors[current.job.id] ?? null)}
-                onDecide={(d) => void decide(d)}
-                onDetails={() => setDetails(current.job)}
-                register={(f) => {
-                  flyRef.current = f;
-                }}
-              />
-            </div>
+        }
+        actions={<AddJobButton size="sm" />}
+      />
+      <p className="sr-only" aria-live="polite">
+        {announce}
+      </p>
 
-            <div className="mt-6 grid grid-cols-4 gap-2" role="group" aria-label="Decide on this job">
-              <Button onClick={() => act("skip")} aria-keyshortcuts="ArrowLeft" className="h-14">
-                <X size={20} aria-hidden />
-                Skip
-              </Button>
-              <Button onClick={() => void undo()} aria-keyshortcuts="Z" variant="ghost" className="h-14" disabled={!canUndo}>
-                <ArrowArcLeft size={20} aria-hidden />
-                Undo
-              </Button>
-              <Button onClick={() => act("save")} aria-keyshortcuts="ArrowUp" className="h-14">
-                <BookmarkSimple size={20} aria-hidden />
-                Save
-              </Button>
-              <Button onClick={() => act("apply")} aria-keyshortcuts="ArrowRight" variant="primary" className="h-14">
-                <Check size={20} weight="bold" aria-hidden />
-                Apply
-              </Button>
-            </div>
-            <p className="mt-3 hidden text-center text-sm text-ink-3 sm:block">Drag the card, or use the arrow keys. Z undoes.</p>
-
-            {lastSkip && (
-              <div className="mt-4 flex flex-wrap items-center gap-2" role="group" aria-label="Why did you skip it? Optional.">
-                <span className="text-sm text-ink-2">Why skip? Optional:</span>
-                {SKIP_REASONS.map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    className="rounded-control border border-line px-2.5 py-1 text-sm hover:border-ink-3"
-                    onClick={async () => {
-                      await db.swipes.update(lastSkip.id, { reason: r });
-                      setLastSkip(null);
-                    }}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </section>
-
-      <aside className="grid content-start gap-6">
-        <div>
-          <h1 className="text-3xl font-bold">Jobs for you</h1>
-          {deck && (
-            <p className="mt-2 text-ink-2">
-              <span className="num">{deck.entries.length}</span> {deck.entries.length === 1 ? "match" : "matches"} in Ireland, best first.
-            </p>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-10">
+        <section aria-label="Your deck" className="min-w-0">
+          {noFacts && (
+            <Notice tone="warn" className="mx-auto mb-4 max-w-[460px]" action={<Button size="sm" onClick={() => go({ name: "profile" })}>Build your profile</Button>}>
+              Your profile has no confirmed facts yet, so Deis can&apos;t tailor anything.
+            </Notice>
           )}
-        </div>
-        {toast && <Notice tone="ok">{toast}</Notice>}
-        {feed && feedError && <Notice tone="warn">{feedError}</Notice>}
-        {queue.working && <Notice>Building a kit in the background. {queue.waiting > 1 ? `${queue.waiting - 1} more after this one.` : ""}</Notice>}
-        {noFacts && (
-          <Notice tone="warn">
-            Your profile has no confirmed facts yet, so Deis can&apos;t tailor anything.{" "}
-            <button className="font-medium underline" onClick={() => go({ name: "profile" })}>
-              Build your profile
-            </button>
-          </Notice>
-        )}
-        {current && current.matched.length > 0 && (
-          <div>
-            <h2 className="text-sm text-ink-3">Words this posting shares with your profile</h2>
-            <p className="mt-1 text-ink-2">{current.matched.join(", ")}</p>
-          </div>
-        )}
-        {hiddenEntries.length > 0 && (
-          <details className="text-ink-2">
-            <summary className="cursor-pointer text-ink">Deis hid {hiddenEntries.reduce((s, [, n]) => s + n, 0)} jobs for you</summary>
-            <ul className="mt-2 grid gap-1 text-[15px]">
-              {hiddenEntries.map(([k, n]) => (
-                <li key={k}>{HIDDEN_COPY[k](n)}</li>
-              ))}
-            </ul>
-          </details>
-        )}
-        {feed && (
-          <p className="flex items-center gap-2 text-sm text-ink-3">
-            Updated {new Date(feed.at).toLocaleTimeString("en-IE", { hour: "2-digit", minute: "2-digit" })}
-            <button type="button" onClick={() => loadFeed(true)} className="inline-flex items-center gap-1 rounded-control px-2 py-1 hover:bg-surface-2 hover:text-ink">
-              <ArrowClockwise size={14} aria-hidden />
-              Refresh
-            </button>
-          </p>
-        )}
-      </aside>
+          {body}
+        </section>
 
-      <Dialog open={Boolean(details)} onClose={() => setDetails(null)} title={details ? `${details.title}, ${details.company}` : ""} wide>
+        <aside aria-label="About this job" className="lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto">
+          <Inspector
+            entry={current}
+            position={position}
+            prefs={prefs}
+            onShowStretch={() => void setPreferences({ ...prefs, showStretch: true })}
+            bars={bars}
+            lane={lane}
+            saved={{ at: feedSavedAt, starter: feed.starter, refreshing: feed.refreshing, error: feed.error && !firstRun ? feed.error.message : null, offline: isOffline, refresh: feed.refresh }}
+          />
+        </aside>
+      </div>
+
+      <Dialog open={Boolean(details)} onClose={() => setDetails(null)} title={details ? `${details.title}, ${details.company}` : ""} description={details?.location} wide>
         {details && (
           <div className="grid gap-4">
-            <p className="text-ink-2">{details.location}</p>
-            <div className="max-h-[55dvh] overflow-y-auto whitespace-pre-line rounded-control bg-bg p-4 text-[15px] leading-relaxed">{details.description || "This board didn't share a description. Open the original posting."}</div>
-            <div className="flex flex-wrap gap-2">
-              {details.apply.slice(0, 3).map((a) => (
-                <LinkButton key={a.url} href={a.url}>
-                  Open on {a.label}
-                </LinkButton>
-              ))}
+            <div className="max-h-[55dvh] overflow-y-auto rounded-control border border-line bg-surface p-4 text-body leading-relaxed whitespace-pre-line">
+              {details.description || "This board didn't share a description. Open the original posting."}
             </div>
+            {details.apply.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {details.apply.slice(0, 3).map((a) => (
+                  <LinkButton key={a.url} href={a.url}>
+                    Open on {a.label}
+                  </LinkButton>
+                ))}
+              </div>
+            ) : (
+              <p className="text-caption text-ink-2">You pasted this one without a link, so there&apos;s nothing to open.</p>
+            )}
           </div>
         )}
       </Dialog>
 
-      <Dialog open={Boolean(laneAsk)} onClose={() => setLaneAsk(null)} title="How do you want to apply?">
+      <Dialog open={Boolean(laneAsk)} onClose={() => setLaneAsk(null)} title="How do you want to apply?" description="Deis remembers this. Change it any time in Settings, or pick Careful from any application.">
         <div className="grid gap-3">
           {(
             [
               ["quick", "Quick", "Deis checks the fit and writes your CV, a letter and draft answers in the background. You keep swiping, then review and apply."],
               ["careful", "Careful", "Deis shows the fit first and asks about your gaps. What you tell it can strengthen your profile for every job after this one."],
             ] as const
-          ).map(([lane, title, body]) => (
+          ).map(([l, title, text]) => (
             <button
-              key={lane}
+              key={l}
               type="button"
-              className="rounded-surface border border-line bg-surface p-4 text-left transition hover:border-accent active:translate-y-px"
+              className="rounded-surface border border-control-border bg-raised p-4 text-left transition hover:border-ink hover:bg-wash active:translate-y-px"
               onClick={async () => {
-                await setMeta("lane", lane);
-                setLane(lane);
+                await setMeta("lane", l);
+                setLane(l);
                 setLaneAsk(null);
-                act("apply", lane);
+                void decide("apply", l);
               }}
             >
-              <span className="block font-bold">{title}</span>
-              <span className="mt-1 block text-[15px] text-ink-2">{body}</span>
+              <span className="display block text-lead text-ink">{title}</span>
+              <span className="mt-1 block text-body text-ink-2">{text}</span>
             </button>
           ))}
-          <p className="text-sm text-ink-3">Deis remembers this. Change it any time in Settings, or pick Careful from any application.</p>
         </div>
       </Dialog>
     </div>

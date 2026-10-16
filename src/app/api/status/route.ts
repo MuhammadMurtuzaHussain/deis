@@ -10,6 +10,8 @@ export async function GET() {
   const hosts = demoHosts();
   return Response.json({
     ok: true,
+    // Render sets this on every deploy; the app links the source at this exact commit (AGPL).
+    commit: process.env.RENDER_GIT_COMMIT?.slice(0, 12) ?? null,
     hosted: process.env.DEIS_HOSTED === "1",
     desktop: process.env.DEIS_DESKTOP === "1",
     demoModel: hosts.length > 0,
