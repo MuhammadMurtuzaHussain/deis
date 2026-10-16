@@ -115,6 +115,7 @@ The server then refuses every connection that isn't to this computer (an egress 
 
 - Next.js 16, React 19, Tailwind 4, Motion, Dexie.
 - [Mastra](https://mastra.ai) agents and a parallel kit workflow, with a per-request chain of models and fallbacks (Ollama, Google AI Studio, any OpenAI-compatible server). The hosted demo tries AI Studio, then Gemma on OpenRouter.
+- Mastra scorers with no model judge check every hosted kit after the guard: untraceable numbers, tools and certificates, near-copy lines, a finished degree written as current, prompt leaks, and the share the guard removed (`src/mastra/scorers.ts`). Their scores sit next to the kit's trace in Mastra Platform, as rule names and counts only.
 - [SerpApi](https://serpapi.com) Google Jobs for the shared Irish feed; public Greenhouse and Ashby job board APIs.
 - [Sentry](https://sentry.io) agent tracing and one issue per guard rule (never prompts, CVs or keys).
 - [Render](https://render.com) web service and Key Value for the hosted demo (`render.yaml`), with per-person and demo-wide hourly limits on the demo's own key. Your own key or Ollama is never limited.

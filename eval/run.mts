@@ -18,57 +18,18 @@ import { POST as fitRoute } from "../src/app/api/fit/route";
 import { POST as kitRoute } from "../src/app/api/kit/route";
 import { encodeSettings, type AiSettings } from "../src/lib/ai/settings";
 import type { CardWhy } from "../src/lib/ai/schema";
-import { cvSections, jaccard, type CvDocument, type CvLine } from "../src/lib/cv/compose";
-import { CERTS, TOOLS, type GuardEvent } from "../src/lib/cv/guard";
+import { cvSections } from "../src/lib/cv/compose";
+import type { GuardEvent } from "../src/lib/cv/guard";
+import { CURRENT, cvLines, degreesFinished, factsText as factsTextOf, LEAK, nearCopyPairs, untraceableIn, untraceableInProse } from "../src/lib/cv/quality";
 import type { Fit } from "../src/lib/cv/schema";
 import { PERSONAS, type PersonaId } from "../src/lib/demo/personas";
 import { categoriesForTitle } from "../src/lib/jobs/categories";
 import type { ScoredJob } from "../src/lib/jobs/types";
-import { isFinished } from "../src/lib/profile/dates";
 import type { Fact } from "../src/lib/profile/types";
 import type { Kit } from "../src/mastra/workflows/kit";
 
 const postings: ScoredJob[] = JSON.parse(readFileSync("eval/data/postings.json", "utf8"));
 const early = postings.filter((p) => p.seniority.level === "early" || p.seniority.level === "open");
-
-// The eval's own dictionary: the guard's lists plus tools it once missed (OQ-X1), case-insensitive.
-const EXTRA_TOOLS = ["Git", "GitHub", "GitLab", "Swift", "Firebase", "Jest", "Selenium", "VBA", "SAS", "Canva", "WordPress", "Prophet", "Qt", "Sage", "Xero", "Kubernetes"];
-const TOOL_RE = new RegExp(`(?<![\\w.+#])(${[...TOOLS, ...EXTRA_TOOLS].join("|")})(?![\\w+#])`, "gi");
-const CERT_RE = new RegExp(`(?<![\\w+])(${CERTS.join("|")})(?![\\w+])`, "gi");
-
-/** Independent of the guard: anything checkable in the final text that no confirmed fact contains. The profile may name the role as advertised, so the job title counts as a source. */
-function untraceable(text: string, factsText: string): string[] {
-  const src = factsText.toLowerCase().replace(/,/g, "");
-  const bad: string[] = [];
-  for (const m of text.matchAll(/(?<![\w.])\d[\d,]*(?:\.\d+)?/g)) if (!src.includes(m[0].replace(/,/g, ""))) bad.push(m[0]);
-  for (const m of text.matchAll(TOOL_RE)) if (!new RegExp(`(?<![\\w.+#])${m[0].replace(/[.+#]/g, "\\$&")}(?![\\w+#])`, "i").test(src)) bad.push(m[0]);
-  for (const m of text.matchAll(CERT_RE)) if (!src.includes(m[0].toLowerCase())) bad.push(m[0]);
-  return bad;
-}
-
-/** Gap wording, the eval's own: a letter may name a tool it says it lacks or wants to learn. */
-const ADMITS = /\b(haven['’]t|hasn['’]t|have not|has not|not yet|never|no (direct |professional |hands-on )?experience|less (direct )?experience|limited [\w ]{0,20}experience|new to|unfamiliar|keen to learn|eager to learn|look(ing)? forward to learning|(am|currently|now) learning)\b/i;
-
-/**
- * The same check on letters and answers, sentence by sentence. They may quote the posting's
- * years and durations ("a 2 year programme starting in 2027"), name the employer and its
- * role, and name a tool in a sentence admitting the gap.
- */
-function untraceableProse(text: string, factsText: string, job: ScoredJob): string[] {
-  const posting = job.description.replace(/,/g, "");
-  const bad: string[] = [];
-  for (const s of text.split(/(?<=[.!?])\s+/)) {
-    for (const x of untraceable(s, `${factsText}\n${job.title}\n${job.company}`)) {
-      if (/^\d/.test(x)) {
-        const n = x.replace(/,/g, "");
-        const dated = /^(19|20)\d{2}$/.test(n) || new RegExp(`(?<![\\d.])${n.replace(".", "\\.")}[\\s-]*(?:month|week|year)s?\\b`, "i").test(s);
-        if (dated && posting.includes(n)) continue;
-      } else if (ADMITS.test(s)) continue;
-      bad.push(x);
-    }
-  }
-  return bad;
-}
 
 const sentences = (s: string) => s.split(/(?<=[.!?])\s+/).filter((x) => x.trim().length > 3).length;
 const words = (s: string) => s.split(/\s+/).filter(Boolean).length;
@@ -81,10 +42,6 @@ const copied = (text: string, posting: Set<string>) => {
   const g = grams(text);
   return g.length ? g.filter((x) => posting.has(x)).length / g.length : 0;
 };
-const LEAK = /\[[^\]\n]*\]|needsYou|\([^)]*\bposting\b[^)]*\)/gi;
-// A finished degree written as ongoing (both personas have finished theirs).
-const CURRENT =
-  /\b(final[- ]year ([\w-]+ ){0,3}?(student|undergraduate)|current(ly)? (a )?(student|studying|pursuing|enrolled|completing|undertaking|reading|doing)|(is|am) (currently )?(pursuing|studying|completing|undertaking|reading for)|is preparing me|expected to graduate|due to (graduate|finish|complete)|will graduate|(current|ongoing|present) (msc|bsc|ba|ma|btech|meng|beng|degree|studies|master['’]?s|bachelor['’]?s)|(completing|finishing) in 20\d\d)\b/gi;
 const NAMES_GAP = /\b(haven['’]t|have not|not yet|no (direct|professional|hands-on) experience|less (direct )?experience|limited (professional |direct |hands-on )?experience|new to)\b/i;
 
 type Output = { jobId: string; card: CardWhy | null; fit: Fit; fitEvents: GuardEvent[]; kit: Kit & { model?: string } };
@@ -105,27 +62,18 @@ type Quality = {
   removed: { rule: string; text: string }[];
 };
 
-function cvLines(cv: CvDocument): { section: string; line: CvLine }[] {
-  return cvSections(cv).flatMap((s) =>
-    s.id === "header" ? [] : [...(s.paragraph ?? []), ...(s.entries ?? []).flatMap((e) => e.lines), ...(s.bullets ?? [])].map((line) => ({ section: s.id, line })),
-  );
-}
-
 function quality(out: Output, job: ScoredJob, facts: Fact[]): Quality {
   const cv = out.kit.cv!;
   const lines = cvLines(cv);
   const cites = new Map<string, number>();
   for (const { line } of lines) for (const id of new Set(line.facts)) cites.set(id, (cites.get(id) ?? 0) + 1);
-  const body = lines.filter((l) => l.section !== "profile").map((l) => (l.line.label ? `${l.line.label}: ${l.line.text}` : l.line.text));
-  let nearCopyPairs = 0;
-  for (let i = 0; i < body.length; i++) for (let j = i + 1; j < body.length; j++) if (jaccard(body[i], body[j]) > 0.45) nearCopyPairs++;
   const posting = new Set(grams(job.description));
   const cvText = lines.map((l) => l.line.text).join(" ");
   const letter = out.kit.letter?.paragraphs.map((p) => p.text).join("\n") ?? "";
   const answers = out.kit.answers?.answers ?? [];
   const answerText = answers.map((a) => a.answer).join(" ");
   const everything = [cvText, ...cvSections(cv).map((s) => (s.id === "header" ? "" : (s.lists ?? []).flatMap((l) => l.items).join(" "))), letter, ...answers.flatMap((a) => [a.question, a.answer])].join("\n");
-  const finished = facts.filter((f) => f.kind === "education").every((f) => isFinished(f));
+  const finished = degreesFinished(facts);
   const sectionWords: Record<string, number> = {};
   for (const s of cvSections(cv)) {
     if (s.id === "header") continue;
@@ -133,15 +81,14 @@ function quality(out: Output, job: ScoredJob, facts: Fact[]): Quality {
     sectionWords[s.id] = words(text);
   }
   const answered = answers.filter((a) => a.answer);
-  const factsText = facts.map((f) => [f.text, f.org, f.title, f.start, f.end].filter(Boolean).join(" ")).join(" \n ");
   return {
     factsCited3Plus: [...cites.values()].filter((n) => n >= 3).length,
     dupFactRate: +([...cites.values()].filter((n) => n >= 2).length / Math.max(1, cites.size)).toFixed(3),
-    nearCopyPairs,
+    nearCopyPairs: nearCopyPairs(cv).pairs,
     postingCopy: { cv: +copied(cvText, posting).toFixed(3), letter: +copied(letter, posting).toFixed(3), answers: +copied(answerText, posting).toFixed(3) },
     bracketLeaks: everything.match(LEAK) ?? [],
     tenseErrors: finished ? (`${cvText}\n${letter}\n${answerText}`.match(CURRENT) ?? []) : [],
-    untraceableProse: untraceableProse(`${letter}\n${answers.map((a) => a.answer).join("\n")}`, factsText, job),
+    untraceableProse: untraceableInProse(`${letter}\n${answers.map((a) => a.answer).join("\n")}`, factsTextOf(facts), job).map((x) => x.token),
     repairs: (out.kit as { repairs?: unknown[] }).repairs?.length ?? 0,
     letterNamesGap: NAMES_GAP.test(letter),
     words: { ...sectionWords, cv: words(cvText), letter: words(letter), answerAvg: answered.length ? Math.round(answered.reduce((n, a) => n + words(a.answer), 0) / answered.length) : 0 },
@@ -229,7 +176,7 @@ let label = "";
 for (const id of Object.keys(PERSONAS) as PersonaId[]) {
   const p = PERSONAS[id];
   const jobs = early.filter((j) => categoriesForTitle(j.title).some((c) => p.preferences.roles.includes(c))).slice(0, perPersona);
-  const factsText = p.facts.map((f) => [f.text, f.org, f.title, f.start, f.end].filter(Boolean).join(" ")).join(" \n ");
+  const factsText = factsTextOf(p.facts);
   for (const job of jobs) {
     const t0 = Date.now();
     try {
@@ -256,7 +203,7 @@ for (const id of Object.keys(PERSONAS) as PersonaId[]) {
         removed: events.length,
         byRule,
         // Letters and answers have their own check in quality (they may quote the posting's dates).
-        untraceable: untraceable(cvText, `${factsText}\n${job.title}`),
+        untraceable: untraceableIn(cvText, `${factsText}\n${job.title}`).map((x) => x.token),
         output,
         quality: q,
       });

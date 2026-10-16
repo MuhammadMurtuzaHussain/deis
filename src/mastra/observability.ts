@@ -1,4 +1,4 @@
-import type { AnySpan, SpanOutputProcessor } from "@mastra/core/observability";
+import type { AnySpan, ObservabilityExporter, SpanOutputProcessor } from "@mastra/core/observability";
 import { MastraPlatformExporter, Observability } from "@mastra/observability";
 import { isOfflineMode } from "@/lib/server/net";
 import { serverEnvironment } from "@/lib/sentry-env";
@@ -52,13 +52,17 @@ const strip: SpanOutputProcessor = {
 export const mastraTracingEnabled = (env: Record<string, string | undefined> = process.env) =>
   Boolean(env.MASTRA_PLATFORM_ACCESS_TOKEN && env.MASTRA_PROJECT_ID) && (env.DEIS_DESKTOP !== "1" || env.DEIS_DIAGNOSTICS === "1");
 
-export function observability(): Observability | undefined {
+/** Kit scores (src/mastra/scorers.ts) go wherever traces go, under the same switches. */
+export const kitScoringEnabled = (env: Record<string, string | undefined> = process.env) => mastraTracingEnabled(env) && !isOfflineMode();
+
+/** Tests pass their own exporter; everyone else sends to Mastra Platform. */
+export function observability(exporters?: ObservabilityExporter[]): Observability | undefined {
   if (!mastraTracingEnabled() || isOfflineMode()) return undefined;
   return new Observability({
     configs: {
       default: {
         serviceName: "deis",
-        exporters: [new MastraPlatformExporter()],
+        exporters: exporters ?? [new MastraPlatformExporter()],
         spanOutputProcessors: [strip],
       },
     },

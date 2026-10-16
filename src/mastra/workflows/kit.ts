@@ -1,3 +1,5 @@
+import type { Mastra } from "@mastra/core/mastra";
+import { EntityType, type AnySpan } from "@mastra/core/observability";
 import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
 import { answersPrompt, cvPrompt, formQuestions, letterPrompt, YOURS_TO_ANSWER, type Lane } from "@/lib/ai/prompts";
@@ -6,15 +8,19 @@ import { composeCv, scrub, type CvDocument } from "@/lib/cv/compose";
 import { answersDraftSchema, bodyFromDraft, cvDraftSchema, GUARD_VERSION, letterSchema, type Answers, type AnswersDraft, type CvBody, type CvDraft, type CvLength, type Fit, type Letter } from "@/lib/cv/schema";
 import type { ScoredJob } from "@/lib/jobs/types";
 import type { Profile } from "@/lib/profile/types";
+import { serverEnvironment } from "@/lib/sentry-env";
 import { reportGuard, traceStep } from "@/lib/server/telemetry";
 import { structured, type Usage } from "../gemma";
 import type { ModelChain } from "../model";
+import { kitScoringEnabled } from "../observability";
+import { scoreKit } from "../scorers";
 
 // The application kit as a Mastra workflow, after a swipe right:
-//   cv ‖ letter ‖ answers  →  assemble
+//   cv ‖ letter ‖ answers  →  assemble  →  checks
 // The three writers run in parallel (on a laptop Ollama queues them; in the cloud they
 // overlap, which the Sentry trace shows). Each one's output is guarded before assemble
-// sees it, and every guard event is reported with the tier and model.
+// sees it, and every guard event is reported with the tier and model. Checks scores the
+// finished kit with code (src/mastra/scorers.ts) and passes it on unchanged.
 
 const passThrough = z.any();
 
@@ -219,8 +225,43 @@ const assembleStep = createStep({
     }),
 });
 
+/** Sends each kit score to Mastra, on the workflow run's trace. Never throws: a score is never worth a kit. */
+async function sendScores(init: KitInput, kit: Kit, mastra: Mastra | undefined, step: AnySpan | undefined) {
+  let run = step?.isValid ? step : undefined;
+  while (run?.parent && run.type !== "workflow_run") run = run.parent;
+  const observability = mastra?.observability;
+  if (!run || !observability?.addScore) return;
+  try {
+    const scores = await scoreKit({ job: init.job, facts: init.profile.facts }, kit);
+    const correlationContext = run.getCorrelationContext?.();
+    for (const score of scores) {
+      await observability.addScore({
+        traceId: run.traceId,
+        spanId: run.id,
+        correlationContext,
+        score: { ...score, scoreSource: "live", targetEntityType: EntityType.WORKFLOW_RUN, metadata: { environment: serverEnvironment(process.env) } },
+      });
+    }
+  } catch {
+    // Monitoring only.
+  }
+}
+
+const checksStep = createStep({
+  id: "checks",
+  description: "Code scores the finished kit, no model: untraceable items, near-copy lines, tense, prompt leaks, guard removals. The kit passes through unchanged",
+  inputSchema: passThrough,
+  outputSchema: passThrough,
+  execute: async ({ inputData, getInitData, mastra, tracingContext }): Promise<Kit> => {
+    const kit = inputData as Kit;
+    if (kitScoringEnabled()) await sendScores(getInitData<KitInput>(), kit, mastra, tracingContext?.currentSpan);
+    return kit;
+  },
+});
+
 // No snapshots: a run's input is someone's name, email and facts, and Mastra's default store keeps every run in memory.
 export const kitWorkflow = createWorkflow({ id: "application-kit", inputSchema: passThrough, outputSchema: passThrough, options: { shouldPersistSnapshot: () => false } })
   .parallel([cvStep, letterStep, answersStep])
   .then(assembleStep)
+  .then(checksStep)
   .commit();
