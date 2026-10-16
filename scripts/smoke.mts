@@ -32,3 +32,7 @@ console.log("\nCV", cv.usage);
 console.log(JSON.stringify(g.body, null, 1));
 console.log("\nGUARD EVENTS", g.events);
 console.log("\nTOTAL", ((Date.now() - t0) / 1000).toFixed(1), "s; tokens in", card.usage.inputTokens + fit.usage.inputTokens + cv.usage.inputTokens, "out", card.usage.outputTokens + fit.usage.outputTokens + cv.usage.outputTokens);
+
+// Send the traces still buffered (Mastra Platform batches every 5 s) before the script exits.
+const { mastra } = await import("../src/mastra");
+await mastra.shutdown();

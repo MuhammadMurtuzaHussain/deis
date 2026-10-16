@@ -77,6 +77,12 @@ services:
         value: deis
       - key: SENTRY_AUTH_TOKEN
         sync: false
+      # Mastra Platform: traces of each agent call and kit workflow (names, timings, models,
+      # tokens). Never prompts, CVs or outputs: src/mastra/observability.ts strips them.
+      - key: MASTRA_PLATFORM_ACCESS_TOKEN
+        sync: false
+      - key: MASTRA_PROJECT_ID
+        sync: false
       # Polar: /checkout opens a checkout for the desktop app (the app's Buy button links here).
       # Organization access token with checkouts scope; the webhook secret once /api/webhook/polar is registered.
       - key: POLAR_ACCESS_TOKEN

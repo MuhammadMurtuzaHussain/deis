@@ -1,6 +1,7 @@
 import { MastraLogger } from "@mastra/core/logger";
 import { Mastra } from "@mastra/core/mastra";
 import { agents } from "./agents";
+import { observability } from "./observability";
 import { kitWorkflow } from "./workflows/kit";
 
 /** Text before the first detail: Mastra's own messages can carry a model's raw output, which holds a CV. */
@@ -22,4 +23,5 @@ export const mastra = new Mastra({
   agents,
   workflows: { kitWorkflow },
   logger: new HeadlineLogger({ name: "deis" }),
+  observability: observability(),
 });

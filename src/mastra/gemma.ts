@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import { RequestContext } from "@mastra/core/request-context";
-import { agents, type AgentName } from "./agents";
+import type { AgentName } from "./agents";
 import { answering, BUDGET, type Answer, type ModelChain } from "./model";
 import { isNoNetwork, isOfflineError, OfflineError } from "@/lib/server/net";
 import { modelErrorCode, reportFlags, reportModelError, traceAgent, traceChat, type Task } from "@/lib/server/telemetry";
@@ -89,7 +89,9 @@ async function structuredNow<T>(
   const where = { tier: chain.tier, model: String(chain.models[0]?.id ?? "unknown") };
   const temperature = opts.temperature ?? 0.2;
   const requestContext = new RequestContext([["chain", chain]]);
-  const agent = agents[name];
+  // Through the Mastra instance, so every agent call is traced (imported here, not at the top: index imports this file).
+  const { mastra } = await import("./index");
+  const agent = mastra.getAgent(name);
   const started = Date.now();
   const local = chain.tier === "local";
   const budget = local ? Infinity : BUDGET[chain.effort ?? "careful"].totalMs;
