@@ -191,3 +191,16 @@ describe("structured()", () => {
     fake.close();
   }, 30_000);
 });
+
+describe("OpenRouter routing", () => {
+  it("asks the reliable providers first and keeps the rest of the request", async () => {
+    const { preferProviders, OPENROUTER_PROVIDERS } = await load();
+    let sent: Record<string, unknown> = {};
+    const base = (async (_: unknown, init?: RequestInit) => {
+      sent = JSON.parse(String(init?.body));
+      return new Response("{}");
+    }) as typeof fetch;
+    await preferProviders(base)("https://openrouter.ai/api/v1/chat/completions", { method: "POST", body: JSON.stringify({ model: "google/gemma-4-26b-a4b-it", stream: true }) });
+    expect(sent).toEqual({ model: "google/gemma-4-26b-a4b-it", stream: true, provider: { order: OPENROUTER_PROVIDERS, allow_fallbacks: true } });
+  });
+});

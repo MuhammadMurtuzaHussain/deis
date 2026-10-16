@@ -12,6 +12,8 @@ Sentry.init({
   environment: serverEnvironment(process.env),
   tracesSampleRate: 1,
   ...privacy,
+  // Node's "aborted": the visitor closed the page while a kit was still being written.
+  ignoreErrors: [/^aborted$/],
   // Offline mode can be switched on after start: from then on nothing is sent.
   beforeSend: (event) => (isOfflineMode() ? null : privacy.beforeSend(event)),
   beforeSendTransaction: (event) => (isOfflineMode() ? null : event),

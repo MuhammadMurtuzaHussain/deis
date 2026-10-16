@@ -141,11 +141,28 @@ function ollamaEntry(baseUrl: string, model: string): ModelWithRetries {
 /** Models that think before answering. Asked for a JSON schema, Gemma 4 on Ollama thinks until it runs out of tokens and answers nothing. */
 const THINKS = /gemma-?4|qwen3|deepseek-r1|gpt-oss|magistral/i;
 
+/**
+ * OpenRouter sends Gemma 4 to the cheapest of ~13 providers by default. On 16 Oct a CV broke off
+ * halfway twice (finish_reason "error"), and in 6 long test replies its usual pick gave 2 that
+ * weren't JSON and one that took 111 s; DeepInfra first gave 6 in 6 at ~34 s. These are asked
+ * first, then OpenRouter's usual pick if all of them are down.
+ */
+export const OPENROUTER_PROVIDERS = ["deepinfra", "parasail", "novita", "google-vertex"];
+
+export const preferProviders =
+  (base: typeof fetch): typeof fetch =>
+  (input, init) => {
+    const body = typeof init?.body === "string" && init.body.startsWith("{") ? JSON.stringify({ ...JSON.parse(init.body), provider: { order: OPENROUTER_PROVIDERS, allow_fallbacks: true } }) : init?.body;
+    return base(input, { ...init, body });
+  };
+
 function openaiEntry(baseUrl: string, apiKey: string | undefined, model: string, effort: Effort, o: { retries?: number; health?: string; reasoning?: boolean } = {}): ModelWithRetries {
   const host = new URL(baseUrl).host;
   // Servers on this machine can take their time; rented ones get the cloud budget.
   const local = isLoopback(baseUrl);
-  const provider = createOpenAICompatible({ name: "custom", baseURL: baseUrl, apiKey, supportsStructuredOutputs: true, fetch: via(host, "openai", local ? localFetch : guardedFetch("model"), o.health) });
+  const base = local ? localFetch : guardedFetch("model");
+  const fetch = via(host, "openai", host === "openrouter.ai" ? preferProviders(base) : base, o.health);
+  const provider = createOpenAICompatible({ name: "custom", baseURL: baseUrl, apiKey, supportsStructuredOutputs: true, fetch });
   return {
     id: `openai:${host}:${model}`,
     model: provider.chatModel(model),

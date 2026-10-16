@@ -28,6 +28,8 @@ if (dsn && web) {
       environment: browserEnvironment(location.hostname),
       tracesSampleRate: 1,
       ...privacy,
+      // A visitor's connection dropping (fonts, a fetch mid-swipe) says nothing about Deis.
+      ignoreErrors: [/^(Error: )?NetworkError: A network error occurred\.?$/],
       beforeSend: (event) => (online ? privacy.beforeSend(event) : null),
       beforeSendTransaction: (event) => (online ? event : null),
       sendClientReports: false,

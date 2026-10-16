@@ -8,14 +8,16 @@ import { modelErrorCode, reportFlags, reportModelError, traceAgent, traceChat, t
 // Every Gemma call in Deis goes through here. Native JSON-schema mode first; if a
 // model ignores it (small local models sometimes do) or the host doesn't support it,
 // one retry with the schema written into the prompt, then pull JSON out of the text.
-// Only a JSON or schema failure gets that retry: a timeout or a dead host would just
-// fail again, slower. Cloud calls have a total time budget; on a laptop, calls run one
+// Only a JSON or schema failure, or a reply the host broke off halfway, gets that retry:
+// a timeout or a dead host would just fail again, slower. Cloud calls have a total time budget; on a laptop, calls run one
 // at a time. Each call is a Sentry agent span with a chat span per attempt.
 
 /** model and host: who actually answered, which differs from the first in the chain after a failover. */
 export type Usage = { inputTokens: number; outputTokens: number; ms: number; model?: string; host?: string };
 
 class NoJson extends Error {}
+/** The host stopped mid-reply (finish reason "error"): half a CV, not a model that can't do JSON. Worth one retry. */
+class StreamBroke extends Error {}
 
 /** A reply that wasn't the JSON asked for, or a host refusing the schema in JSON mode. Never a timeout or a network error. */
 function isJsonFailure(e: unknown): boolean {
@@ -126,6 +128,7 @@ async function structuredNow<T>(
     if (res.object) return { data: res.object as T, usage };
     const parsed = schema.safeParse(extractJson(res.text ?? ""));
     if (parsed.success) return { data: parsed.data, usage };
+    if (res.finishReason === "error") throw new StreamBroke("The host stopped before the reply finished");
     // Local debugging only (DEIS_DEBUG=1): what the model actually said. Never sent anywhere.
     if (process.env.DEIS_DEBUG) console.error(`[${task}] attempt ${n} raw:`, (res.text ?? "").slice(0, 800), "| issues:", JSON.stringify(parsed.error?.issues?.slice(0, 3)));
     throw new NoJson("Model returned no usable JSON");
@@ -133,7 +136,10 @@ async function structuredNow<T>(
 
   const fail = (e: unknown): never => {
     // A schema error's message can quote the model's output, so only the host's errors are logged as text.
-    if (isJsonFailure(e)) {
+    if (e instanceof StreamBroke) {
+      reportModelError(task, where, "stream_error");
+      console.error(`[${task}] stream_error from`, where.model);
+    } else if (isJsonFailure(e)) {
       reportFlags(task, ["json_failed"], where);
       console.error(`[${task}] no usable JSON from`, where.model);
     } else {
@@ -155,7 +161,7 @@ async function structuredNow<T>(
     try {
       return await attempt(injectFirst, 1);
     } catch (first) {
-      if (!isJsonFailure(first) || left() < 15_000) return fail(first);
+      if (!(isJsonFailure(first) || first instanceof StreamBroke) || left() < 15_000) return fail(first);
       try {
         const second = await attempt(promptOnly || !injectFirst, 2);
         reportFlags(task, ["json_retry"], where);
