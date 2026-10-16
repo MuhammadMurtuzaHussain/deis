@@ -80,13 +80,18 @@ export function Welcome() {
             <p className="mt-6 max-w-[42ch] text-lead text-ink-2">Early-career roles in Ireland that fit your level and right to work, with a CV traced to your own facts.</p>
             <div className="mt-9 flex flex-wrap gap-3">
               {hosted ? (
-                IDS.map((id, i) => (
-                  <a key={id} href={routeHref({ name: "demo", persona: id })} className={buttonClass(i === 0 ? "primary" : "secondary", "lg")}>
-                    Try as {firstName(id)}
-                    <span className="sr-only">, {personaLine(id)}</span>
-                    {i === 0 && <ArrowRight size={18} weight="bold" aria-hidden />}
+                <>
+                  <a href={routeHref({ name: "checkin" })} className={buttonClass("primary", "lg")}>
+                    Try it yourself
+                    <ArrowRight size={18} weight="bold" aria-hidden />
                   </a>
-                ))
+                  {IDS.map((id) => (
+                    <a key={id} href={routeHref({ name: "demo", persona: id })} className={buttonClass("secondary", "lg")}>
+                      Try as {firstName(id)}
+                      <span className="sr-only">, {personaLine(id)}</span>
+                    </a>
+                  ))}
+                </>
               ) : (
                 <>
                   <a href={routeHref({ name: "checkin" })} className={buttonClass("primary", "lg")}>
