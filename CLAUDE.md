@@ -55,6 +55,7 @@ Local Gemma: `ollama pull gemma4:e4b` (6.6 GB). `.env.local` points the demo's f
 - Output schemas with tight `.max()` limits threw away good answers (a 170-character requirement failed the whole fit). Schemas are generous; code trims.
 - Models cite ids as `[ab5]`, inline in text, or copy the whole fact line; `cleanId` takes the first token.
 - Gemma 26B wrote "currently undertaking an MSc" about a 2025 degree and "eligible to work in Ireland without sponsorship" for a Stamp 1G persona. Both are now code-checked.
+- 16 Oct: linking the repo to Mastra Platform made it try to deploy Deis on every push. Each one failed, and Render's `checksPass` waits for every GitHub check, so Render stopped deploying. The repo is now unlinked in Mastra (tracing only needs the access token). If Render goes quiet again, check the commit's GitHub checks first.
 - A `useEffect(() => register(fly))` arrow returned the function, React treated it as cleanup and flew a card every render. Effects that call registration functions need a block body.
 
 ## Progress (16 Oct)
