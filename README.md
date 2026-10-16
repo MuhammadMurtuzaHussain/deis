@@ -125,7 +125,7 @@ How well it works, measured: [eval/RESULTS.md](eval/RESULTS.md). The seniority f
 - Code catches invented numbers, tools, certificates, employers, dates and status claims. It can't judge every shade of meaning, so read your CV once before you send it.
 - Small local models are slower (see the timing above) and write plainer CVs than the cloud tier. The guard also removes some true sentences: on 16 October about half of what it removed was a real over-claim.
 - The hosted demo's Gemma depends on Google AI Studio and OpenRouter, and both have had bad hours. Your own key or Ollama avoids that.
-- Only the macOS installer has been run on a real machine so far. The Android app hasn't been run on a phone yet.
+- Only the macOS installer has been run on a real machine so far. The Android app has been installed and opened on an emulator in CI, not yet on a phone.
 - Ireland only for now. Permit information is general, not immigration advice.
 
 ## Licence

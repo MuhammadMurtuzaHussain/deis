@@ -100,7 +100,7 @@ export function Welcome() {
             {hosted && (
               <a href="/download" className="link mt-5 inline-flex min-h-11 items-center gap-2 text-body font-medium">
                 <DownloadSimple size={18} weight="bold" aria-hidden />
-                Get the desktop app for Mac, Windows or Linux
+                Get the app for Mac, Windows, Linux or Android
               </a>
             )}
           </div>
