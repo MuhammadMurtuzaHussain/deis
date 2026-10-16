@@ -9,11 +9,12 @@ import { useStore } from "@/lib/client/store";
 import { LicenceForm } from "./Licence";
 import { ModelSetup } from "./ModelSetup";
 import { DataSection } from "./settings/DataSection";
+import { JobSearchSection } from "./settings/JobSearchSection";
 import { OfflineSection } from "./settings/OfflineSection";
 import { SettingsSection } from "./settings/parts";
 import { Chip, PageHeader } from "./ui";
 
-// Settings: the model, offline mode, how kits are built, appearance, and the user's own
+// Settings: the model, offline mode, the job search key, how kits are built, appearance, and the user's own
 // data, which they can export, restore or delete in one go. Each topic is a two-column
 // section at large widths (settings/parts.tsx).
 
@@ -73,6 +74,8 @@ export function Settings() {
         </SettingsSection>
 
         {status && !status.hosted && <OfflineSection />}
+
+        <JobSearchSection />
 
         <SettingsSection title="After a swipe right" description="Quick or Careful is at the top of Jobs. On a laptop, a CV alone takes about half the time of a full kit.">
           <div role="group" aria-label="CV length" className="grid gap-2 sm:grid-cols-2">

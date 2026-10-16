@@ -41,7 +41,10 @@ export function scrubEvent<T extends { message?: string; exception?: { values?: 
     if (e.request.url) e.request.url = scrubText(e.request.url);
     delete e.request.query_string;
     delete e.request.data;
-    if (e.request.headers) delete e.request.headers["x-deis-ai"];
+    if (e.request.headers) {
+      delete e.request.headers["x-deis-ai"];
+      delete e.request.headers["x-deis-serpapi"];
+    }
   }
   return e;
 }
@@ -55,7 +58,7 @@ export const dataCollection: NonNullable<BrowserOptions["dataCollection"]> = {
   databaseQueryData: false,
   queues: false,
   httpBodies: [],
-  httpHeaders: { deny: ["forwarded", "-ip", "remote-", "via", "-user", "x-deis-ai", "authorization", "cookie"] },
+  httpHeaders: { deny: ["forwarded", "-ip", "remote-", "via", "-user", "x-deis-ai", "x-deis-serpapi", "authorization", "cookie"] },
   cookies: { deny: ["forwarded", "-ip", "remote-", "via", "-user"] },
   urlQueryParams: { deny: ["forwarded", "-ip", "remote-", "via", "-user", "key", "api_key", "token"] },
 };

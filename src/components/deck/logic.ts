@@ -17,7 +17,7 @@ export const FEED_TTL_MS = 6 * 3600_000;
 /** The last feed answer this device saved: which jobs it held, for which searches, and when it was asked for. */
 export type FeedBatch = { ids: string[]; categories: string; hiddenSenior: number; fetchedAt: number };
 
-export type FeedAnswer = { jobs: ScoredJob[]; stale?: boolean; offline?: boolean; savedAt?: string; sources?: { hiddenSenior?: number } };
+export type FeedAnswer = { jobs: ScoredJob[]; stale?: boolean; offline?: boolean; savedAt?: string; sources?: { hiddenSenior?: number; searches?: Record<string, string> } };
 
 /** Ask the server again? Only online, and only when the searches changed, the batch is old, or the user asked. */
 export function shouldRefresh(batch: FeedBatch | null, categories: string, opts: { offline: boolean; force?: boolean; now?: number }): boolean {

@@ -7,10 +7,11 @@ import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { CardWhy } from "@/lib/ai/schema";
 import { api, ApiError, isAbort, isPausable } from "@/lib/client/api";
-import { db, factsKey, getCard, putCard, setMeta, type CardCache } from "@/lib/client/db";
+import { db, factsKey, getCard, getMeta, putCard, setMeta, type CardCache } from "@/lib/client/db";
+import { loadSerpKey, PAUSED_META } from "@/lib/client/serpapi";
 import { isStale, savedOn } from "@/lib/client/offline";
 import { newApplication } from "@/lib/client/kit";
-import { useStore } from "@/lib/client/store";
+import { routeHref, useStore } from "@/lib/client/store";
 import { categoryById } from "@/lib/jobs/categories";
 import { buildDeck, profileTerms, type DeckEntry } from "@/lib/jobs/rank";
 import { workFit } from "@/lib/jobs/rightToWork";
@@ -80,6 +81,8 @@ export function Deck() {
   const categories = useMemo(() => [...(prefs?.roles ?? [])].sort(), [prefs?.roles]);
   const feed = useFeed(categories, isOffline);
   const swipes = useLiveQuery(() => db.swipes.toArray(), [], null);
+  // The shared Google Jobs budget is spent and there's no key of the user's own (Settings > Job search).
+  const googlePaused = useLiveQuery(async () => (await getMeta<boolean>(PAUSED_META, false)) && !(await loadSerpKey()), [], false);
   const hintId = useId();
   const deckRef = useRef<HTMLDivElement>(null);
   const { reduce } = useMotion();
@@ -392,6 +395,7 @@ export function Deck() {
         starter={feed.starter}
         hidden={hiddenTotal}
         onHidden={() => setHiddenOpen(true)}
+        googlePaused={googlePaused}
       />
       <LaneSwitch className="mt-3 flex w-fit lg:hidden" />
       {feed.error && !firstRun && !isOffline && <p className="mt-1 text-caption text-warn">{feed.error.message}</p>}
@@ -467,7 +471,7 @@ export function Deck() {
 }
 
 /** "22 matches · saved 14:05 · 365 hidden": the deck's one line under the title. */
-function MetaLine({ deckReady, matches, savedAt, starter, hidden, onHidden }: { deckReady: boolean; matches: number; savedAt: number | null; starter: boolean; hidden: number; onHidden: () => void }) {
+function MetaLine({ deckReady, matches, savedAt, starter, hidden, onHidden, googlePaused }: { deckReady: boolean; matches: number; savedAt: number | null; starter: boolean; hidden: number; onHidden: () => void; googlePaused: boolean }) {
   if (!deckReady) return <p className="text-body text-ink-2">Finding jobs in Ireland that fit you.</p>;
   const today = savedAt != null && new Date(savedAt).toDateString() === new Date().toDateString();
   const time = savedAt != null ? (today ? savedOn(savedAt, true)?.split(", ")[1] : savedOn(savedAt)) : null;
@@ -498,6 +502,15 @@ function MetaLine({ deckReady, matches, savedAt, starter, hidden, onHidden }: { 
             <RollingNumber value={hidden} />
             &nbsp;hidden
           </button>
+        </>
+      )}
+      {googlePaused && (
+        <>
+          <span aria-hidden>·</span>
+          {/* The shared SerpApi budget is spent and the user has no key of their own: say where to add one. */}
+          <a href={routeHref({ name: "settings" })} className="text-warn underline decoration-control-border underline-offset-4 hover:decoration-ink">
+            Google Jobs paused, add your own key
+          </a>
         </>
       )}
     </p>

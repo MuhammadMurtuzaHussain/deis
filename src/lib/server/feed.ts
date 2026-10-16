@@ -6,6 +6,7 @@ import { LANGUAGES } from "../jobs/languages";
 import { sanitisePosting } from "../jobs/sanitize";
 import { classifySeniority } from "../jobs/seniority";
 import { jobSchema, LEVELS, type ScoredJob } from "../jobs/types";
+import { hideKey } from "../serpapi";
 import { kvGet, kvHit, kvSet, kvSetNx } from "./kv";
 import { netFetch } from "./net";
 import { reportBoardFailures } from "./telemetry";
@@ -19,7 +20,9 @@ import { reportBoardFailures } from "./telemetry";
 //     Shared by every user, fresh for about a week (spread so they don't all fall due
 //     together), kept 30 days, with daily and monthly budgets and a floor of searches
 //     left, because the key is shared with other projects. A page past the first is
-//     only read while the month's budget is under 80% spent.
+//     only read while the month's budget is under 80% spent. A user can bring their own
+//     key (x-deis-serpapi): it skips the shared budget for a daily cap of its own, and its
+//     results go into the same shared cache, because search results aren't personal.
 // Stale-while-revalidate: a saved copy is served at once and refreshed in the
 // background, one refresh at a time across instances. A failed refresh never
 // overwrites the saved copy, and an empty list is saved only when a board is gone (404).
@@ -204,7 +207,21 @@ export async function boardJobs(b: Board): Promise<ScoredJob[]> {
 
 const month = () => new Date().toISOString().slice(0, 7);
 
-/** Searches left on the SerpApi account, checked at most once an hour. The account API doesn't use a search. */
+/** What account.json says about a key. The account API doesn't use a search. */
+export async function serpAccount(key: string): Promise<{ ok: true; left: number | null } | { ok: false; reason: "invalid" | "unreachable" }> {
+  try {
+    const r = await netFetch("feed", `https://serpapi.com/account.json?api_key=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(10_000), headers: UA });
+    if (r.status === 401 || r.status === 403) return { ok: false, reason: "invalid" };
+    const d = (await r.json().catch(() => null)) as { total_searches_left?: number; plan_searches_left?: number; error?: string } | null;
+    if (!d || d.error) return { ok: false, reason: d?.error ? "invalid" : "unreachable" };
+    const left = d.total_searches_left ?? d.plan_searches_left;
+    return { ok: true, left: typeof left === "number" ? left : null };
+  } catch {
+    return { ok: false, reason: "unreachable" };
+  }
+}
+
+/** Searches left on the shared SerpApi account, checked at most once an hour. */
 async function searchesLeft(key: string): Promise<number | null> {
   const hit = await kvGet<number>("serp:left");
   if (hit !== null) return hit;
@@ -223,6 +240,12 @@ class OverBudget extends Error {}
 
 type SearchAnswer = { jobs: ScoredJob[]; from: "cache" | "serpapi" | "off" | "budget" | "error" | "offline"; at?: number; stale?: boolean };
 
+/** A user's own key: no shared budget, but a daily cap so a loop can't empty their account. */
+async function spendOwn(key: string): Promise<void> {
+  const day = `serp-own:${hashId(key)}:${new Date().toISOString().slice(0, 10)}`;
+  if ((await kvHit(day, 2 * 86400)) > (Number(process.env.SERPAPI_OWN_DAILY_CAP) || 40)) throw new OverBudget();
+}
+
 /** May one more SerpApi search be spent? Deeper pages only while the month is under 80% spent. */
 async function spend(key: string, page: number): Promise<void> {
   // The key is shared with return-route and pizhu: leave them a floor of searches.
@@ -239,8 +262,9 @@ async function spend(key: string, page: number): Promise<void> {
  * One Google Jobs search, up to s.pages pages deep, shared by everyone. A page that can't be
  * read (budget, error) ends the search with the pages already read, if any.
  */
-export async function runSearch(s: Search, o: { cacheOnly?: boolean } = {}): Promise<SearchAnswer> {
-  const key = process.env.SERPAPI_KEY;
+export async function runSearch(s: Search, o: { cacheOnly?: boolean; userKey?: string | null } = {}): Promise<SearchAnswer> {
+  const own = Boolean(o.userKey);
+  const key = o.userKey || process.env.SERPAPI_KEY;
   if (!key) return { jobs: [], from: "off" };
   let overBudget = false;
   const cacheKey = `gj:v3:${hashId(`${s.query}|${s.location}|${s.pages}`)}`;
@@ -252,19 +276,19 @@ export async function runSearch(s: Search, o: { cacheOnly?: boolean } = {}): Pro
       let token: string | undefined;
       for (let page = 0; page < s.pages; page++) {
         try {
-          await spend(key, page);
+          await (own ? spendOwn(key) : spend(key, page));
           // gl=ie is rejected by the Google Jobs engine; the location alone keeps results in Ireland.
-          const url = `https://serpapi.com/search.json?engine=google_jobs&q=${encodeURIComponent(s.query)}&location=${encodeURIComponent(s.location)}&hl=en${token ? `&next_page_token=${encodeURIComponent(token)}` : ""}&api_key=${key}`;
+          const url = `https://serpapi.com/search.json?engine=google_jobs&q=${encodeURIComponent(s.query)}&location=${encodeURIComponent(s.location)}&hl=en${token ? `&next_page_token=${encodeURIComponent(token)}` : ""}&api_key=${encodeURIComponent(key)}`;
           const d = (await getJson(url, AbortSignal.timeout(25_000))) as { jobs_results?: unknown[]; error?: string; serpapi_pagination?: { next_page_token?: string } };
           // "No results" is a real answer (and the end of the pages); any other error (bad key, out of searches) isn't.
-          if (d.error && !/hasn't returned any results/i.test(d.error)) throw new Error(d.error);
+          if (d.error && !/hasn't returned any results/i.test(d.error)) throw new Error(hideKey(d.error, key));
           raw.push(...(d.jobs_results ?? []));
           token = d.serpapi_pagination?.next_page_token;
           if (!token || !d.jobs_results?.length) break;
         } catch (e) {
           if (e instanceof OverBudget) overBudget = true;
-          else console.warn("[feed] google jobs", s.id, e instanceof Error ? e.message.replace(key, "[key]") : e);
-          if (page === 0) throw e;
+          else console.warn("[feed] google jobs", s.id, own ? "(own key)" : "", hideKey(e instanceof Error ? e.message : String(e), key));
+          if (page === 0) throw e instanceof OverBudget ? e : new Error(hideKey(e instanceof Error ? e.message : String(e), key));
           break; // keep the pages already read
         }
       }
@@ -278,7 +302,7 @@ export async function runSearch(s: Search, o: { cacheOnly?: boolean } = {}): Pro
 }
 
 /** A role family's own search, shared by everyone who picked it. */
-export async function searchJobs(categoryId: string, o: { cacheOnly?: boolean } = {}): Promise<SearchAnswer> {
+export async function searchJobs(categoryId: string, o: { cacheOnly?: boolean; userKey?: string | null } = {}): Promise<SearchAnswer> {
   const cat = categoryById(categoryId);
   if (!cat) return { jobs: [], from: "off" };
   return runSearch(familySearch(cat), o);
@@ -304,14 +328,16 @@ export type FeedSources = {
 /** available is false when no source answered and nothing was saved: the route says 503. */
 export type FeedResult = { jobs: ScoredJob[]; sources: FeedSources; stale: boolean; savedAt?: string; available: boolean };
 
-export async function buildFeed(categories: string[], opts: { includeSenior?: boolean; cacheOnly?: boolean } = {}): Promise<FeedResult> {
+/** userKey: the user's own SerpApi key for the Google Jobs searches. searchesOnly: leave the boards out (the desktop gets them from the hosted feed). */
+export async function buildFeed(categories: string[], opts: { includeSenior?: boolean; cacheOnly?: boolean; userKey?: string | null; searchesOnly?: boolean } = {}): Promise<FeedResult> {
   const signal = AbortSignal.timeout(FEED_DEADLINE);
   const searchDeadline = AbortSignal.timeout(FEED_DEADLINE - 5000);
+  const so = { cacheOnly: opts.cacheOnly, userKey: opts.userKey };
   const [boards, searches] = await Promise.all([
-    Promise.all(BOARDS.map((b) => boardFeed(b, { cacheOnly: opts.cacheOnly, signal }))),
+    Promise.all((opts.searchesOnly ? [] : BOARDS).map((b) => boardFeed(b, { cacheOnly: opts.cacheOnly, signal }))),
     Promise.all([
-      ...categories.slice(0, 5).map(async (c) => [c, await inTime(searchJobs(c, { cacheOnly: opts.cacheOnly }), searchDeadline)] as const),
-      ...POOL.map(async (s) => [`pool:${s.id}`, await inTime(runSearch(s, { cacheOnly: opts.cacheOnly }), searchDeadline)] as const),
+      ...categories.slice(0, 5).map(async (c) => [c, await inTime(searchJobs(c, so), searchDeadline)] as const),
+      ...POOL.map(async (s) => [`pool:${s.id}`, await inTime(runSearch(s, so), searchDeadline)] as const),
     ]),
   ]);
   const fromBoards = boards.flatMap((g) => g.jobs ?? []);
@@ -329,12 +355,25 @@ export async function buildFeed(categories: string[], opts: { includeSenior?: bo
       boardJobs: fromBoards.length,
       searches: Object.fromEntries(searches.map(([c, r]) => [c, r.from])),
       searchJobs: fromSearch.length,
-      failed: BOARDS.filter((b, i) => (boards[i].how === "none" && !opts.cacheOnly) || failing.has(b.slug)).map((b) => b.name),
+      failed: opts.searchesOnly ? [] : BOARDS.filter((b, i) => (boards[i].how === "none" && !opts.cacheOnly) || failing.has(b.slug)).map((b) => b.name),
       hiddenSenior: merged.length - jobs.length,
     },
     stale: boards.some((g) => g.stale) || searches.some(([, r]) => r.stale),
     savedAt: times.length ? new Date(Math.min(...times)).toISOString() : undefined,
     available: boards.some((g) => g.jobs !== null) || searches.some(([, r]) => r.from === "cache" || r.from === "serpapi"),
+  };
+}
+
+/** The hosted feed's answer with this machine's own Google Jobs searches (the user's key) on top. */
+export function withOwnSearches(feed: FeedResult, own: FeedResult): FeedResult {
+  if (!own.available) return feed;
+  const jobs = mergeJobs([...own.jobs, ...feed.jobs]);
+  return {
+    jobs,
+    sources: { ...feed.sources, searches: { ...feed.sources.searches, ...own.sources.searches }, searchJobs: feed.sources.searchJobs + own.sources.searchJobs },
+    stale: feed.stale && own.stale,
+    savedAt: feed.savedAt,
+    available: true,
   };
 }
 

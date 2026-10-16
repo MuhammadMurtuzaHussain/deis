@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, ApiError, isAbort } from "@/lib/client/api";
 import { db, feedSavedAt, getMeta, saveJobs, setMeta, type SavedJob } from "@/lib/client/db";
+import { PAUSED_META, pausedFrom, serpHeaders } from "@/lib/client/serpapi";
 import type { ScoredJob } from "@/lib/jobs/types";
 import { feedUpdate, pickJobs, shouldRefresh, type FeedAnswer, type FeedBatch } from "./logic";
 
@@ -61,7 +62,8 @@ export function useFeed(categories: string[], offline: boolean): Feed {
     setRefreshing(true);
     setError(null);
     try {
-      const out = await api<FeedAnswer>("/api/feed", { categories, includeSenior: false }, { signal: ctl.signal });
+      const out = await api<FeedAnswer>("/api/feed", { categories, includeSenior: false }, { signal: ctl.signal, headers: await serpHeaders() });
+      await setMeta(PAUSED_META, pausedFrom(out.sources?.searches));
       const decision = feedUpdate(await feedSavedAt(), out);
       if (decision.save) {
         await saveJobs(out.jobs, decision.at, { feed: decision.moveSavedAt });

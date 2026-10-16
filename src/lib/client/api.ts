@@ -143,7 +143,7 @@ const TOO_LONG = "That took too long, so Deis stopped waiting. Try again; on a l
  * for every failure except a caller's own abort, which rethrows the AbortError.
  * opts.timeoutMs overrides the per-route deadline; 0 turns it off.
  */
-export async function api<T>(path: string, body?: unknown, opts: { signal?: AbortSignal; ai?: AiSettings; timeoutMs?: number } = {}): Promise<T> {
+export async function api<T>(path: string, body?: unknown, opts: { signal?: AbortSignal; ai?: AiSettings; timeoutMs?: number; headers?: Record<string, string> } = {}): Promise<T> {
   const ai = opts.ai ?? settings();
   const ms = opts.timeoutMs ?? deadlineFor(path, tierOf(ai));
   const { signal, deadline } = ms > 0 ? withDeadline(opts.signal, ms) : { signal: opts.signal, deadline: null };
@@ -151,7 +151,7 @@ export async function api<T>(path: string, body?: unknown, opts: { signal?: Abor
   try {
     res = await fetch(path, {
       method: body === undefined ? "GET" : "POST",
-      headers: { "content-type": "application/json", [AI_HEADER]: encodeSettings(ai) },
+      headers: { ...opts.headers, "content-type": "application/json", [AI_HEADER]: encodeSettings(ai) },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal,
     });
