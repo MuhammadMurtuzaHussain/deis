@@ -24,7 +24,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
-      - run: pnpm exec tsc --noEmit
+      # Route types (LayoutProps) are generated, as in ci.yml.
+      - run: pnpm exec next typegen && pnpm exec tsc --noEmit
       - run: pnpm test
 
   build:
