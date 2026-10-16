@@ -5,6 +5,7 @@
 // server says it's online, and sends nothing from the moment it says otherwise.
 import * as Sentry from "@sentry/nextjs";
 import { dataCollection, privacy } from "./lib/privacy";
+import { browserEnvironment } from "./lib/sentry-env";
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 const web = typeof location !== "undefined" && /^https?:$/.test(location.protocol);
@@ -24,6 +25,7 @@ if (dsn && web) {
     if (!online) return;
     Sentry.init({
       dsn,
+      environment: browserEnvironment(location.hostname),
       tracesSampleRate: 1,
       ...privacy,
       beforeSend: (event) => (online ? privacy.beforeSend(event) : null),

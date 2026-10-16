@@ -3,11 +3,13 @@
 import * as Sentry from "@sentry/nextjs";
 import { isOfflineMode } from "./src/lib/server/net";
 import { dataCollection, privacy } from "./src/lib/privacy";
+import { serverEnvironment } from "./src/lib/sentry-env";
 
 const off = (process.env.DEIS_DESKTOP === "1" && process.env.DEIS_DIAGNOSTICS !== "1") || isOfflineMode();
 
 Sentry.init({
   dsn: off ? undefined : process.env.SENTRY_DSN,
+  environment: serverEnvironment(process.env),
   tracesSampleRate: 1,
   ...privacy,
   // Offline mode can be switched on after start: from then on nothing is sent.

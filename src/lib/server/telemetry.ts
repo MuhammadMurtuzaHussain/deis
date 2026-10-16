@@ -45,13 +45,16 @@ export const sentryEnabled = () => !isOfflineMode() && Boolean(Sentry.getClient(
 export type Task = "import" | "card" | "fit" | "cv" | "letter" | "answers" | "questions" | "proposals" | "feed";
 export type Where = { tier: Tier; model: string };
 
+/** The issue title. Issues are grouped per task, so the task is in the title too, or one rule looks like duplicates. */
+export const guardTitle = (task: Task, rule: string) => `Guard (${task}): ${LABEL[rule] ?? rule}`;
+
 function report(task: Task, rule: string, tags: Record<string, string>, count = 1) {
   Sentry.withScope((scope) => {
     scope.setLevel(rule === "model_error" || rule === "json_failed" ? "error" : "warning");
     scope.setTags({ task, rule, ...tags });
     scope.setFingerprint(["guard", task, rule, ...(tags.code ? [tags.code] : [])]);
     scope.setExtra("count", count);
-    Sentry.captureMessage(`Guard: ${LABEL[rule] ?? rule}`);
+    Sentry.captureMessage(guardTitle(task, rule));
   });
 }
 
