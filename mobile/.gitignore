@@ -1,0 +1,4 @@
+node_modules/
+# A local signing keystore, if you make one; the release one lives in GitHub secrets.
+*.jks
+*.keystore

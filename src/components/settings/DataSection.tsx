@@ -3,6 +3,7 @@
 import { DownloadSimple, Trash, UploadSimple } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
 import { deleteEverything, exportAll, importAll } from "@/lib/client/db";
+import { saveFile } from "@/lib/client/files";
 import { Button, Dialog, Notice } from "../ui";
 import { SettingsSection } from "./parts";
 
@@ -14,9 +15,7 @@ export function DataSection({ desktop }: { desktop: boolean }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const download = async () => {
-    const url = URL.createObjectURL(new Blob([JSON.stringify(await exportAll(), null, 2)], { type: "application/json" }));
-    Object.assign(document.createElement("a"), { href: url, download: `deis-backup-${new Date().toISOString().slice(0, 10)}.json` }).click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    await saveFile(new Blob([JSON.stringify(await exportAll(), null, 2)], { type: "application/json" }), `deis-backup-${new Date().toISOString().slice(0, 10)}.json`);
   };
 
   return (

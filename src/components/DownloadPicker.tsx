@@ -1,10 +1,11 @@
 "use client";
 
-import { AppleLogo, DownloadSimple, LinuxLogo, WindowsLogo } from "@phosphor-icons/react";
+import { AndroidLogo, AppleLogo, DownloadSimple, LinuxLogo, WindowsLogo } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { buttonClass } from "./ui";
 
-// Installer names never change between versions (package.json "artifactName"), so
+// Installer names never change between versions (package.json "artifactName", and the APK in
+// .github/workflows/android.yml), so
 // releases/latest/download/<name> is always the newest build.
 const LATEST = "https://github.com/MuhammadMurtuzaHussain/deis/releases/latest/download";
 
@@ -13,6 +14,7 @@ export const BUILDS = [
   { id: "mac-x64", os: "mac", label: "Mac with Intel", note: "macOS 12 or later", file: "Deis-mac-x64.dmg", Icon: AppleLogo },
   { id: "windows-x64", os: "windows", label: "Windows", note: "Windows 10 or 11, 64-bit", file: "Deis-windows-x64.exe", Icon: WindowsLogo },
   { id: "linux-x64", os: "linux", label: "Linux", note: "AppImage, 64-bit", file: "Deis-linux-x86_64.AppImage", Icon: LinuxLogo },
+  { id: "android", os: "android", label: "Android phone", note: "Android 7 or later", file: "Deis-android.apk", Icon: AndroidLogo },
 ] as const;
 type Build = (typeof BUILDS)[number];
 
@@ -21,11 +23,12 @@ export const downloadUrl = (b: Build) => `${LATEST}/${b.file}`;
 type UAData = { platform?: string; getHighEntropyValues?: (h: string[]) => Promise<{ architecture?: string }> };
 
 /** Which build this visitor most likely wants. Safari can't say Apple silicon or Intel; Apple silicon is the safe bet since 2020. */
-async function detect(): Promise<Build["id"] | null> {
+async function detect(): Promise<Build["id"] | "iphone" | null> {
   const nav = navigator as Navigator & { userAgentData?: UAData };
   const ua = navigator.userAgent;
   const platform = nav.userAgentData?.platform ?? navigator.platform ?? "";
-  if (/android|iphone|ipad|ipod/i.test(ua)) return null;
+  if (/android/i.test(ua)) return "android";
+  if (/iphone|ipad|ipod/i.test(ua)) return "iphone";
   if (/mac/i.test(platform) || /Macintosh/.test(ua)) {
     const arch = await nav.userAgentData?.getHighEntropyValues?.(["architecture"]).catch(() => null);
     return arch?.architecture === "x86" ? "mac-x64" : "mac-arm64";
@@ -37,7 +40,7 @@ async function detect(): Promise<Build["id"] | null> {
 
 /** The big button for this computer, and the other builds under it. */
 export function DownloadPicker() {
-  const [mine, setMine] = useState<Build["id"] | null | undefined>(undefined);
+  const [mine, setMine] = useState<Build["id"] | "iphone" | null | undefined>(undefined);
   useEffect(() => {
     void detect().then(setMine);
   }, []);
@@ -52,9 +55,15 @@ export function DownloadPicker() {
             Download for {build.label}
           </a>
         ) : (
-          <p className="text-body text-ink-2">{mine === null ? "Deis runs on a Mac, Windows or Linux computer. Open this page there, or pick a build below." : "Finding the right build for this computer."}</p>
+          <p className="text-body text-ink-2">
+            {mine === "iphone"
+              ? "On an iPhone, Deis installs from Safari: open deiscareers.tech, tap Share, then Add to Home Screen."
+              : mine === null
+                ? "Deis runs on a Mac, Windows or Linux computer and on Android phones. Open this page there, or pick a build below."
+                : "Finding the right build for this device."}
+          </p>
         )}
-        {build && <p className="text-caption text-ink-3">{build.note}. Not your computer? Every build is below.</p>}
+        {build && <p className="text-caption text-ink-3">{build.note}. Not your device? Every build is below.</p>}
       </div>
 
       <ul className="grid gap-2 sm:grid-cols-2" aria-label="Every build">

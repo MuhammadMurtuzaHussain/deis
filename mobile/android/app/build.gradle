@@ -1,0 +1,76 @@
+import groovy.json.JsonSlurper
+
+apply plugin: 'com.android.application'
+
+// One version for every Deis build: the root package.json (0.1.3 is versionCode 103).
+def deisVersion = new JsonSlurper().parse(file('../../../package.json')).version
+def (vMajor, vMinor, vPatch) = deisVersion.tokenize('.').collect { it.replaceAll('[^0-9].*', '') as int }
+
+// Release signing comes from the environment (GitHub secrets in .github/workflows/android.yml).
+// The keystore itself is never in the repo.
+def keystore = System.getenv('DEIS_KEYSTORE')
+
+android {
+    namespace = "ie.deis.app"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "ie.deis.app"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode vMajor * 10000 + vMinor * 100 + vPatch
+        versionName deisVersion
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        release {
+            if (keystore) {
+                storeFile file(keystore)
+                storeType "pkcs12"
+                storePassword System.getenv('DEIS_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('DEIS_KEY_ALIAS')
+                keyPassword System.getenv('DEIS_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (keystore) signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

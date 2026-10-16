@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     "public/pdf.worker.min.mjs",
     "desktop/**",
     "release/**",
+    // The Android shell (Capacitor); its web assets are copied in, not written here.
+    "mobile/**",
   ]),
 ]);
 

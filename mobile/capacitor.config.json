@@ -1,0 +1,14 @@
+{
+  "appId": "ie.deis.app",
+  "appName": "Deis",
+  "webDir": "www",
+  "backgroundColor": "#0E0F10",
+  "server": {
+    "url": "https://deiscareers.tech",
+    "errorPath": "offline.html"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  }
+}

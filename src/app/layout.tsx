@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   title: "Deis · Jobs you can actually get",
   description,
   applicationName: "Deis",
+  // Added to the home screen from Safari, Deis opens full screen like an app.
+  appleWebApp: { capable: true, title: "Deis", statusBarStyle: "default" },
   openGraph: { title: "Deis", description, type: "website", locale: "en_IE" },
   twitter: { card: "summary_large_image", title: "Deis", description },
 };

@@ -4,6 +4,7 @@ import { Cards, DownloadSimple } from "@phosphor-icons/react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo, useState } from "react";
 import { db } from "@/lib/client/db";
+import { saveFile } from "@/lib/client/files";
 import { routeHref } from "@/lib/client/store";
 import { AddJobButton } from "./AddJob";
 import { useKitQueue } from "./KitQueue";
@@ -35,9 +36,7 @@ export function Tracker() {
   const total = apps.length;
 
   const exportCsv = () => {
-    const url = URL.createObjectURL(new Blob([toCsv(apps, savedJobs)], { type: "text/csv;charset=utf-8" }));
-    Object.assign(document.createElement("a"), { href: url, download: `deis-applications-${new Date().toISOString().slice(0, 10)}.csv` }).click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    saveFile(new Blob([toCsv(apps, savedJobs)], { type: "text/csv;charset=utf-8" }), `deis-applications-${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
   return (

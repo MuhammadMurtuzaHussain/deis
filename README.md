@@ -78,6 +78,15 @@ The installers aren't signed with an Apple or Microsoft certificate yet, so the 
 
 Builds come from the [Desktop installers](.github/workflows/desktop.yml) workflow: each one is launched once in CI before it's kept, and a `v*` tag publishes them as a [GitHub Release](https://github.com/MuhammadMurtuzaHussain/deis/releases). To release an update, bump `version` in `desktop/package.json` and push a new tag.
 
+### On your phone
+
+Free on both, and the same Deis as the website: jobs and Gemma come through [deiscareers.tech](https://deiscareers.tech) (the demo's Gemma, or your own free AI Studio key in Settings), because Deis can't run Gemma on a phone yet. Your profile stays in the phone's storage.
+
+- **Android:** download `Deis-android.apk` from the [download page](https://deiscareers.tech/download) or the [latest release](https://github.com/MuhammadMurtuzaHussain/deis/releases/latest), open it, and allow your browser to install unknown apps when Android asks. Sideloading needs no Google account; Google's developer verification for sideloaded apps covers Brazil, Indonesia, Singapore and Thailand from 30 September 2026 and the rest of the world in 2027, so it doesn't affect Ireland yet.
+- **iPhone:** open deiscareers.tech in Safari, tap Share, then *Add to Home Screen*. Deis is an installable web app (manifest, icons, full screen), so it needs no App Store. An App Store or TestFlight build would need a $99 a year Apple Developer account.
+
+The Android app is a [Capacitor](https://capacitorjs.com) shell in [`mobile/`](mobile) that opens the hosted site, so it updates when the website does. A small native layer covers what an Android WebView can't do alone: Word files and backups go to the share sheet (save to Files or Drive, or send), *Save as PDF* opens Android's print dialog, links to job postings open in your browser, and the back button walks back through the app. The [Android app](.github/workflows/android.yml) workflow builds and signs the APK, installs it on an emulator and opens it, and a `v*` tag attaches it to the GitHub Release. The signing key is kept only in repository secrets. Google Play ($25 once) and [F-Droid](https://f-droid.org) (free, and AGPL suits it, but its review takes weeks) are options for later.
+
 ## Run it from source
 
 ```bash
@@ -116,7 +125,7 @@ How well it works, measured: [eval/RESULTS.md](eval/RESULTS.md). The seniority f
 - Code catches invented numbers, tools, certificates, employers, dates and status claims. It can't judge every shade of meaning, so read your CV once before you send it.
 - Small local models are slower (see the timing above) and write plainer CVs than the cloud tier. The guard also removes some true sentences: on 16 October about half of what it removed was a real over-claim.
 - The hosted demo's Gemma depends on Google AI Studio and OpenRouter, and both have had bad hours. Your own key or Ollama avoids that.
-- Only the macOS installer has been run on a real machine so far.
+- Only the macOS installer has been run on a real machine so far. The Android app hasn't been run on a phone yet.
 - Ireland only for now. Permit information is general, not immigration advice.
 
 ## Licence

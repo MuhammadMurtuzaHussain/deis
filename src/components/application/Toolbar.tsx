@@ -5,7 +5,7 @@ import { useState, type ReactNode } from "react";
 import type { Kit } from "@/lib/client/db";
 import { cvText } from "@/lib/cv/compose";
 import { Button, toast } from "../ui";
-import { download } from "./copy";
+import { printPage, saveFile as download } from "@/lib/client/files";
 import { letterText } from "./LetterView";
 import { useTrace } from "./useTrace";
 
@@ -74,7 +74,7 @@ export function CvToolbar({ kit, job, name }: { kit: Kit; job: { company: string
           setBusy(true);
           try {
             const { cvDocx, cvFileName, toBlob } = await import("@/lib/cv/docx");
-            download(await toBlob(cvDocx(kit.cv, header)), cvFileName(job.company, job.title, name));
+            await download(await toBlob(cvDocx(kit.cv, header)), cvFileName(job.company, job.title, name));
           } catch {
             toast("The Word file couldn't be made. Try again, or use Save as PDF.");
           } finally {
@@ -85,7 +85,7 @@ export function CvToolbar({ kit, job, name }: { kit: Kit; job: { company: string
         {!busy && <DownloadSimple size={16} aria-hidden />}
         Download Word
       </Button>
-      <Button size="sm" onClick={() => window.print()}>
+      <Button size="sm" onClick={() => printPage(`${job.company} - ${job.title} CV - ${name || "Deis"}`)}>
         <Printer size={16} aria-hidden />
         Save as PDF
       </Button>
@@ -108,7 +108,7 @@ export function LetterToolbar({ kit, job, name }: { kit: Kit; job: { company: st
           setBusy(true);
           try {
             const { letterDocx, letterFileName, toBlob } = await import("@/lib/cv/docx");
-            download(await toBlob(letterDocx(letter, kit.cv.header, job.title)), letterFileName(job.company, job.title, name));
+            await download(await toBlob(letterDocx(letter, kit.cv.header, job.title)), letterFileName(job.company, job.title, name));
           } catch {
             toast("The Word file couldn't be made. Try again, or copy the text.");
           } finally {

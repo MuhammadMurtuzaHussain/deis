@@ -24,13 +24,3 @@ export const RULE_COPY: Record<GuardRule, string> = {
 export const PART_COPY: Record<KitPart, string> = { cv: "CV", letter: "cover letter", answers: "form answers" };
 
 export const VERDICT: Record<string, string> = { close: "Close fit", good: "Good fit", stretch: "A stretch, worth a go", major_stretch: "A big stretch" };
-
-/** Save a Blob as a file. */
-export function download(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob);
-  const a = Object.assign(document.createElement("a"), { href: url, download: name });
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}

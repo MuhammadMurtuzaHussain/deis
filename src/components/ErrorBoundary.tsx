@@ -12,10 +12,9 @@ import { buttonClass } from "./ui";
 export async function downloadBackup(): Promise<boolean> {
   try {
     const { exportAll } = await import("@/lib/client/db");
+    const { saveFile } = await import("@/lib/client/files");
     const data = await exportAll();
-    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
-    Object.assign(document.createElement("a"), { href: url, download: `deis-backup-${new Date().toISOString().slice(0, 10)}.json` }).click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    await saveFile(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }), `deis-backup-${new Date().toISOString().slice(0, 10)}.json`);
     return true;
   } catch {
     return false;
