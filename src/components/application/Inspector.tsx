@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, type RefObject } from "react";
 import { ArrowsClockwise, CaretRight, Question } from "@phosphor-icons/react";
 import type { Application } from "@/lib/client/db";
 import { savedOn } from "@/lib/client/offline";
@@ -14,6 +15,8 @@ import { useTrace } from "./useTrace";
 // The right-hand column of the kit workspace, 360 wide: the verdict and requirements, right to
 // work, the sources (fact slips), the checks in one line, this kit's details and the notes.
 // Sticky under the top bar on desktop with its own scroll; a section under the paper on phones.
+// Before it sticks it starts lower down the page, so its height follows the space left in the
+// window and the last requirement is never cut off below the fold.
 
 const WHAT: Record<KitTab, string> = { cv: "this CV", letter: "this letter", answers: "these answers", checks: "this kit" };
 
@@ -33,6 +36,7 @@ export function Inspector({
   rebuild: { canRewrite: boolean; busy: boolean; again: () => void; careful: () => void } | null;
 }) {
   const { railRef, numbers } = useTrace();
+  useFitToWindow(railRef);
   const kit = app.kit;
   const n = kit?.events.length ?? 0;
   const sources = Boolean(kit) && tab !== "checks" && numbers.size > 0;
@@ -40,7 +44,7 @@ export function Inspector({
     <aside
       ref={railRef}
       aria-label="About this application"
-      className="grid min-w-0 content-start gap-3 lg:sticky lg:top-[calc(var(--top-bar)+1.5rem)] lg:-mx-1 lg:max-h-[calc(100dvh-var(--top-bar)-3rem)] lg:overflow-y-auto lg:overscroll-contain lg:px-1 lg:pb-1"
+      className="grid min-w-0 content-start gap-3 lg:sticky lg:top-[calc(var(--top-bar)+1.5rem)] lg:-mx-1 lg:max-h-[calc(100dvh-var(--top-bar)-3rem)] lg:overflow-y-auto lg:px-1 lg:pb-1"
     >
       <Surface raised className="p-5">
         <FitPanel app={app} facts={facts} numbers={numbers} pending={fitPending} />
@@ -97,4 +101,37 @@ export function Inspector({
       </Surface>
     </aside>
   );
+}
+
+/** On desktop, cap the rail's height at the window space below its top edge, as the page scrolls. */
+function useFitToWindow(ref: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    let frame = 0;
+    const fit = () => {
+      frame = 0;
+      if (!desktop.matches) {
+        el.style.maxHeight = "";
+        return;
+      }
+      const top = Math.max(el.getBoundingClientRect().top, parseFloat(getComputedStyle(el).top) || 0);
+      el.style.maxHeight = `${Math.max(240, window.innerHeight - top - 24)}px`;
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(fit);
+    };
+    fit();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    desktop.addEventListener("change", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      desktop.removeEventListener("change", schedule);
+      el.style.maxHeight = "";
+    };
+  }, [ref]);
 }

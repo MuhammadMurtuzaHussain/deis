@@ -1,27 +1,32 @@
 "use client";
 
+import { useState } from "react";
 import { ArrowsLeftRight, Check, CircleDashed, Prohibit, Question, ShieldCheck } from "@phosphor-icons/react";
 import type { Application } from "@/lib/client/db";
 import { useStore } from "@/lib/client/store";
 import { readRightToWork, workFit, WORK_FIT_COPY, WORK_STATUS_LABEL } from "@/lib/jobs/rightToWork";
 import type { Fact } from "@/lib/profile/types";
-import { Elapsed, Pill, Skeleton } from "../ui";
+import { Chip, Elapsed, Skeleton } from "../ui";
 import { VERDICT } from "./copy";
 import { useTraceMaybe } from "./useTrace";
 
 // The inspector's fit block: Gemma's verdict, the must-haves matched to your facts (with
 // fact text, never ids), and right to work as code reads it. Each match sits in a small
 // round chip: strong on pop-soft (proven), carries over on sunken, a gap on warn-soft.
-// Lime is never an icon colour on white.
+// Lime is never an icon colour on white. The counts above the list are toggle chips that
+// filter it to one group; "All" or a second press on the same chip shows every requirement.
 
 const MATCH = {
-  strong: { Icon: Check, weight: "bold" as const, chip: "bg-pop-soft text-ink", sr: "Strong match" },
-  transferable: { Icon: ArrowsLeftRight, weight: "bold" as const, chip: "bg-sunken text-ink-2", sr: "Carries over" },
-  gap: { Icon: CircleDashed, weight: "bold" as const, chip: "bg-warn-soft text-warn", sr: "Gap" },
+  strong: { Icon: Check, weight: "bold" as const, chip: "bg-pop-soft text-ink", sr: "Strong match", group: "strong matches", label: (n: number) => `${n} strong` },
+  transferable: { Icon: ArrowsLeftRight, weight: "bold" as const, chip: "bg-sunken text-ink-2", sr: "Carries over", group: "carry over", label: (n: number) => `${n} carry over` },
+  gap: { Icon: CircleDashed, weight: "bold" as const, chip: "bg-warn-soft text-warn", sr: "Gap", group: "gaps", label: (n: number) => (n === 1 ? "1 gap" : `${n} gaps`) },
 };
+type Match = keyof typeof MATCH;
+const GROUPS: Match[] = ["strong", "transferable", "gap"];
 
 export function FitPanel({ app, facts, numbers, pending }: { app: Application; facts: Map<string, Fact>; numbers: Map<string, number>; pending: { since: number | null; waiting: boolean; error: string | null } | null }) {
   const trace = useTraceMaybe();
+  const [show, setShow] = useState<Match | "all">("all");
   const fit = app.fit;
   if (!fit) {
     return (
@@ -44,10 +49,11 @@ export function FitPanel({ app, facts, numbers, pending }: { app: Application; f
       </div>
     );
   }
-  const count = (m: keyof typeof MATCH) => fit.requirements.filter((r) => r.match === m).length;
-  const strong = count("strong");
-  const carries = count("transferable");
-  const gaps = count("gap");
+  const counts = new Map(GROUPS.map((m) => [m, fit.requirements.filter((r) => r.match === m).length]));
+  const groups = GROUPS.filter((m) => counts.get(m));
+  // A group that empties after a rewrite falls back to all.
+  const shown = show !== "all" && groups.includes(show) ? show : "all";
+  const visible = fit.requirements.map((r, i) => ({ r, i })).filter(({ r }) => shown === "all" || r.match === shown);
   return (
     <div className="grid gap-4">
       <div>
@@ -55,14 +61,21 @@ export function FitPanel({ app, facts, numbers, pending }: { app: Application; f
         <p className="display mt-1 text-title leading-tight text-ink">{VERDICT[fit.verdict] ?? fit.verdict}</p>
         {fit.angle && <p className="mt-1.5 text-body text-ink-2">{fit.angle}</p>}
         {/* Counted by code from the requirements, not Gemma's own score. */}
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {strong > 0 && <Pill tone="go">{strong} strong</Pill>}
-          {carries > 0 && <Pill>{carries} carry over</Pill>}
-          {gaps > 0 && <Pill tone="warn">{gaps === 1 ? "1 gap" : `${gaps} gaps`}</Pill>}
-        </div>
+        {groups.length > 0 && (
+          <div role="group" aria-label="Show requirements" className="mt-3 flex flex-wrap gap-1.5">
+            <Chip on={shown === "all"} onClick={() => setShow("all")}>
+              All {fit.requirements.length}
+            </Chip>
+            {groups.map((m) => (
+              <Chip key={m} on={shown === m} onClick={() => setShow(shown === m ? "all" : m)}>
+                {MATCH[m].label(counts.get(m) ?? 0)}
+              </Chip>
+            ))}
+          </div>
+        )}
       </div>
-      <ul className="grid gap-3.5 border-t border-line pt-4">
-        {fit.requirements.map((r, i) => {
+      <ul aria-label={shown === "all" ? "Requirements" : `Requirements: ${MATCH[shown].group}`} className="grid gap-3.5 border-t border-line pt-4">
+        {visible.map(({ r, i }) => {
           const m = MATCH[r.match];
           const from = r.facts.map((id) => facts.get(id)).filter((f): f is Fact => Boolean(f));
           return (
