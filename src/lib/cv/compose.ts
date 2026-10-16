@@ -1,20 +1,21 @@
 import { companyKey } from "../jobs/normalise";
 import { isFinished } from "../profile/dates";
 import type { Fact, Header, Profile } from "../profile/types";
-import type { Cited, CvBody, Fit } from "./schema";
+import type { Cited, CvBody, CvLength, Fit } from "./schema";
 
 // The finished CV. Gemma's guarded writing goes into the slots; everything a recruiter
 // checks against your LinkedIn (name, employers, job titles, dates, degrees, certificates,
-// languages) is copied from the facts by code and never rewritten. A graduate's CV
-// follows the Irish graduate layout: profile, education, experience, projects and
-// leadership, skills, certifications, languages. cvSections() is the one order the
-// Word file, the preview and "Copy as text" all render.
+// languages, achievements) is copied from the facts by code and never rewritten. The layout
+// is a hand-tailored Irish CV's: professional summary, core competencies, experience,
+// projects and leadership, education, skills, achievements. A graduate's education moves up
+// under the summary. cvSections() is the one order the Word file, the preview and "Copy as
+// text" all render.
 
 export type CvRole = { title: string; org: string; where: string | null; dates: string; bullets: Cited[] };
 export type CvEducation = { text: string; dates: string; facts: string[]; /** Grade, dissertation, modules: the user's own lines. */ lines?: Cited[] };
 export type CvDocument = {
   header: Header;
-  /** 2 or 3 sentences. Kits built before 16 Oct 2026 have an objective and a summary instead. */
+  /** The professional summary, ending with the career objective. Kits built before 16 Oct 2026 have an objective and a summary instead. */
   profile?: Cited[];
   /** Graduates and students: education straight after the profile. */
   educationFirst?: boolean;
@@ -23,15 +24,18 @@ export type CvDocument = {
   projects: Cited[];
   /** The projects section includes societies or other leadership. */
   leadership?: boolean;
+  /** "Label: one sentence", mirroring the posting. */
+  competencies?: { label: string; text: string; facts: string[] }[];
+  /** Kits built 16 Oct 2026: competency labels with no sentence. */
   keySkills?: string[];
   skills: string[];
+  /** The user's own achievement facts, word for word, most relevant first. */
+  achievements?: Cited[];
   certifications?: Cited[];
   languages?: string[];
   // Older kits, still on people's devices:
   objective?: Cited[];
   summary?: Cited[];
-  competencies?: { label: string; text: string; facts: string[] }[];
-  achievements?: Cited[];
 };
 
 export const projectsHeading = (cv: Pick<CvDocument, "leadership">) => (cv.leadership ? "Selected projects and leadership" : "Selected projects");
@@ -136,7 +140,8 @@ function templatedProfile(degree: Fact | undefined, role: Fact | undefined, now:
   return parts;
 }
 
-export function composeCv(profile: Pick<Profile, "header" | "facts">, body: CvBody, fit?: Pick<Fit, "requirements">, now = new Date()): CvDocument {
+export function composeCv(profile: Pick<Profile, "header" | "facts">, body: CvBody, fit?: Pick<Fit, "requirements">, now = new Date(), length: CvLength = "detailed"): CvDocument {
+  const short = length === "short";
   const facts = profile.facts.filter((f) => f.confirmed);
   const byId = new Map(facts.map((f) => [f.id, f]));
   const clean = (lines: Cited[]) => lines.map((l) => ({ ...l, text: scrub(l.text) })).filter((l) => l.text);
@@ -192,18 +197,26 @@ export function composeCv(profile: Pick<Profile, "header" | "facts">, body: CvBo
     education = educationOf();
   }
   const projects = onlyNew(allProjects, seen);
+  // Achievements Gemma chose, or else the ones that don't belong to a job or a degree.
+  const standalone = facts.filter((f) => f.kind === "achievement" && !degreeFor(f) && !roles.some((r) => sameOrg(r.org, f.org))).map(asCited);
+  const achievements = onlyNew(body.achievements.length ? body.achievements : standalone, seen).slice(0, short ? 3 : 8);
   const certifications = onlyNew(certificationLines, seen);
 
   const languages = facts.filter((f) => f.kind === "language").map((f) => f.text);
   const spoken = new Set(languages.join(" ").toLowerCase().match(/[a-zÀ-ɏ]{3,}/g) ?? []);
-  const keySkills = [...new Map(body.competencies.map((c) => scrub(c.label)).filter(Boolean).map((l) => [l.toLowerCase(), l])).values()].slice(0, 8);
+  // Competencies with a sentence are the CV's own section; bare labels (older drafts) are a skills line.
+  const competencies = body.competencies
+    .map((c) => ({ ...c, label: scrub(c.label), text: scrub(c.text) }))
+    .filter((c, i, all) => c.label && c.text && all.findIndex((o) => o.label.toLowerCase() === c.label.toLowerCase()) === i)
+    .slice(0, short ? 4 : 7);
+  const keySkills = [...new Map(body.competencies.filter((c) => !c.text.trim()).map((c) => scrub(c.label)).filter(Boolean).map((l) => [l.toLowerCase(), l])).values()].slice(0, 8);
   const taken = new Set(keySkills.map((k) => k.toLowerCase()));
   // "Excel (pivot tables, VLOOKUP), Xero" is two skills: commas inside brackets don't split.
   const fromFacts = facts.filter((f) => f.kind === "skill").flatMap((f) => f.text.split(/\s*[,;]\s*(?![^(]*\))/));
   const skills = (body.skills.length ? body.skills.map(scrub) : fromFacts).filter((s) => s && !spoken.has(firstWord(s) ?? "") && !taken.has(s.toLowerCase()));
 
-  // The profile's opening sentence is guarded as the objective, so it may name the role as advertised.
-  const profileLines = clean([...(body.objective ?? []), ...body.summary]);
+  // The profile's opening sentence and closing aim are guarded as the objective, so they may name the role as advertised.
+  const profileLines = clean([...(body.objective ?? []), ...body.summary, ...(body.aim ?? [])]);
   return {
     header: profile.header,
     profile: profileLines.length ? profileLines : templatedProfile(latestDegree, roles.slice().sort(newestFirst)[0], now),
@@ -212,8 +225,10 @@ export function composeCv(profile: Pick<Profile, "header" | "facts">, body: CvBo
     experience,
     projects,
     leadership: leadership.length > 0,
+    competencies,
     keySkills,
     skills: [...new Set(skills)],
+    achievements,
     certifications,
     languages,
   };
@@ -236,7 +251,7 @@ export function cvSections(cv: CvDocument, header: Header = cv.header): CvSectio
     ...(cv.skills.length ? [{ label: cv.keySkills?.length ? "Technical" : "", items: cv.skills }] : []),
   ];
   const sections: CvSection[] = [
-    { id: "profile", title: "Profile", paragraph: profile },
+    { id: "profile", title: "Professional summary", paragraph: profile },
     { id: "competencies", title: "Core competencies", bullets: (cv.competencies ?? []).map((c) => ({ label: c.label, text: c.text, facts: c.facts })) },
     { id: "education", title: "Education", entries: cv.education.map((e) => ({ heading: e.text, dates: e.dates, facts: e.facts, lines: e.lines ?? [] })) },
     { id: "experience", title: "Work experience", entries: cv.experience.map((r) => ({ heading: [r.title, r.org, r.where].filter(Boolean).join(", "), dates: r.dates, facts: [], lines: r.bullets })) },
@@ -247,7 +262,7 @@ export function cvSections(cv: CvDocument, header: Header = cv.header): CvSectio
     { id: "languages", title: "Languages", lists: cv.languages?.length ? [{ label: "", items: cv.languages }] : [] },
   ];
   const order: CvSectionId[] = cv.educationFirst
-    ? ["profile", "education", "experience", "projects", "skills", "certifications", "languages"]
+    ? ["profile", "education", "competencies", "experience", "projects", "skills", "achievements", "certifications", "languages"]
     : ["profile", "competencies", "experience", "projects", "education", "skills", "achievements", "certifications", "languages"];
   const filled = (s: CvSection) => s.id === "header" || Boolean(s.paragraph?.length || s.entries?.length || s.bullets?.length || s.lists?.length);
   const contact = [header.location, header.email, header.phone, ...(header.links ?? [])].filter(Boolean).join(" | ");

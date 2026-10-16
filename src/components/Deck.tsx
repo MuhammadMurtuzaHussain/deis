@@ -1,12 +1,13 @@
 "use client";
 
 import { ArrowClockwise, Cards, Lightning, Path, WarningCircle } from "@phosphor-icons/react";
+import { LaneSwitch, useLane } from "./deck/LaneSwitch";
 import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { CardWhy } from "@/lib/ai/schema";
 import { api, ApiError, isAbort, isPausable } from "@/lib/client/api";
-import { db, factsKey, getCard, getMeta, putCard, setMeta, type CardCache } from "@/lib/client/db";
+import { db, factsKey, getCard, putCard, setMeta, type CardCache } from "@/lib/client/db";
 import { isStale, savedOn } from "@/lib/client/offline";
 import { newApplication } from "@/lib/client/kit";
 import { useStore } from "@/lib/client/store";
@@ -100,19 +101,16 @@ export function Deck() {
   const [lastSkip, setLastSkip] = useState<ScoredJob | null>(null);
   const [announce, setAnnounce] = useState("");
   const [whyErrors, setWhyErrors] = useState<Record<string, WhyError>>({});
-  const [lane, setLaneState] = useState<Lane | null>(null);
+  // The switch at the top of Jobs and the first-apply question write the same row; the deck follows it.
+  const lane = useLane();
   // Decisions can finish after the lane dialog closes, so they read the lane from a ref.
-  const laneRef = useRef<Lane | null>(null);
-  const setLane = (l: Lane | null) => {
-    laneRef.current = l;
-    setLaneState(l);
-  };
+  const laneRef = useRef<Lane | null>(lane);
   useEffect(() => {
-    void getMeta<Lane | null>("lane", null).then((l) => {
-      laneRef.current = l;
-      setLaneState(l);
-    });
-  }, []);
+    laneRef.current = lane;
+  }, [lane]);
+  const setLane = (l: Lane) => {
+    laneRef.current = l;
+  };
 
   // ---- which cards, in what order
 
@@ -233,12 +231,12 @@ export function Deck() {
       const e = entries[0];
       if (!e) return;
       const job = e.job;
-      const useLane = chosen ?? laneRef.current;
+      const pick = chosen ?? laneRef.current;
       // Ask how to apply before the card leaves, so closing the question leaves it in place.
-      if (dir === "apply" && !useLane) return setLaneAsk(job);
+      if (dir === "apply" && !pick) return setLaneAsk(job);
       // A Quick apply: a copy of the card flies into Applications, where the kit is now being built.
       const topCard = deckRef.current?.querySelector<HTMLElement>("[data-deck-top]");
-      if (dir === "apply" && useLane === "quick" && topCard && !reduce) flyToApplications(topCard, job);
+      if (dir === "apply" && pick === "quick" && topCard && !reduce) flyToApplications(topCard, job);
       setFlow({ dir, kind: "decide", id: job.id });
       clearIntent();
       setDecided((list) => [...list, { id: job.id, dir, job }]);
@@ -249,12 +247,12 @@ export function Deck() {
       const say = (message: string) => toasts.current.set(job.id, toast({ message, undo: () => undoId(job.id) }));
       if (dir === "skip") say(`Skipped. ${name}.`);
       if (dir === "save") say(`Kept for later: ${name}. It's in Applications.`);
-      if (dir === "apply" && useLane) {
+      if (dir === "apply" && pick) {
         if (!(await db.applications.get(job.id))) {
-          await db.applications.put(newApplication(job, useLane));
+          await db.applications.put(newApplication(job, pick));
           createdApp.current.add(job.id);
         }
-        if (useLane === "careful") return go({ name: "application", id: job.id });
+        if (pick === "careful") return go({ name: "application", id: job.id });
         say(`Building a kit for ${name}. Find it in Applications.`);
       }
     },
@@ -395,6 +393,7 @@ export function Deck() {
         hidden={hiddenTotal}
         onHidden={() => setHiddenOpen(true)}
       />
+      <LaneSwitch className="mt-3 flex w-fit lg:hidden" />
       {feed.error && !firstRun && !isOffline && <p className="mt-1 text-caption text-warn">{feed.error.message}</p>}
       <p className="sr-only" aria-live="polite">
         {announce}
@@ -433,7 +432,7 @@ export function Deck() {
         )}
       </Dialog>
 
-      <Dialog open={Boolean(laneAsk)} onClose={() => setLaneAsk(null)} title="How do you want to apply?" description="Deis remembers this. Change it any time in Settings, or pick Careful from any application.">
+      <Dialog open={Boolean(laneAsk)} onClose={() => setLaneAsk(null)} title="How do you want to apply?" description="Deis remembers this. Switch any time at the top of Jobs, or pick Careful from any application.">
         <div className="grid gap-2.5">
           {(
             [

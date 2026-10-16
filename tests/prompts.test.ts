@@ -29,17 +29,28 @@ const fit: Fit = {
 };
 
 describe("prompts", () => {
-  it("CV: a short profile, key skill labels, one fact per bullet and a graduate's tense", () => {
+  it("CV: a full summary ending in a career objective, 7 competencies, richer bullets and a graduate's tense", () => {
     const p = cvPrompt(long, fit, aoife.facts, aoife.neverClaim);
-    expect(p).toContain("- profile: 2 or 3 sentences.");
-    expect(p).toContain("- keySkills:");
-    expect(p).toContain("one fact per bullet");
+    expect(p).toContain("- profile: the professional summary, 4 or 5 sentences");
+    expect(p).toContain('- aim: the career objective, one sentence that closes the summary. It names "Graduate Software Engineer"');
+    expect(p).toContain("- competencies: exactly 7 if the facts allow");
+    expect(p).toContain("A bullet may join 2 or 3 facts from the same employer");
+    expect(p).toContain("a shorter true CV beats padding");
     expect(p).toContain("Never add led, managed, presented");
     expect(p).toContain("Each fact appears once across roles and projects.");
     expect(p).toContain('Fact ids go only in the "facts" lists');
     expect(p).toContain("they are a graduate, not a student");
     expect(p).toContain("Never claim: any certification.");
-    expect(p).not.toMatch(/competencies|objective|achievements/);
+  });
+
+  it("CV: one page asks for less of every section, and achievements are only the ones no job owns", () => {
+    const p = cvPrompt(long, fit, aoife.facts, aoife.neverClaim, undefined, "short");
+    expect(p).toContain("Write a one-page CV");
+    expect(p).toContain("It must fit on one A4 page");
+    expect(p).toContain("- competencies: exactly 4,");
+    expect(p).not.toContain("two A4 pages");
+    // ab5 to ab7 belong to Harbour Payments and ab9 to Kiln Coffee: they are bullets, not achievements.
+    expect(cvPrompt(long, fit, aoife.facts, []).match(/achievement facts \(([^)]*)\)/)?.[1]).toBe("ab3");
   });
 
   it("CV retry quotes the rules that removed lines", () => {

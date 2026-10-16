@@ -1,6 +1,6 @@
 "use client";
 
-import type { Fit } from "../cv/schema";
+import type { CvLength, Fit } from "../cv/schema";
 import type { GuardEvent } from "../cv/guard";
 import type { ScoredJob } from "../jobs/types";
 import type { Profile } from "../profile/types";
@@ -12,6 +12,7 @@ import { db, getMeta, type Application, type Kit } from "./db";
 
 export type KitParts = { letter: boolean; answers: boolean };
 export const kitParts = () => getMeta<KitParts>("kitParts", { letter: true, answers: true });
+export const cvLength = () => getMeta<CvLength>("cvLength", "detailed");
 
 const usable = (p: Profile) => ({ header: p.header, facts: p.facts.filter((f) => f.confirmed), neverClaim: p.neverClaim });
 
@@ -22,8 +23,8 @@ export async function runFit(job: ScoredJob, p: Profile): Promise<{ fit: Fit; ev
 
 /** Both callers save the fit (and its guard events) first, so the lane and those events are read back here. */
 export async function runKit(job: ScoredJob, p: Profile, fit: Fit): Promise<Kit> {
-  const [include, app] = await Promise.all([kitParts(), db.applications.get(job.id)]);
-  const out = await api<Omit<Kit, "at">>("/api/kit", { job, profile: usable(p), fit, include, lane: app?.lane ?? "quick" });
+  const [include, length, app] = await Promise.all([kitParts(), cvLength(), db.applications.get(job.id)]);
+  const out = await api<Omit<Kit, "at">>("/api/kit", { job, profile: usable(p), fit, include, lane: app?.lane ?? "quick", length });
   // The Checks tab lists everything the guard stepped in on, the fit check included.
   return { ...out, events: [...(app?.fitEvents ?? []), ...out.events], at: Date.now() };
 }

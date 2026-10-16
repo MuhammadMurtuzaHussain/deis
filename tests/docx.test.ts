@@ -82,7 +82,7 @@ describe("CV for a posting", () => {
 
   it("writes the graduate layout into the Word file, in the same order as the text", async () => {
     const text = await wordText(cv);
-    const order = ["PROFILE", "EDUCATION", "WORK EXPERIENCE", "SELECTED PROJECTS AND LEADERSHIP", "SKILLS", "LANGUAGES"].map((h) => text.indexOf(h));
+    const order = ["PROFESSIONAL SUMMARY", "EDUCATION", "WORK EXPERIENCE", "SELECTED PROJECTS AND LEADERSHIP", "SKILLS", "LANGUAGES"].map((h) => text.indexOf(h));
     expect(order.every((i) => i >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     expect(text).toContain("Key skills: Unit testing");

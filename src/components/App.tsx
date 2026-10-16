@@ -1,12 +1,12 @@
 "use client";
 
-import { Cards, Cloud, CloudSlash, Gear, GithubLogo, IdentificationCard, Laptop, ListChecks, LockSimple, Warning, WifiSlash } from "@phosphor-icons/react";
+import { Cards, CloudSlash, Gear, GithubLogo, IdentificationCard, ListChecks, LockSimple, WifiSlash } from "@phosphor-icons/react";
 import { LayoutGroup, motion } from "motion/react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { db } from "@/lib/client/db";
 import { enterDemo, exitDemo, isPersona } from "@/lib/client/demo";
-import { modelPill } from "@/lib/client/model";
+import { modelPill, type EffectiveModel } from "@/lib/client/model";
 import { offlineBanner } from "@/lib/client/offline";
 import { isOnboarded, routeHref, StoreProvider, useStore, type Route } from "@/lib/client/store";
 import { useRouteFocus } from "@/lib/client/useRouteFocus";
@@ -15,6 +15,7 @@ import { PERSONAS, type PersonaId } from "@/lib/demo/personas";
 import { ApplicationScreen } from "./ApplicationScreen";
 import { CheckIn } from "./CheckIn";
 import { Deck } from "./Deck";
+import { LaneSwitch } from "./deck/LaneSwitch";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { KitQueue } from "./KitQueue";
 import { LicenceScreen } from "./Licence";
@@ -207,16 +208,18 @@ function TopBar({ active }: { active: string }) {
         </div>
         <div className="ml-auto flex min-w-0 items-center gap-2 lg:ml-0">
           <DemoPill />
-          <ModelPill />
-          <a
-            href={routeHref({ name: "settings" })}
-            aria-current={active === "settings" ? "page" : undefined}
-            title="Settings"
-            className={`hidden size-10 shrink-0 place-items-center rounded-full transition-colors lg:grid ${active === "settings" ? "bg-ink text-surface" : "text-ink-2 hover:bg-sunken hover:text-ink"}`}
-          >
-            <Gear size={20} weight={active === "settings" ? "fill" : "regular"} aria-hidden />
-            <span className="sr-only">Settings</span>
-          </a>
+          {active === "deck" && <LaneSwitch className="hidden lg:flex" />}
+          {/* The model and Settings share one pill, the same shape as the main nav. */}
+          <div className="flex min-w-0 items-center gap-0.5 rounded-pill bg-sunken p-1">
+            <ModelPill />
+            <a
+              href={routeHref({ name: "settings" })}
+              aria-current={active === "settings" ? "page" : undefined}
+              className={`hidden h-8 shrink-0 items-center rounded-pill px-3 text-caption font-medium transition-colors lg:inline-flex ${active === "settings" ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface hover:text-ink"}`}
+            >
+              Settings
+            </a>
+          </div>
         </div>
       </div>
     </header>
@@ -285,21 +288,40 @@ function TabBar({ active }: { active: string }) {
   );
 }
 
-/** Which model answers, from effectiveModel: plain text and a status glyph. Says "Offline" when offline. */
+/** Where the model runs, in two words: "this computer", "AI Studio", "demo server". */
+function modelPlace(m: EffectiveModel): string {
+  if (m.privacy.where === "this computer") return "this computer";
+  if (/AI Studio/.test(m.label)) return "AI Studio";
+  if (/demo/i.test(m.label)) return "demo server";
+  return "your server";
+}
+
+/** Which model answers, from effectiveModel: a status dot, "Gemma" and where it runs. Says "Offline" when offline. */
 function ModelPill() {
   const { effectiveModel: m, isOffline, demo } = useStore();
   const broken = !m.usable;
-  const Icon = broken ? Warning : isOffline ? CloudSlash : m.privacy.where === "this computer" ? Laptop : Cloud;
-  const text = isOffline ? "Offline" : m.label;
+  const dot = broken ? "bg-danger" : isOffline ? "bg-warn" : "bg-accent";
   return (
     <a
       href={routeHref({ name: "model" })}
       title={broken && m.reason ? m.reason : modelPill(m, isOffline)}
-      className="inline-flex h-9 min-w-0 items-center gap-1.5 rounded-pill border border-line bg-surface px-3 text-caption font-medium text-ink-2 transition-colors hover:border-control-border hover:text-ink pointer-coarse:h-11"
+      className="inline-flex h-8 min-w-0 items-center gap-2 rounded-pill px-3 text-caption text-ink-2 transition-colors hover:bg-surface hover:text-ink pointer-coarse:h-10"
     >
-      <Icon size={16} weight={broken || isOffline ? "fill" : "regular"} aria-hidden className={`shrink-0 ${broken ? "text-danger" : isOffline ? "text-warn" : ""}`} />
-      {/* With the demo pill beside it on a phone, the glyph alone carries it. */}
-      <span className={`truncate max-sm:max-w-[9.5rem] ${demo ? "max-sm:sr-only" : ""}`}>{text}</span>
+      <span aria-hidden className="relative grid size-2 shrink-0 place-items-center">
+        {!broken && !isOffline && <span className="absolute inset-0 rounded-full bg-accent opacity-60 motion-safe:animate-ping [animation-duration:2.4s]" />}
+        <span className={`relative size-2 rounded-full ${dot}`} />
+      </span>
+      {/* With the demo pill beside it on a phone, the dot alone carries it. */}
+      <span aria-hidden className={`truncate max-sm:max-w-[10rem] ${demo ? "max-sm:hidden" : ""}`}>
+        {isOffline ? (
+          <span className="font-medium text-ink">Offline</span>
+        ) : (
+          <>
+            <span className="font-medium text-ink">Gemma</span>
+            <span className="text-ink-3 lg:max-xl:hidden"> · {modelPlace(m)}</span>
+          </>
+        )}
+      </span>
       <span className="sr-only">
         {broken && m.reason ? `. ${m.reason}` : ""}. AI model: {modelPill(m, isOffline)}. Change the model
       </span>
@@ -315,7 +337,7 @@ function DemoPill() {
   const p = PERSONAS[demo as PersonaId];
   const first = p.header.name.split(" ")[0];
   return (
-    <div className="inline-flex h-9 shrink-0 items-center rounded-pill border border-control-border bg-surface pl-3 text-caption text-ink pointer-coarse:h-11" title={`You're trying Deis as ${p.header.name}, a fictional graduate. Your own profile is set aside until you leave.`}>
+    <div className="inline-flex h-10 shrink-0 items-center rounded-pill bg-sunken pl-4 text-caption text-ink-2 pointer-coarse:h-12" title={`You're trying Deis as ${p.header.name}, a fictional graduate. Your own profile is set aside until you leave.`}>
       <span>
         Demo: <strong className="font-semibold">{first}</strong>
         <span className="sr-only">, a fictional graduate. Your own profile is set aside until you leave.</span>

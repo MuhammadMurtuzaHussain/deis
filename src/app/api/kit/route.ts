@@ -1,6 +1,6 @@
 import { RequestContext } from "@mastra/core/request-context";
 import { z } from "zod";
-import { fitSchema } from "@/lib/cv/schema";
+import { CV_LENGTHS, fitSchema } from "@/lib/cv/schema";
 import { aiFor, body, jobInputSchema, jsonError, modelFailure, profileInputSchema } from "@/lib/server/api";
 import { traceWorkflow } from "@/lib/server/telemetry";
 import { mastra } from "@/mastra";
@@ -15,6 +15,7 @@ const schema = z.object({
   fit: fitSchema,
   include: z.object({ letter: z.boolean(), answers: z.boolean() }),
   lane: z.enum(["quick", "careful"]).default("quick"),
+  length: z.enum(CV_LENGTHS).default("detailed"),
 });
 
 /** A failed workflow's error arrives as a plain object, not an Error. */

@@ -4,6 +4,7 @@ import { GithubLogo } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { getMeta, setMeta } from "@/lib/client/db";
 import type { KitParts } from "@/lib/client/kit";
+import type { CvLength } from "@/lib/cv/schema";
 import { useStore } from "@/lib/client/store";
 import { LicenceForm } from "./Licence";
 import { ModelSetup } from "./ModelSetup";
@@ -42,19 +43,19 @@ export function Settings() {
       return "system";
     }
   });
-  const [lane, setLane] = useState<"quick" | "careful" | null>(null);
   const [parts, setParts] = useState<KitParts>({ letter: true, answers: true });
+  const [length, setLength] = useState<CvLength>("detailed");
   // /api/status may carry the build's commit (SEC-10); shown when it does.
   const commit = (status as { commit?: string } | null)?.commit;
 
   useEffect(() => {
-    void getMeta<"quick" | "careful" | null>("lane", null).then(setLane);
     void getMeta<KitParts>("kitParts", { letter: true, answers: true }).then(setParts);
+    void getMeta<CvLength>("cvLength", "detailed").then(setLength);
   }, []);
 
-  const pickLane = (l: "quick" | "careful") => {
-    setLane(l);
-    void setMeta("lane", l);
+  const pickLength = (l: CvLength) => {
+    setLength(l);
+    void setMeta("cvLength", l);
   };
   const flip = (k: keyof KitParts) => {
     const next = { ...parts, [k]: !parts[k] };
@@ -73,13 +74,13 @@ export function Settings() {
 
         {status && !status.hosted && <OfflineSection />}
 
-        <SettingsSection title="After a swipe right" description="On a laptop, a CV alone takes about half the time of a full kit.">
-          <div role="group" aria-label="How kits are built" className="grid gap-2 sm:grid-cols-2">
-            <Chip on={lane === "quick"} onClick={() => pickLane("quick")}>
-              Quick: build the kit in the background
+        <SettingsSection title="After a swipe right" description="Quick or Careful is at the top of Jobs. On a laptop, a CV alone takes about half the time of a full kit.">
+          <div role="group" aria-label="CV length" className="grid gap-2 sm:grid-cols-2">
+            <Chip on={length === "detailed"} onClick={() => pickLength("detailed")}>
+              Detailed CV: up to two pages
             </Chip>
-            <Chip on={lane === "careful"} onClick={() => pickLane("careful")}>
-              Careful: ask about my gaps first
+            <Chip on={length === "short"} onClick={() => pickLength("short")}>
+              Short CV: one page
             </Chip>
           </div>
           <div role="group" aria-label="What a kit includes" className="grid gap-2 sm:grid-cols-2">

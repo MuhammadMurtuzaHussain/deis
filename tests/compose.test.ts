@@ -5,6 +5,7 @@ import { RequestContext } from "@mastra/core/request-context";
 import { MockLanguageModelV3, simulateReadableStream } from "ai/test";
 import { composeCv, cvSections, cvText, employerWeights, jaccard, scrub, type CvDocument } from "@/lib/cv/compose";
 import { cvDocx } from "@/lib/cv/docx";
+import { guardCv, ledger } from "@/lib/cv/guard";
 import { bodyFromDraft, GUARD_VERSION, type CvBody } from "@/lib/cv/schema";
 import { aoife, rahul } from "@/lib/demo/personas";
 import type { ScoredJob } from "@/lib/jobs/types";
@@ -118,6 +119,44 @@ it("guards the profile's opening sentence as the objective, so it may name the r
   expect(composeCv(aoife, b, undefined, NOW).profile?.map((p) => p.text)).toEqual(["Graduate applying for the Graduate Programme 2027.", "Built a React dashboard."]);
 });
 
+describe("the full-length CV (17 Oct 2026)", () => {
+  const win = { id: "ab20", kind: "achievement" as const, text: "2nd place, Hack Ireland Cork (2026)", org: "Hack Ireland", source: "manual" as const, confirmed: true, createdAt: "2026-10-01" };
+  const withWin = { ...aoife, facts: [...aoife.facts, win] };
+  const draft = {
+    profile: [{ text: "Computer science graduate of University College Dublin with a payments internship. Built a React dashboard for support agents.", facts: ["ab1", "ab4", "ab5"] }],
+    aim: { text: "Seeking to grow as a Graduate Software Engineer at Cisco, bringing the testing habits that raised coverage from 41% to 68%.", facts: ["ab7"] },
+    competencies: [{ label: "Software testing", text: "Added unit tests that raised coverage on a refunds service from 41% to 68%.", facts: ["ab7"] }],
+    roles: [],
+    projects: [],
+    // A role id and an unknown id are ignored: only achievement facts, word for word.
+    achievements: ["ab20", "ab4", "zz9"],
+    skills: [],
+  };
+
+  it("closes the summary with the career objective and copies achievements word for word", () => {
+    const b = bodyFromDraft(draft, withWin.facts);
+    expect(b.aim?.map((a) => a.text)).toEqual([draft.aim.text]);
+    expect(b.achievements).toEqual([{ text: "2nd place, Hack Ireland Cork (2026)", facts: ["ab20"] }]);
+    const cv = composeCv(withWin, b, undefined, NOW);
+    expect(cv.profile?.at(-1)?.text).toBe(draft.aim.text);
+    expect(cv.competencies).toEqual([{ label: "Software testing", text: draft.competencies[0].text, facts: ["ab7"] }]);
+    expect(cv.keySkills).toEqual([]);
+    expect(cv.achievements?.map((a) => a.text)).toEqual(["2nd place, Hack Ireland Cork (2026)"]);
+  });
+
+  it("shows achievements that belong to no job or degree when Gemma picks none, and lays out a graduate's CV", () => {
+    const cv = composeCv(withWin, bodyFromDraft({ ...draft, achievements: [] }, withWin.facts), undefined, NOW);
+    expect(cv.achievements?.map((a) => a.facts)).toEqual([["ab20"]]);
+    expect(cvSections(cv).map((s) => s.id)).toEqual(["header", "profile", "education", "competencies", "experience", "projects", "skills", "achievements", "languages"]);
+    expect(cvText(cv)).toContain("- Software testing: Added unit tests");
+  });
+
+  it("keeps the aim when the guard checks it, since it may name the role as advertised", () => {
+    const { body } = guardCv(bodyFromDraft(draft, withWin.facts), ledger(withWin.facts, []), "Graduate Software Engineer at Cisco, Galway.");
+    expect(body.aim?.map((a) => a.text)).toEqual([draft.aim.text]);
+  });
+});
+
 describe("kits saved before 16 Oct 2026", () => {
   // The old shape, as it sits in people's IndexedDB: objective, summary, competencies, achievements.
   const old = {
@@ -137,7 +176,7 @@ describe("kits saved before 16 Oct 2026", () => {
   it("render through the same sections as new kits", async () => {
     expect(cvSections(old).map((s) => s.id)).toEqual(["header", "profile", "competencies", "experience", "projects", "education", "skills", "achievements", "languages"]);
     const text = cvText(old);
-    expect(text).toContain("PROFILE\nTo join Cisco as a Graduate Software Engineer. Computer science graduate.");
+    expect(text).toContain("PROFESSIONAL SUMMARY\nTo join Cisco as a Graduate Software Engineer. Computer science graduate.");
     expect(text).toContain("- Software testing: Raised coverage from 41% to 68%.");
     expect(text).toContain("github.com/example-aoife");
     // No empty brackets for an undated degree.
@@ -165,7 +204,7 @@ describe("kit workflow", () => {
   };
   const asked: string[] = [];
   const reply = (prompt: string) => {
-    const which = prompt.includes("A checker removed lines") ? "retry" : prompt.includes("parts of a CV") ? "cv" : prompt.includes("cover letter body") ? "letter" : "answers";
+    const which = prompt.includes("A checker removed lines") ? "retry" : prompt.includes("Write a full CV") ? "cv" : prompt.includes("cover letter body") ? "letter" : "answers";
     asked.push(which);
     return replies[which];
   };

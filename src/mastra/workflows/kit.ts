@@ -3,7 +3,7 @@ import { z } from "zod";
 import { answersPrompt, cvPrompt, formQuestions, letterPrompt, YOURS_TO_ANSWER, type Lane } from "@/lib/ai/prompts";
 import { guardAnswers, guardCv, guardLetter, ledger, splitSentences, type GuardEvent, type GuardRepair } from "@/lib/cv/guard";
 import { composeCv, scrub, type CvDocument } from "@/lib/cv/compose";
-import { answersDraftSchema, bodyFromDraft, cvDraftSchema, GUARD_VERSION, letterSchema, type Answers, type AnswersDraft, type CvBody, type CvDraft, type Fit, type Letter } from "@/lib/cv/schema";
+import { answersDraftSchema, bodyFromDraft, cvDraftSchema, GUARD_VERSION, letterSchema, type Answers, type AnswersDraft, type CvBody, type CvDraft, type CvLength, type Fit, type Letter } from "@/lib/cv/schema";
 import type { ScoredJob } from "@/lib/jobs/types";
 import type { Profile } from "@/lib/profile/types";
 import { reportGuard, traceStep } from "@/lib/server/telemetry";
@@ -25,6 +25,8 @@ export type KitInput = {
   include: { letter: boolean; answers: boolean };
   /** Quick lane letters don't name gaps; the Careful lane has asked about them first. */
   lane?: Lane;
+  /** Two pages (the default) or one. */
+  length?: CvLength;
 };
 
 type Part<T> = { value: T | null; events: GuardEvent[]; repairs?: GuardRepair[]; usage: Usage | null; error?: string };
@@ -49,11 +51,11 @@ const where = (c: ModelChain) => ({ tier: c.tier, model: String(c.models[0]?.id 
 const proseTemperature = (c: ModelChain) => (c.tier === "local" ? 0.3 : 0.4);
 const addUsage = (a: Usage, b: Usage): Usage => ({ inputTokens: a.inputTokens + b.inputTokens, outputTokens: a.outputTokens + b.outputTokens, ms: a.ms + b.ms });
 
-const PARTS = ["profile", "keySkills", "roles", "projects"] as const;
+const PARTS = ["profile", "competencies", "roles", "projects"] as const;
 type PartName = (typeof PARTS)[number];
 const sizes = (b: CvBody): Record<PartName, number> => ({
-  profile: [...(b.objective ?? []), ...b.summary].flatMap((s) => splitSentences(s.text)).length,
-  keySkills: b.competencies.length,
+  profile: [...(b.objective ?? []), ...b.summary, ...(b.aim ?? [])].flatMap((s) => splitSentences(s.text)).length,
+  competencies: b.competencies.length,
   roles: b.roles.reduce((n, r) => n + r.bullets.length, 0),
   projects: b.projects.length,
 });
@@ -65,13 +67,10 @@ export function weakParts(before: CvBody, after: CvBody): PartName[] {
   return PARTS.filter((p) => (p === "profile" && b.profile === 0) || (a[p] >= 2 && (a[p] - b[p]) / a[p] > 0.3));
 }
 
-/** Puts one guarded part into the body. The profile lives in two fields: its opening sentence is the objective. */
-const take = (body: CvBody, from: CvBody, p: PartName): CvBody =>
-  p === "profile"
-    ? { ...body, objective: from.objective, summary: from.summary }
-    : { ...body, [p === "keySkills" ? "competencies" : p]: from[p === "keySkills" ? "competencies" : p] };
+/** Puts one guarded part into the body. The profile lives in three fields: the opening sentence (objective), the summary and the closing aim. */
+const take = (body: CvBody, from: CvBody, p: PartName): CvBody => (p === "profile" ? { ...body, objective: from.objective, summary: from.summary, aim: from.aim } : { ...body, [p]: from[p] });
 /** The draft with one part filled, so the guard's events are about that part alone. */
-const onlyPart = (d: CvDraft, p: PartName) => ({ profile: [], keySkills: [], roles: [], projects: [], skills: [], [p]: d[p] }) as CvDraft;
+const onlyPart = (d: CvDraft, p: PartName): CvDraft => (p === "profile" ? { profile: d.profile, aim: d.aim } : { profile: [], [p]: d[p] });
 
 const cvStep = createStep({
   id: "cv",
@@ -80,15 +79,17 @@ const cvStep = createStep({
   outputSchema: passThrough,
   execute: async ({ inputData, requestContext }): Promise<Part<CvDocument>> =>
     traceStep("cv", async () => {
-      const { job, profile, fit } = inputData as KitInput;
+      const { job, profile, fit, length = "detailed" } = inputData as KitInput;
       const chain = chainOf(requestContext);
       const l = ledger(profile.facts, profile.neverClaim);
       const posting = `${job.title}\n${job.description}`;
       const write = (retry?: Parameters<typeof cvPrompt>[4]) =>
-        structured("cv", "cvAgent", chain, cvPrompt(job, fit, profile.facts, profile.neverClaim, retry), cvDraftSchema, { maxOutputTokens: 3000, temperature: 0.2 });
+        // A two-page CV is about 1,000 words of JSON with fact ids: room for that and a little more.
+        structured("cv", "cvAgent", chain, cvPrompt(job, fit, profile.facts, profile.neverClaim, retry, length), cvDraftSchema, { maxOutputTokens: length === "short" ? 3500 : 6000, temperature: 0.2 });
+      const confirmed = profile.facts.filter((f) => f.confirmed);
       try {
         const first = await write();
-        const draft = bodyFromDraft(first.data);
+        const draft = bodyFromDraft(first.data, confirmed);
         let { body, events, repairs } = guardCv(draft, l, posting);
         let usage = first.usage;
         // One targeted retry, quoting the rules that bit. If it does no better, compose falls back to the facts.
@@ -99,7 +100,7 @@ const cvStep = createStep({
             usage = addUsage(usage, again.usage);
             // A retried part replaces the first only when more of it survives the guard.
             for (const p of weak) {
-              const checked = guardCv(bodyFromDraft(onlyPart(again.data, p)), l, posting);
+              const checked = guardCv(bodyFromDraft(onlyPart(again.data, p), confirmed), l, posting);
               if (sizes(checked.body)[p] <= sizes(body)[p]) continue;
               body = take(body, checked.body, p);
               events = [...events, ...checked.events];
@@ -110,7 +111,7 @@ const cvStep = createStep({
           }
         }
         reportGuard("cv", events, where(chain));
-        return { value: composeCv(profile, body, fit), events, repairs, usage };
+        return { value: composeCv(profile, body, fit, undefined, length), events, repairs, usage };
       } catch (e) {
         return { value: null, events: [], usage: null, error: e instanceof Error ? e.message : String(e) };
       }

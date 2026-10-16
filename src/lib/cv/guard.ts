@@ -721,6 +721,7 @@ export function guardCv(body: CvBody, l: Ledger, posting = "", now?: Date): { bo
     body: {
       objective: keep(body.objective ?? [], l, events, { posting, quotesPosting: true, now }, repairs),
       summary: keep(body.summary, l, events, { now }, repairs),
+      aim: keep(body.aim ?? [], l, events, { posting, quotesPosting: true, now }, repairs),
       competencies,
       roles,
       projects: keep(body.projects, l, events, { now }, repairs),
