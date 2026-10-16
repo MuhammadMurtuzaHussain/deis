@@ -1,5 +1,6 @@
-# Desktop installers for macOS, Windows and Linux. Run by hand from the Actions tab, or
-# by pushing a v* tag. Unsigned for now: the README says how to open them.
+# Desktop installers for macOS, Windows and Linux. Run by hand from the Actions tab (the
+# installers are kept as artifacts for 14 days), or by pushing a v* tag, which also
+# publishes them as a GitHub Release. Unsigned for now: the README says how to open them.
 name: Desktop installers
 
 on:
@@ -8,7 +9,21 @@ on:
     tags: ["v*"]
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm test
+
   build:
+    needs: check
     strategy:
       fail-fast: false
       matrix:
@@ -31,7 +46,14 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Starter jobs for an offline first run, from the employer boards only. A flaky board
+      # shouldn't stop a release: the app works without the list.
+      - run: npx tsx scripts/feed-snapshot.mts
+        continue-on-error: true
+      # The window never reports to Sentry; desktop-prepare fails the build if a DSN got inlined.
       - run: pnpm desktop:build
+        env:
+          NEXT_PUBLIC_SENTRY_DSN: ""
       - run: pnpm exec electron-builder ${{ matrix.target }} --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
@@ -40,3 +62,19 @@ jobs:
           name: deis-${{ matrix.os }}
           path: ${{ matrix.files }}
           retention-days: 14
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: installers
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: installers/*
+          generate_release_notes: true

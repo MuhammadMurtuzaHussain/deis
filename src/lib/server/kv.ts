@@ -1,4 +1,5 @@
 import { Redis } from "ioredis";
+import { isLoopback, isOfflineMode, onOffline } from "./net";
 
 // A small shared cache. On Render it is a Key Value instance (REDIS_URL), so
 // the job feed and the demo rate limits survive restarts and are
@@ -9,7 +10,18 @@ type Entry = { until: number; value: string };
 const memory = new Map<string, Entry>();
 let redis: Redis | null | undefined;
 
+/** A Key Value somewhere else is the internet: offline mode uses this process's own cache instead. */
+const remote = () => Boolean(process.env.REDIS_URL && !isLoopback(process.env.REDIS_URL));
+
+// The open connection would keep talking after offline mode is switched on, so it closes.
+onOffline(() => {
+  if (!redis || !remote()) return;
+  redis.disconnect();
+  redis = undefined;
+});
+
 function client(): Redis | null {
+  if (isOfflineMode() && remote()) return null;
   if (redis !== undefined) return redis;
   const url = process.env.REDIS_URL;
   redis = url ? new Redis(url, { maxRetriesPerRequest: 1, commandTimeout: 1500, connectTimeout: 3000 }) : null;
@@ -57,6 +69,32 @@ export async function kvSet(key: string, value: unknown, ttlSec: number): Promis
     else remember(key, raw, ttlSec);
   } catch {
     remember(key, raw, ttlSec);
+  }
+}
+
+/** Set only if the key is free (a lock). True when this caller got it. */
+export async function kvSetNx(key: string, value: unknown, ttlSec: number): Promise<boolean> {
+  const raw = JSON.stringify(value);
+  const r = client();
+  try {
+    if (r) return (await r.set(`deis:${key}`, raw, "EX", ttlSec, "NX")) === "OK";
+  } catch {
+    // fall through to this process's own lock
+  }
+  if (recall(key) !== null) return false;
+  remember(key, raw, ttlSec);
+  return true;
+}
+
+/** Round trip to Key Value for /api/status: milliseconds, or null when it didn't answer. */
+export async function kvPing(): Promise<number | null> {
+  const r = client();
+  if (!r) return 0;
+  const t = Date.now();
+  try {
+    return (await r.ping()) === "PONG" ? Date.now() - t : null;
+  } catch {
+    return null;
   }
 }
 

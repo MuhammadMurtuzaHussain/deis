@@ -7,6 +7,8 @@ import { z } from "zod";
 export const DEFAULTS = {
   google: "gemma-4-26b-a4b-it",
   ollama: "gemma4:e4b",
+  /** "Better writing": the bigger local model writes the kit (about 2 minutes on a 16 GB laptop). */
+  kitModel: "gemma4:12b",
   ollamaUrl: "http://127.0.0.1:11434/api",
 } as const;
 
@@ -15,8 +17,13 @@ export const aiSettingsSchema = z.discriminatedUnion("provider", [
   z.object({ provider: z.literal("demo") }),
   /** The user's free Google AI Studio key, serving open-weight Gemma. */
   z.object({ provider: z.literal("google"), apiKey: z.string().min(10).max(200), model: z.string().max(80).default(DEFAULTS.google) }),
-  /** Gemma on the user's own machine through Ollama. Nothing leaves it. */
-  z.object({ provider: z.literal("ollama"), baseUrl: z.string().url().default(DEFAULTS.ollamaUrl), model: z.string().max(80).default(DEFAULTS.ollama) }),
+  /** Gemma on the user's own machine through Ollama. Nothing leaves it. kitModel, when set, writes the kit. */
+  z.object({
+    provider: z.literal("ollama"),
+    baseUrl: z.string().url().default(DEFAULTS.ollamaUrl),
+    model: z.string().max(80).default(DEFAULTS.ollama),
+    kitModel: z.string().max(80).optional(),
+  }),
   /** Any OpenAI-compatible server: LM Studio, llama.cpp, vLLM, OpenRouter, DigitalOcean. */
   z.object({
     provider: z.literal("openai"),

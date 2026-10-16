@@ -149,9 +149,14 @@ export function Deck() {
       if (cached && !force && Date.now() - cached.at < FEED_TTL) return setFeed({ jobs: cached.jobs, at: cached.at });
       setFeed(null);
       try {
-        const out = await api<{ jobs: ScoredJob[]; sources: unknown }>("/api/feed", { categories, includeSenior: false });
-        await db.feed.put({ key: feedKey, jobs: out.jobs, at: Date.now(), sources: out.sources });
-        setFeed({ jobs: out.jobs, at: Date.now() });
+        const out = await api<{ jobs: ScoredJob[]; sources: unknown; stale?: boolean; offline?: boolean; savedAt?: string }>("/api/feed", { categories, includeSenior: false });
+        // Saved jobs from the server keep the time they were saved, so they're asked for again next time.
+        const at = (out.stale || out.offline) && out.savedAt ? Date.parse(out.savedAt) || Date.now() : Date.now();
+        // Never swap saved jobs for an empty list, or, offline, for an older copy than this device already has.
+        // Online, a stale answer still carries every source that did refresh, so it wins.
+        if (cached?.jobs.length && (!out.jobs.length || (out.offline && cached.at >= at))) return setFeed({ jobs: cached.jobs, at: cached.at });
+        await db.feed.put({ key: feedKey, jobs: out.jobs, at, sources: out.sources });
+        setFeed({ jobs: out.jobs, at });
       } catch (e) {
         if (cached) setFeed({ jobs: cached.jobs, at: cached.at });
         setFeedError(e instanceof ApiError ? e.message : "Couldn't load jobs.");
@@ -193,7 +198,7 @@ export function Deck() {
     const confirmed = profile.facts.filter((f) => f.confirmed);
     if (!confirmed.length) return;
     asking.current = true;
-    api<CardWhy>("/api/card", { job: next.job, facts: confirmed })
+    api<CardWhy>("/api/card", { job: next.job, facts: confirmed, neverClaim: profile.neverClaim })
       .then((r) => db.cards.put({ jobId: next.job.id, why: r.why, score: r.score, at: Date.now() }))
       .catch((e) => setWhyErrors((m) => ({ ...m, [next.job.id]: e instanceof ApiError ? e.message : "Gemma couldn't read this one." })))
       .finally(() => {
@@ -381,6 +386,7 @@ export function Deck() {
           )}
         </div>
         {toast && <Notice tone="ok">{toast}</Notice>}
+        {feed && feedError && <Notice tone="warn">{feedError}</Notice>}
         {queue.working && <Notice>Building a kit in the background. {queue.waiting > 1 ? `${queue.waiting - 1} more after this one.` : ""}</Notice>}
         {noFacts && (
           <Notice tone="warn">

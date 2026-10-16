@@ -47,4 +47,40 @@ describe("desktop licence", () => {
     expect((await licenceState()).state).toBe("licensed");
     expect(JSON.parse(readFileSync(file, "utf8")).key).toBe("K-1234-5678");
   });
+
+  const lapsed = () => writeFileSync(file, JSON.stringify({ firstRunAt: 0, key: "K-1234-5678", validatedAt: Date.now() - 40 * DAY, customer: "Aoife" }));
+  const stored = () => JSON.parse(readFileSync(file, "utf8"));
+
+  it("stays licensed when Polar is busy, refuses or fails (429, 403, 5xx)", async () => {
+    for (const status of [429, 403, 500, 503]) {
+      lapsed();
+      polar(status, { detail: "nope" });
+      expect((await licenceState()).state).toBe("licensed");
+      expect(stored().key).toBe("K-1234-5678");
+    }
+  });
+
+  it("takes the licence away only on a definite answer, and keeps the key", async () => {
+    for (const [status, body] of [
+      [404, { detail: "not found" }],
+      [200, { status: "revoked" }],
+      [200, { status: "disabled" }],
+    ] as const) {
+      lapsed();
+      polar(status, body);
+      expect((await licenceState()).state).toBe("locked");
+      expect(stored()).toMatchObject({ key: "K-1234-5678" });
+      expect(stored().refusedAt).toBeTypeOf("number");
+    }
+  });
+
+  it("doesn't contact Polar at all in offline mode", async () => {
+    vi.stubEnv("DEIS_OFFLINE", "1");
+    lapsed();
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    expect((await licenceState()).state).toBe("licensed");
+    expect((await activate("DEIS-GOOD-KEY-1234")).ok).toBe(false);
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });
