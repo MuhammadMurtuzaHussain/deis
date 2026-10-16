@@ -68,6 +68,8 @@ Your profile never leaves the browser except as the facts sent with a request to
 
 The desktop app for macOS, Windows and Linux runs everything on your computer: your profile, the job deck and, with [Ollama](https://ollama.com), Gemma itself. It's €9.99 once, after a 14-day free trial with everything included. The money pays for the ready-built app, updates and the daily Irish job feed.
 
+**October only:** 80% off with the code `HACKTOBERFEST` at checkout, so €2.
+
 **[Download Deis](https://deiscareers.tech/download)** for a Mac (Apple silicon or Intel), Windows or Linux. Windows and Linux copies update themselves; on a Mac, Deis tells you when a new version is out.
 
 The installers aren't signed with an Apple or Microsoft certificate yet, so the first time you open Deis:

@@ -8,6 +8,7 @@ import { routeHref, useStore } from "@/lib/client/store";
 import { PERSONAS, type PersonaId } from "@/lib/demo/personas";
 import { AutoDeck } from "./onboarding/AutoDeck";
 import { StoryScroll } from "./onboarding/StoryScroll";
+import { OfferNote } from "./OfferNote";
 import { buttonClass, Button, CompanyMark, Dialog, MOTION, Pill, useMotion, Wordmark } from "./ui";
 
 // The first screen, and the landing page of the web demo (v3). A split hero: the promise and
@@ -159,6 +160,7 @@ export function Welcome() {
             <span className="display mr-2 text-[40px] leading-none text-ink">€9.99 once</span>
             for the desktop app, after a 14-day trial. The code is free under AGPL-3.0.
           </p>
+          <OfferNote className="mt-4" />
           <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
             {hosted && (
               <a href="/download" className="link inline-flex min-h-11 items-center gap-2 text-body font-medium">

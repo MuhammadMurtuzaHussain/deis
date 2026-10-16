@@ -4,6 +4,7 @@ import { Check, GithubLogo, Key } from "@phosphor-icons/react";
 import { useState } from "react";
 import { api, ApiError } from "@/lib/client/api";
 import { routeHref, useStore, type Licence as LicenceInfo } from "@/lib/client/store";
+import { OfferNote } from "./OfferNote";
 import { Button, Field, inputClass, LinkButton, Notice, PageHeader, Surface } from "./ui";
 
 // The desktop app's licence: try everything for 14 days, then a Polar licence key.
@@ -91,6 +92,7 @@ export function LicenceScreen({ licence, onChange }: { licence: LicenceInfo; onC
             <span className="display text-[44px] leading-none text-ink">€9.99 once</span>
             <span className="text-body text-ink-2">No subscription.</span>
           </p>
+          <OfferNote />
           <LicenceForm licence={licence} onChange={onChange} />
         </Surface>
 

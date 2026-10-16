@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DownloadPicker } from "@/components/DownloadPicker";
+import { OfferNote } from "@/components/OfferNote";
 import { Wordmark } from "@/components/ui";
 
 export const metadata: Metadata = {
@@ -57,6 +58,7 @@ export default function DownloadPage() {
             <p className="text-lead text-ink-2">
               Your profile, the job deck and, with Ollama, Gemma itself stay on your computer. It works offline once the jobs are saved. Free for 14 days with everything included, then €9.99 once. On a phone, Deis is free.
             </p>
+            <OfferNote />
           </div>
           <DownloadPicker />
         </section>
