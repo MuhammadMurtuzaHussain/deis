@@ -37,7 +37,7 @@ beforeEach(() => {
   vi.stubEnv("DEIS_HOSTED", "1");
   vi.stubEnv("DEMO_HOURLY_CAP", "");
   vi.stubEnv("DEMO_DAILY_CAP", "");
-  vi.stubEnv("SITE_URL", "https://deis-bu83.onrender.com");
+  vi.stubEnv("SITE_URL", "https://deiscareers.tech");
 });
 afterEach(() => {
   vi.useRealTimers();
@@ -127,8 +127,13 @@ describe("aiFor", () => {
     expect(((await aiFor(plain, "light", 30)) as Response).status).toBe(415);
     const foreign = req("/api/check", { origin: "https://evil.example" });
     expect(((await aiFor(foreign, "light", 30)) as Response).status).toBe(403);
-    const own = await aiFor(req("/api/check", { origin: "https://deis-bu83.onrender.com" }), "light", 30);
+    const own = await aiFor(req("/api/check", { origin: "https://deiscareers.tech" }), "light", 30);
     expect(own).not.toBeInstanceOf(Response);
+    // Render's own address still works for old links: the Origin matches the Host it was served from.
+    const render = await aiFor(req("/api/check", { origin: "https://deis-bu83.onrender.com", host: "deis-bu83.onrender.com" }), "light", 30);
+    expect(render).not.toBeInstanceOf(Response);
+    const spoofed = req("/api/check", { origin: "https://evil.example", host: "deiscareers.tech" });
+    expect(((await aiFor(spoofed, "light", 30)) as Response).status).toBe(403);
     expect(hits.size).toBeGreaterThan(0);
   });
 });

@@ -67,7 +67,7 @@ export function LicenceForm({ licence, onChange }: { licence: LicenceInfo; onCha
 }
 
 const PAYS_FOR = [
-  "The signed desktop app, so your computer trusts it without a terminal",
+  "The ready-built desktop app, with nothing to compile or set up",
   "Updates as job boards and models change",
   "The daily Irish job feed the app reads",
 ];

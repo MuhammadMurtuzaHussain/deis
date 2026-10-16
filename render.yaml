@@ -24,7 +24,7 @@ services:
       - key: DEIS_HOSTED
         value: "1"
       - key: SITE_URL
-        value: https://deis-bu83.onrender.com
+        value: https://deiscareers.tech
       # The demo key's budget for everyone together, on top of each person's hourly limits.
       - key: DEMO_HOURLY_CAP
         value: "600"

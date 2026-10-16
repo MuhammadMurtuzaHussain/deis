@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CloudArrowUp, GithubLogo, HardDrives, Key, Laptop } from "@phosphor-icons/react";
+import { ArrowRight, CloudArrowUp, DownloadSimple, GithubLogo, HardDrives, Key, Laptop } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import type { PrivacyWhere } from "@/lib/client/model";
@@ -97,6 +97,12 @@ export function Welcome() {
                 </>
               )}
             </div>
+            {hosted && (
+              <a href="/download" className="link mt-5 inline-flex min-h-11 items-center gap-2 text-body font-medium">
+                <DownloadSimple size={18} weight="bold" aria-hidden />
+                Get the desktop app for Mac, Windows or Linux
+              </a>
+            )}
           </div>
 
           <motion.figure
@@ -151,9 +157,15 @@ export function Welcome() {
           </h2>
           <p className="max-w-[40ch] text-lead text-ink-2">
             <span className="display mr-2 text-[40px] leading-none text-ink">€9.99 once</span>
-            for the signed desktop app, after a 14-day trial. The code is free under AGPL-3.0.
+            for the desktop app, after a 14-day trial. The code is free under AGPL-3.0.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
+            {hosted && (
+              <a href="/download" className="link inline-flex min-h-11 items-center gap-2 text-body font-medium">
+                <DownloadSimple size={18} aria-hidden />
+                Download for Mac, Windows or Linux
+              </a>
+            )}
             <a href={SOURCE_URL} target="_blank" rel="noreferrer noopener" className="link inline-flex min-h-11 items-center gap-2 text-body font-medium">
               <GithubLogo size={18} aria-hidden />
               Read the source code

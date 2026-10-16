@@ -19,7 +19,7 @@ const config = (() => {
     return {};
   }
 })();
-const FEED_URL = process.env.DEIS_FEED_URL ?? config.feedUrl ?? "https://deis-bu83.onrender.com";
+const FEED_URL = process.env.DEIS_FEED_URL ?? config.feedUrl ?? "https://deiscareers.tech";
 // `--offline` locks offline mode on for this run; otherwise File > Work offline switches it.
 const FORCED_OFFLINE = process.argv.includes("--offline");
 // CI's launch test: start the server, load the window, exit 0. Any failure exits 1 with no dialog.

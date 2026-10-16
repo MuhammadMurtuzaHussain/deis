@@ -6,7 +6,7 @@
 
 It runs on your own model: Gemma on your laptop through Ollama, your own free Google AI Studio key, or any server you rent. With Gemma on your laptop it works with the Wi-Fi off.
 
-**Try it:** [deis-bu83.onrender.com](https://deis-bu83.onrender.com). Choose *Try a demo profile* to use it as one of two fictional graduates. The jobs are real. That makes an application cost about nothing, where pay-per-application tools often charge 30 cents to a euro each.
+**Try it:** [deiscareers.tech](https://deiscareers.tech). Choose *Try a demo profile* to use it as one of two fictional graduates. The jobs are real. That makes an application cost about nothing, where pay-per-application tools often charge 30 cents to a euro each.
 
 Built for the [DEV Hacktoberfest Open-Source AI Challenge, Week 2: Side Hustle](https://dev.to/challenges/hacktoberfest-week2-2026-10-12).
 
@@ -66,9 +66,9 @@ Your profile never leaves the browser except as the facts sent with a request to
 
 ## Get the app
 
-The desktop app for macOS, Windows and Linux runs everything on your computer: your profile, the job deck and, with [Ollama](https://ollama.com), Gemma itself. It's €9.99 once, after a 14-day free trial with everything included. The money pays for the signed app, updates and the daily Irish job feed.
+The desktop app for macOS, Windows and Linux runs everything on your computer: your profile, the job deck and, with [Ollama](https://ollama.com), Gemma itself. It's €9.99 once, after a 14-day free trial with everything included. The money pays for the ready-built app, updates and the daily Irish job feed.
 
-**[Download Deis](https://deis-bu83.onrender.com/download)** for a Mac (Apple silicon or Intel), Windows or Linux. Windows and Linux copies update themselves; on a Mac, Deis tells you when a new version is out.
+**[Download Deis](https://deiscareers.tech/download)** for a Mac (Apple silicon or Intel), Windows or Linux. Windows and Linux copies update themselves; on a Mac, Deis tells you when a new version is out.
 
 The installers aren't signed with an Apple or Microsoft certificate yet, so the first time you open Deis:
 

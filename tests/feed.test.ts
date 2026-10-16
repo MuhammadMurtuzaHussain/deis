@@ -152,7 +152,7 @@ describe("hosted feed on the desktop", () => {
 
   it("reads the feed from the hosted demo's real address", () => {
     const config = JSON.parse(readFileSync("desktop/config.json", "utf8")) as { feedUrl: string };
-    expect(config.feedUrl).toBe("https://deis-bu83.onrender.com");
+    expect(config.feedUrl).toBe("https://deiscareers.tech");
     expect(readFileSync("desktop/main.mjs", "utf8")).not.toContain("deis.onrender.com");
   });
 });

@@ -60,7 +60,7 @@ Local Gemma: `ollama pull gemma4:e4b` (6.6 GB). `.env.local` points the demo's f
 ## Progress (16 Oct)
 
 - Repo public: github.com/MuhammadMurtuzaHussain/deis (AGPL-3.0), pushed to `main` as we go. CI (`ci.yml`) runs tests, lint and types on every push.
-- Hosted demo: https://deis-bu83.onrender.com (Render gave `deis-bu83`; `deis.onrender.com` belongs to someone else). The desktop app reads its job feed from it, so installers built before 13 Oct 17:15 point at the wrong host.
+- Hosted demo: https://deiscareers.tech (custom domain on Render; `www` redirects to it). Render's own address, https://deis-bu83.onrender.com, still serves it: installers up to v0.1.1 read their job feed and Buy link from there, and the cross-site check accepts both. Installers built before 13 Oct 17:15 point at the wrong host.
 - Whole app works locally and in the packaged macOS app: check-in, profile import (CV, LinkedIn PDF, LinkedIn export ZIP), deck over real Irish jobs, Quick and Careful lanes, kit with sources and Checks tab, Word/PDF, tracker, settings, licence (off until Polar is set).
 - Audit fixes done: per-route and demo-wide rate limits on the demo key (`limits.ts`, counts in Key Value), CI, model chain v2 (AI Studio, then `FALLBACK_*` = OpenRouter Gemma 4 26B, then optional `FALLBACK_2_*`; no retries, a failing host goes to the back for 2 minutes).
 - Offline mode done: `DEIS_OFFLINE`, egress guard, File/Settings > Work offline, saved jobs in Dexie, paste-a-job (`AddJob.tsx`) that works with no network.

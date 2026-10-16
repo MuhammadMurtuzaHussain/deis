@@ -5,7 +5,7 @@ Deis sells the desktop app through Polar. Organisation: `deis` (`d1209e45-3973-4
 ## How it fits together
 
 - **Product:** "Deis", €9.99 one-time, with a **licence key** benefit. Id: `fb94fe7f-d0f8-49a0-8854-4bbe41f25496`.
-- **Buying:** the desktop app's Buy button opens `https://deis-bu83.onrender.com/checkout?products=fb94fe7f-d0f8-49a0-8854-4bbe41f25496`. That route creates a Polar checkout and redirects to it. Polar shows its own confirmation and emails the licence key.
+- **Buying:** the desktop app's Buy button opens `https://deiscareers.tech/checkout?products=fb94fe7f-d0f8-49a0-8854-4bbe41f25496`. That route creates a Polar checkout and redirects to it. Polar shows its own confirmation and emails the licence key.
 - **Unlocking:** the desktop app checks the key with Polar's public licence-key endpoint (`src/lib/server/licence.ts`): online once, then trusted offline and re-checked monthly. The app holds no secret.
 - **Customer portal:** Polar hosts it and emails customers the link. No app code is needed.
 
@@ -30,7 +30,7 @@ These are set locally in `.env.local`, and in Render's dashboard for the hosted 
 ## Webhook
 
 Not registered yet: there's no public deploy of `/api/webhook/polar`. After the next Render deploy:
-1. Polar dashboard → Settings → Webhooks → add `https://deis-bu83.onrender.com/api/webhook/polar`, format **raw**, with the events `order.paid` and `customer.state_changed`.
+1. Polar dashboard → Settings → Webhooks → add `https://deiscareers.tech/api/webhook/polar`, format **raw**, with the events `order.paid` and `customer.state_changed`.
 2. Copy the signing secret into Render as `POLAR_WEBHOOK_SECRET`.
 
 Deis doesn't need webhooks to sell or unlock, because the licence key does both. They're useful only for counting sales.

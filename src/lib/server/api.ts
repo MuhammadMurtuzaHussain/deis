@@ -121,8 +121,10 @@ function crossSite(req: Request): Response | null {
   const origin = req.headers.get("origin");
   if (process.env.DEIS_HOSTED !== "1" || !origin) return null;
   try {
-    const own = process.env.SITE_URL ? new URL(process.env.SITE_URL).host : req.headers.get("host");
-    if (new URL(origin).host === own) return null;
+    // The demo answers on its own domain (SITE_URL) and on Render's address, which old links
+    // and installers still use. A browser can't forge Host, so a page served from here matches it.
+    const from = new URL(origin).host;
+    if (from === req.headers.get("host") || (process.env.SITE_URL && from === new URL(process.env.SITE_URL).host)) return null;
   } catch {
     // "null" or a malformed Origin: refuse
   }
