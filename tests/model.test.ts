@@ -24,7 +24,7 @@ const quietFetch = (tags: string[] = ["gemma4:e4b"], probeStatus = 200) =>
   );
 
 beforeEach(() => {
-  for (const k of ["GOOGLE_GENERATIVE_AI_API_KEY", "FALLBACK_BASE_URL", "FALLBACK_MODEL", "FALLBACK_2_BASE_URL", "FALLBACK_2_MODEL", "DEIS_OFFLINE", "DEIS_HOSTED", "DEIS_STATE_DIR", "GOOGLE_MODEL"]) vi.stubEnv(k, "");
+  for (const k of ["GOOGLE_GENERATIVE_AI_API_KEY", "FALLBACK_BASE_URL", "FALLBACK_MODEL", "FALLBACK_API_KEY", "FALLBACK_2_BASE_URL", "FALLBACK_2_MODEL", "FALLBACK_2_API_KEY", "DEIS_OFFLINE", "DEIS_HOSTED", "DEIS_STATE_DIR", "GOOGLE_MODEL"]) vi.stubEnv(k, "");
   quietFetch();
 });
 afterEach(() => {
@@ -38,8 +38,10 @@ describe("demo chain", () => {
     vi.stubEnv("GOOGLE_GENERATIVE_AI_API_KEY", "AIza-test-key-0000000000000");
     vi.stubEnv("FALLBACK_BASE_URL", "https://api.groq.com/openai/v1");
     vi.stubEnv("FALLBACK_MODEL", "gemma-4-26b");
+    vi.stubEnv("FALLBACK_API_KEY", "gsk-test");
     vi.stubEnv("FALLBACK_2_BASE_URL", "https://openrouter.ai/api/v1");
     vi.stubEnv("FALLBACK_2_MODEL", "google/gemma-4-26b-a4b-it");
+    vi.stubEnv("FALLBACK_2_API_KEY", "sk-or-test");
     const { modelChain, demoHosts } = await load();
     const chain = modelChain({ provider: "demo" }, "careful");
     expect(chain.tier).toBe("demo");
@@ -60,11 +62,23 @@ describe("demo chain", () => {
     vi.stubEnv("GOOGLE_GENERATIVE_AI_API_KEY", "AIza-test-key-0000000000000");
     vi.stubEnv("FALLBACK_BASE_URL", "https://openrouter.ai/api/v1");
     vi.stubEnv("FALLBACK_MODEL", "google/gemma-4-26b-a4b-it");
+    vi.stubEnv("FALLBACK_API_KEY", "sk-or-test");
     quietFetch([], 500);
     const { modelChain, demoHosts } = await load();
     modelChain({ provider: "demo" });
     await vi.waitFor(() => expect(demoHosts()[0].healthy).toBe(false));
     expect(ids(modelChain({ provider: "demo" }))[0]).toBe("openai:openrouter.ai:google/gemma-4-26b-a4b-it");
+  });
+
+  it("leaves out a rented fallback host whose key isn't set, but not one on this computer", async () => {
+    vi.stubEnv("DEIS_HOSTED", "1");
+    vi.stubEnv("GOOGLE_GENERATIVE_AI_API_KEY", "AIza-test-key-0000000000000");
+    vi.stubEnv("FALLBACK_BASE_URL", "https://openrouter.ai/api/v1");
+    vi.stubEnv("FALLBACK_MODEL", "google/gemma-4-26b-a4b-it");
+    vi.stubEnv("FALLBACK_2_BASE_URL", "http://127.0.0.1:8080/v1");
+    vi.stubEnv("FALLBACK_2_MODEL", "gemma-4");
+    const { demoHosts } = await load();
+    expect(demoHosts().map((h) => h.label)).toEqual(["Google AI Studio", "Gemma on this computer"]);
   });
 });
 

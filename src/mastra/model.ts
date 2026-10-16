@@ -68,7 +68,8 @@ function via(host: string, system: string, base: typeof fetch, health?: string):
   return async (input, init) => {
     try {
       const res = await base(input, init);
-      if (health && (res.status === 429 || res.status >= 500)) markDown(health);
+      // 401/403 too: a missing or revoked key won't answer the next person either.
+      if (health && (res.status === 401 || res.status === 403 || res.status === 429 || res.status >= 500)) markDown(health);
       const store = answering.getStore();
       if (res.ok && store) Object.assign(store, { host, system });
       return res;
@@ -163,8 +164,11 @@ function fallbacks(): Fallback[] {
     const baseUrl = process.env[`${p}_BASE_URL`];
     const model = process.env[`${p}_MODEL`];
     if (!baseUrl || !model || !URL.canParse(baseUrl)) return [];
+    const apiKey = process.env[`${p}_API_KEY`];
+    // The blueprint sets the URL and model; a rented host without its key only answers 401.
+    if (!apiKey && !isLoopback(baseUrl)) return [];
     // A host that answers 400 to reasoning_effort gets FALLBACK_REASONING=omit.
-    return [{ key: p, baseUrl, apiKey: process.env[`${p}_API_KEY`], model, reasoning: process.env[`${p}_REASONING`] !== "omit" }];
+    return [{ key: p, baseUrl, apiKey, model, reasoning: process.env[`${p}_REASONING`] !== "omit" }];
   });
 }
 
