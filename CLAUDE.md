@@ -68,13 +68,17 @@ Local Gemma: `ollama pull gemma4:e4b` (6.6 GB). `.env.local` points the demo's f
 - v3 "Highlighter" UI: lime highlighter, physical deck with spotlight and fly-to-tab, the kit that writes itself, trace connectors, rolling numbers, magnetic buttons, company marks (`docs/DESIGN.md`).
 - Evals in `eval/RESULTS.md`: seniority 98.1% on a blind held-out set (first run), 0 jobs wrongly hidden after the fix; guard re-run on the current code 16 Oct (see the table), 0 untraceable left.
 - Installers for macOS, Windows and Linux build in GitHub Actions (`Desktop installers`, run by hand). Only the macOS one has been run on a real machine.
+- v0.1.4 (16 Oct) adds a signed Android APK (Capacitor shell over deiscareers.tech) and a PWA manifest for iPhone's Add to Home Screen. The APK has run on an emulator in CI, not yet on a real phone.
+- October offer (`src/lib/offer.ts`, `OfferNote`): 80% off with code HACKTOBERFEST beside every price until 1 Nov. The code must exist in Polar; checkout applies it only if the Polar token has `discounts:read`.
 - DEV post draft: `../deis-dev-post.md` (outside the repo). Remaining TODOs are author-only: own words, tester quotes, video link, screenshots.
 
 ## Open items
 
+- [x] Web service on Starter (16 Oct, dashboard and `render.yaml`).
 - [ ] Render blueprint applied and secrets set in the dashboard (author): AI Studio key, SerpApi key, Sentry auth token, OpenRouter `FALLBACK_API_KEY` (key with a credit limit). Key Value is on the paid `256mb` plan ($10/month from the $50 hackathon credit); web service Starter $7/month.
 - [ ] Sentry screenshots of a kit trace and guard issues for the post (project `deis`, org `tfc-research-and-innovation-li`).
-- [ ] Polar (author): €9.99 product with a licence-key benefit; put the organisation id and checkout link in `desktop/config.json`.
+- [x] Polar: €9.99 product and checkout link in `desktop/config.json`.
+- [ ] Polar (author): create the HACKTOBERFEST 80% discount, ending 31 Oct.
 - [ ] Testers (author): the author's own job search, Cybersecurity Society; quotes for the post. Then video, screenshots, DevRelay session, publish.
 - [ ] Job feed expansion to about 250 jobs (another agent); put the real count in README and the post.
 - [ ] Windows and Linux installers tested on real machines; code signing before a real launch.
