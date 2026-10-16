@@ -4,8 +4,8 @@ services:
   - type: web
     name: deis
     runtime: node
-    # Free sleeps after 15 minutes idle (about 30 s to wake). Starter ($7/month) stays awake.
-    plan: free
+    # Starter ($7/month) stays awake, so a judge never waits for a cold start. Free sleeps after 15 minutes idle.
+    plan: starter
     region: frankfurt
     # Deploy a commit only after GitHub's CI checks (.github/workflows/ci.yml) pass on it.
     autoDeployTrigger: checksPass
