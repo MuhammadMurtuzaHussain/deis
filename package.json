@@ -26,6 +26,7 @@
     "@ai-sdk/openai-compatible": "^3.0.67",
     "@mastra/core": "^1.76.0",
     "@phosphor-icons/react": "^2.1.10",
+    "@polar-sh/sdk": "^1.0.2",
     "@sentry/nextjs": "^11.6.0",
     "ai": "^7.0.137",
     "dexie": "^4.4.6",

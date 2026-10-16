@@ -77,6 +77,14 @@ services:
         value: deis
       - key: SENTRY_AUTH_TOKEN
         sync: false
+      # Polar: /checkout opens a checkout for the desktop app (the app's Buy button links here).
+      # Organization access token with checkouts scope; the webhook secret once /api/webhook/polar is registered.
+      - key: POLAR_ACCESS_TOKEN
+        sync: false
+      - key: POLAR_WEBHOOK_SECRET
+        sync: false
+      - key: POLAR_SERVER
+        value: production
 
   # Render Key Value (Valkey). Internal only: holds the job feed cache, the demo's rate limits
   # and this month's SerpApi count, so a sleeping web service wakes without spending searches.
