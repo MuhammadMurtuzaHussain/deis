@@ -1,7 +1,7 @@
 "use client";
 
 import { ClipboardText } from "@phosphor-icons/react";
-import { useId, useRef, useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { db, saveJobs } from "@/lib/client/db";
 import { useStore } from "@/lib/client/store";
 import type { ScoredJob } from "@/lib/jobs/types";
@@ -25,7 +25,7 @@ export function AddJobButton({
   onAdded,
 }: {
   variant?: Variant;
-  label?: string;
+  label?: ReactNode;
   size?: "sm" | "md" | "lg";
   className?: string;
   /** After saving. Without it, Deis says where the job went and offers to show it. */

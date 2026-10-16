@@ -6,9 +6,9 @@ import { DEFAULTS, type AiSettings } from "@/lib/ai/settings";
 import { api, ApiError } from "@/lib/client/api";
 import { effectiveModel, type EffectiveModel } from "@/lib/client/model";
 import { useStore } from "@/lib/client/store";
-import { CopyLine, PrivacyBadge } from "./settings/parts";
+import { CopyLine, PrivacyBadge, SpringSwitch } from "./settings/parts";
 import { betterWritingDefault, useOllama } from "./settings/useOllama";
-import { Button, Elapsed, EYEBROW, Field, inputClass, Notice, PageHeader, Pill, selectClass, Switch } from "./ui";
+import { Button, Elapsed, Field, inputClass, Notice, PageHeader, Pill, selectClass } from "./ui";
 
 // Where Gemma runs. The whole pitch of Deis is that this is the user's choice:
 // their own laptop (free, private), their own free Google AI Studio key, or any
@@ -49,15 +49,15 @@ function Option({
 }) {
   const on = choice === id && !disabled;
   return (
-    <div className={`rounded-surface border bg-raised transition-colors ${on ? "border-ink shadow-[inset_0_0_0_1px_var(--ink)]" : "border-line"} ${disabled ? "opacity-75" : ""}`}>
+    <div className={`rounded-panel border bg-surface transition-[border-color,box-shadow] ${on ? "border-ink shadow-[inset_0_0_0_1px_var(--ink)]" : "border-line hover:border-control-border"} ${disabled ? "opacity-75" : ""}`}>
       <label className={`flex items-start gap-4 p-4 sm:p-5 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
-        <input type="radio" name="provider" checked={on} disabled={disabled} onChange={() => setChoice(id)} className="mt-1 size-5 shrink-0 accent-[var(--ink)]" />
-        <span className="mt-0.5 shrink-0 text-ink-2" aria-hidden>
+        <input type="radio" name="provider" checked={on} disabled={disabled} onChange={() => setChoice(id)} className="mt-2.5 size-5 shrink-0 accent-[var(--ink)]" />
+        <span className={`grid size-10 shrink-0 place-items-center rounded-full transition-colors ${on ? "bg-ink text-surface" : "bg-sunken text-ink-2"}`} aria-hidden>
           {icon}
         </span>
         <span className="grid min-w-0 flex-1 gap-1.5">
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="font-bold text-ink">{title}</span>
+            <span className="text-[16px] font-semibold text-ink">{title}</span>
             {inUse && <Pill icon={<Check size={14} weight="bold" aria-hidden />}>In use now</Pill>}
           </span>
           <span className="text-body text-ink-2">{sub}</span>
@@ -67,7 +67,7 @@ function Option({
           {disabled && model.reason && <span className="text-caption text-ink-2">{model.reason}</span>}
         </span>
       </label>
-      {on && children && <div className="border-t border-line p-4 sm:p-5">{children}</div>}
+      {on && children && <div className="border-t border-line p-4 sm:p-5 sm:pl-[4.75rem]">{children}</div>}
     </div>
   );
 }
@@ -147,7 +147,6 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
     <div className={embedded ? "" : "max-w-3xl"}>
       {!embedded && (
         <PageHeader
-          eyebrow={EYEBROW.model}
           title="Where should Gemma run?"
           description="Deis uses Gemma, Google's open-weight model, to read job ads and tailor your CV. You choose where it runs. No option charges per application."
         />
@@ -166,7 +165,7 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
             id="demo"
             choice={choice}
             setChoice={setPicked}
-            icon={<Sparkle size={24} />}
+            icon={<Sparkle size={20} />}
             title="The demo's Gemma, in the cloud"
             sub="Nothing to set up. Shared and rate limited, so it can be slow at busy times."
             model={modelOf("demo")}
@@ -179,7 +178,7 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
           id="ollama"
           choice={choice}
           setChoice={setPicked}
-          icon={<Desktop size={24} />}
+          icon={<Desktop size={20} />}
           title="On this computer, with Ollama"
           sub="Free and private. Needs about 8 GB of memory and a 7 GB download, and works offline."
           model={ollamaOpt}
@@ -226,8 +225,8 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
                 </div>
               )}
               {ollamaModel !== DEFAULTS.kitModel && (
-                <div className="grid gap-2 rounded-control border border-line bg-surface p-4">
-                  <Switch
+                <div className="grid gap-2 rounded-panel bg-sunken p-4">
+                  <SpringSwitch
                     checked={betterWriting}
                     onChange={setBetterWriting}
                     disabled={!kitInstalled}
@@ -249,7 +248,7 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
           id="google"
           choice={choice}
           setChoice={setPicked}
-          icon={<Cloud size={24} />}
+          icon={<Cloud size={20} />}
           title="With a free Google AI Studio key"
           sub="Faster than most laptops. Google's free tier runs open-weight Gemma at no cost. Takes a minute to set up."
           model={modelOf("google")}
@@ -286,7 +285,7 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
           id="openai"
           choice={choice}
           setChoice={setPicked}
-          icon={<HardDrives size={24} />}
+          icon={<HardDrives size={20} />}
           title="Another server you run or rent"
           sub="LM Studio, llama.cpp, vLLM, DigitalOcean, OpenRouter: anything that speaks the OpenAI API."
           model={modelOf("openai")}

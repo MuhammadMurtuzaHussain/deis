@@ -1,19 +1,19 @@
 "use client";
 
-import { motion } from "motion/react";
 import { useEffect, useRef, type KeyboardEvent } from "react";
-import { MOTION, Pill, useMotion } from "../ui";
+import { useMotion } from "../ui";
 import { KIND_LABEL } from "./trace";
 import { scrollInside, useTrace } from "./useTrace";
 
 // The inspector's list of sources: every fact the open document cites, numbered by first
-// use, as paper slips. Selecting a slip lights every line that cites it and scrolls its
-// first marker into view; selecting a marker lights its slip and scrolls the rail only.
-// It shows what the kit cites and nothing else: no invented relevance or confidence.
+// use, as fact slips (a mono number in a pill, the fact, "used in N lines"). Selecting a slip
+// draws the highlighter over every line that cites it and scrolls its first marker into view;
+// selecting a marker selects its slip and scrolls the rail only. It shows what the kit cites
+// and nothing else: no invented relevance or confidence.
 
 export function SourcesRail({ what }: { what: string }) {
-  const { numbers, uses, facts, active, from, select, railRef, on } = useTrace();
-  const { reduce, t } = useMotion();
+  const { numbers, uses, facts, active, from, select, railRef } = useTrace();
+  const { reduce } = useMotion();
   const listRef = useRef<HTMLOListElement>(null);
   const ids = [...numbers.keys()];
 
@@ -25,7 +25,7 @@ export function SourcesRail({ what }: { what: string }) {
     else document.querySelector(sel)?.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
   }, [active, from, railRef, reduce]);
 
-  if (!on || !ids.length) return null;
+  if (!ids.length) return null;
 
   // Up, Down, Home and End move focus between slips (one tab stop for the list).
   const onKey = (e: KeyboardEvent<HTMLOListElement>) => {
@@ -41,11 +41,16 @@ export function SourcesRail({ what }: { what: string }) {
   const tabStop = active && numbers.has(active) ? active : ids[0];
 
   return (
-    <nav aria-label="Sources" className="grid gap-2">
-      <p className="text-caption text-ink-3">
-        Where {what} came from: {ids.length} {ids.length === 1 ? "fact" : "facts"} you confirmed
-      </p>
-      <ol ref={listRef} onKeyDown={onKey} className="grid gap-2">
+    <nav aria-labelledby="sources-title" className="grid gap-3">
+      <div>
+        <h2 id="sources-title" className="text-body font-semibold text-ink">
+          Sources
+        </h2>
+        <p className="text-caption text-ink-3">
+          Where {what} came from: <span className="num">{ids.length}</span> {ids.length === 1 ? "fact" : "facts"} you confirmed. Pick one to see its lines.
+        </p>
+      </div>
+      <ol ref={listRef} onKeyDown={onKey} className="grid gap-1.5">
         {ids.map((id) => {
           const f = facts.get(id);
           if (!f) return null;
@@ -53,27 +58,25 @@ export function SourcesRail({ what }: { what: string }) {
           const used = uses.get(id) ?? 0;
           const isOn = active === id;
           return (
-            <li key={id} className="relative">
-              {isOn && <motion.span layoutId={reduce ? undefined : "slip-bar"} transition={t(MOTION.trace)} aria-hidden className="absolute inset-y-0 left-0 z-10 w-[3px] rounded-l-control bg-trace" />}
+            <li key={id}>
               <button
                 type="button"
                 data-slip={id}
-                aria-current={isOn ? "true" : undefined}
+                aria-pressed={isOn}
                 tabIndex={id === tabStop ? 0 : -1}
                 onClick={() => select(id, "slip")}
-                className={`grid w-full grid-cols-[24px_minmax(0,1fr)] gap-x-2.5 rounded-control border px-3 py-2.5 text-left transition-colors duration-150 ${isOn ? "border-trace bg-trace-soft" : "border-line bg-raised hover:border-control-border"}`}
+                className={`grid w-full grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 rounded-field border px-3 py-2.5 text-left transition-[background-color,border-color] duration-150 ${
+                  isOn ? "border-transparent bg-pop-soft" : "border-line bg-surface hover:border-control-border"
+                }`}
               >
-                <span aria-hidden className={`mt-0.5 grid h-5 w-6 place-items-center rounded-full font-mono text-[11px] font-bold ${isOn ? "bg-trace text-raised" : "border border-trace/50 bg-trace-soft text-trace"}`}>
+                <span aria-hidden className={`mt-px grid h-5 min-w-6 place-items-center rounded-full px-1 font-mono text-[11px] font-semibold transition-colors duration-150 ${isOn ? "bg-pop text-pop-ink" : "bg-pop-soft text-ink"}`}>
                   {n}
                 </span>
                 <span className="min-w-0">
                   <span className="sr-only">Source {n}: </span>
-                  <span className="block text-body text-ink">{f.text}</span>
-                  <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-ink-2">
-                    <span>{[KIND_LABEL[f.kind], f.org].filter(Boolean).join(", ")}</span>
-                    <span aria-hidden>·</span>
-                    <span>{used === 1 ? "Used in 1 line" : `Used in ${used} lines`}</span>
-                    {isOn && <Pill>Selected</Pill>}
+                  <span className="block text-body leading-snug text-ink">{f.text}</span>
+                  <span className="mt-1 block text-caption text-ink-3">
+                    {[KIND_LABEL[f.kind], f.org].filter(Boolean).join(", ")}. Used in <span className="num">{used}</span> {used === 1 ? "line" : "lines"}
                   </span>
                 </span>
               </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, CheckCircle, Info, Path, Warning, WarningOctagon, X } from "@phosphor-icons/react";
-import { AnimatePresence, motion, useReducedMotion, type Transition } from "motion/react";
+import { AnimatePresence, motion, useAnimate, useReducedMotion, useSpring, useTransform, type HTMLMotionProps, type Transition } from "motion/react";
 import {
   useCallback,
   useEffect,
@@ -18,10 +18,11 @@ import {
 import { createPortal } from "react-dom";
 import { useDialog } from "@/lib/client/useDialog";
 
-// Deis's building blocks, "Estuary paper". Every screen uses these rather than its own.
-// Documented with examples in docs/DESIGN.md. Rules: controls 10px, surfaces 16px, the job
-// card 20px (round buttons and pills are fully round). Green only means "go". Every control
-// has a visible label or an sr-only one, and a 44px target on touch screens.
+// Deis's building blocks, v3 "Highlighter". Every screen uses these rather than its own.
+// Documented with examples in docs/DESIGN.md. Shapes: controls are full pill (textareas 16),
+// containers 20, the swipe card 28, company marks 12. Lime (pop) only means "go" or
+// "proven", and is never text on a light background. Every control has a visible label or
+// an sr-only one, and a 44px target on touch screens.
 
 // ---------------------------------------------------------------------------- motion
 
@@ -30,13 +31,23 @@ export const MOTION = {
   /** The next card rising into place. */
   spring: { type: "spring", stiffness: 380, damping: 32 } satisfies Transition,
   /** A card leaving the deck. */
-  exit: { duration: 0.26, ease: [0.4, 0, 1, 1] } satisfies Transition,
+  exit: { duration: 0.24, ease: [0.4, 0, 1, 1] } satisfies Transition,
   /** Between "How you match" lines, in seconds. */
   stagger: 0.06,
   trace: { duration: 0.15, ease: "easeOut" } satisfies Transition,
   tab: { duration: 0.12, ease: "easeOut" } satisfies Transition,
-  route: { duration: 0.16, ease: "easeOut" } satisfies Transition,
+  route: { duration: 0.14, ease: "easeOut" } satisfies Transition,
+  /** The segmented nav and tab indicator sliding between items (layoutId). */
+  indicator: { type: "spring", stiffness: 520, damping: 40 } satisfies Transition,
+  /** The highlighter stroke drawing in; the CSS .highlight utility uses the same 220 ms. */
+  highlight: { duration: 0.22, ease: [0.22, 1, 0.36, 1] } satisfies Transition,
   toast: { type: "spring", stiffness: 520, damping: 34, mass: 0.6 } satisfies Transition,
+  /** A pressable squashing on press and springing back. */
+  press: { type: "spring", stiffness: 700, damping: 18, mass: 0.6 } satisfies Transition,
+  /** Magnetic buttons settling back under the pointer. */
+  magnet: { stiffness: 260, damping: 18, mass: 0.5 },
+  /** Numbers rolling to a new value. */
+  roll: { stiffness: 120, damping: 20, mass: 0.9 },
 } as const;
 
 /** reduce: the user asked for less motion. t(): the transition, or an instant one. Use opacity only when reduce is true. */
@@ -52,31 +63,75 @@ export type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
 const VARIANT: Record<Variant, string> = {
-  // Primary is the "go" action: one per view.
-  primary: "bg-accent text-accent-ink hover:brightness-110 dark:hover:brightness-105",
-  secondary: "border border-control-border bg-raised text-ink hover:bg-wash",
-  ghost: "text-ink-2 hover:bg-wash hover:text-ink",
-  danger: "border border-control-border bg-raised text-brick hover:border-brick hover:bg-brick-soft",
+  // Primary is the "go" action, lime with ink text: one per view.
+  primary: "bg-pop text-pop-ink hover:bg-[color-mix(in_oklab,var(--pop)_90%,var(--pop-ink))]",
+  secondary: "border border-control-border bg-surface text-ink hover:bg-sunken",
+  ghost: "text-ink-2 hover:bg-sunken hover:text-ink",
+  danger: "border border-control-border bg-surface text-danger hover:border-danger hover:bg-danger-soft",
 };
 
 // sm stays 44px tall on touch screens.
 const SIZE: Record<Size, string> = {
-  sm: "h-9 px-3 text-body pointer-coarse:h-11",
-  md: "h-11 px-4 text-body",
-  lg: "h-12 px-5 text-[16px]",
+  sm: "h-9 px-4 text-body pointer-coarse:h-11",
+  md: "h-11 px-5 text-body",
+  lg: "h-12 px-6 text-[16px]",
 };
 
-const BASE = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-control font-medium transition-[transform,filter,background-color,border-color,color] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0";
+// Shared by Button and buttonClass. Button squashes with a spring (Motion), so the CSS press
+// scale is only added for links and labels styled as buttons.
+const BASE = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-pill font-medium transition-[background-color,border-color,color,box-shadow] disabled:cursor-not-allowed disabled:opacity-50";
 
-export const buttonClass = (variant: Variant = "secondary", size: Size = "md") => `${BASE} ${SIZE[size]} ${VARIANT[variant]}`;
+export const buttonClass = (variant: Variant = "secondary", size: Size = "md") => `${BASE} transition-[transform,background-color,border-color,color] active:scale-[0.98] disabled:active:scale-100 ${SIZE[size]} ${VARIANT[variant]}`;
 
-/** busy: shows a spinner, sets aria-busy and disables the button. */
+/**
+ * Magnetism for primary buttons: the button leans up to 6 px towards a fine pointer moving over
+ * it, and springs back when it leaves. Off for touch and reduced motion.
+ */
+function useMagnet(on: boolean) {
+  const x = useSpring(0, MOTION.magnet);
+  const y = useSpring(0, MOTION.magnet);
+  const move = (e: { clientX: number; clientY: number; currentTarget: Element; pointerType?: string }) => {
+    if (!on || e.pointerType !== "mouse") return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2);
+    const dy = e.clientY - (r.top + r.height / 2);
+    x.set(Math.max(-6, Math.min(6, dx * 0.22)));
+    y.set(Math.max(-4, Math.min(4, dy * 0.3)));
+  };
+  const leave = () => {
+    x.set(0);
+    y.set(0);
+  };
+  return { x, y, move, leave };
+}
+
+/** busy: shows a spinner, sets aria-busy and disables the button. Primary buttons are magnetic; every button squashes on press. */
 export function Button({ variant = "secondary", size = "md", busy, className = "", children, disabled, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size; busy?: boolean }) {
+  const { reduce, t } = useMotion();
+  const off = disabled || busy;
+  const magnet = useMagnet(variant === "primary" && !reduce && !off);
   return (
-    <button type="button" {...rest} disabled={disabled || busy} aria-busy={busy || undefined} className={`${buttonClass(variant, size)} ${className}`}>
+    <motion.button
+      type="button"
+      {...(rest as HTMLMotionProps<"button">)}
+      disabled={off}
+      aria-busy={busy || undefined}
+      style={{ x: magnet.x, y: magnet.y }}
+      onPointerMove={(e) => {
+        magnet.move(e);
+        rest.onPointerMove?.(e);
+      }}
+      onPointerLeave={(e) => {
+        magnet.leave();
+        rest.onPointerLeave?.(e);
+      }}
+      whileTap={reduce || off ? undefined : { scale: 0.95 }}
+      transition={t(MOTION.press)}
+      className={`${BASE} ${SIZE[size]} ${VARIANT[variant]} ${className}`}
+    >
       {busy && <Spinner />}
       {children}
-    </button>
+    </motion.button>
   );
 }
 
@@ -90,27 +145,66 @@ export function LinkButton({ href, children, variant = "secondary", size = "md",
   );
 }
 
-const ROUND: Record<44 | 48 | 56 | 64, string> = { 44: "size-11", 48: "size-12", 56: "size-14", 64: "size-16" };
+export type IconButtonSize = 36 | 40 | 44 | 48 | 52 | 56 | 60 | 64 | 72;
+const ROUND: Record<IconButtonSize, string> = { 36: "size-9 pointer-coarse:size-11", 40: "size-10 pointer-coarse:size-11", 44: "size-11", 48: "size-12", 52: "size-13", 56: "size-14", 60: "size-15", 64: "size-16", 72: "size-18" };
 
-/** A round icon button: the deck's Skip (56), Later (48), Apply (64) and Undo (44). label is read out and shown as a tooltip. */
+/** A round icon button: the deck's Undo (44, ghost), Later (52), Skip (60) and Apply (72, primary). label is read out and shown as a tooltip. Squashes to .94 on press and springs back; primary ones are magnetic. */
 export function IconButton({
   label,
   size = 44,
   variant = "secondary",
   className = "",
   children,
+  disabled,
   ...rest
-}: Omit<ButtonHTMLAttributes<HTMLButtonElement>, "aria-label"> & { label: string; size?: 44 | 48 | 56 | 64; variant?: Variant }) {
+}: Omit<ButtonHTMLAttributes<HTMLButtonElement>, "aria-label"> & { label: string; size?: IconButtonSize; variant?: Variant }) {
+  const { reduce, t } = useMotion();
+  const magnet = useMagnet(variant === "primary" && !reduce && !disabled);
   return (
-    <button
+    <motion.button
       type="button"
       title={label}
-      {...rest}
-      className={`inline-flex shrink-0 items-center justify-center rounded-full transition-[transform,filter,background-color,border-color,box-shadow] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 ${ROUND[size]} ${VARIANT[variant]} ${variant === "ghost" ? "" : "shadow-card"} ${className}`}
+      {...(rest as HTMLMotionProps<"button">)}
+      disabled={disabled}
+      style={{ x: magnet.x, y: magnet.y }}
+      onPointerMove={(e) => {
+        magnet.move(e);
+        rest.onPointerMove?.(e);
+      }}
+      onPointerLeave={(e) => {
+        magnet.leave();
+        rest.onPointerLeave?.(e);
+      }}
+      whileTap={reduce || disabled ? undefined : { scale: 0.94 }}
+      transition={t(MOTION.press)}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full transition-[filter,background-color,border-color,box-shadow,color] disabled:cursor-not-allowed disabled:opacity-50 ${ROUND[size]} ${VARIANT[variant]} ${variant === "ghost" ? "" : "shadow-card"} ${className}`}
     >
       {children}
       <span className="sr-only">{label}</span>
-    </button>
+    </motion.button>
+  );
+}
+
+/**
+ * A count that rolls to its new value on a spring when it changes (deck matches, n of N,
+ * tracker counts, the ready count, the checks counter). The rolling figures are aria-hidden;
+ * screen readers get the final value. Reduced motion: the new value at once.
+ * from: roll up from this on first render (e.g. 0), instead of starting at value.
+ */
+export function RollingNumber({ value, from, className = "", format }: { value: number; from?: number; className?: string; format?: (n: number) => string }) {
+  const { reduce } = useMotion();
+  const fmt = format ?? ((n: number) => Math.round(n).toLocaleString("en-IE"));
+  const spring = useSpring(reduce ? value : (from ?? value), MOTION.roll);
+  const text = useTransform(spring, (v) => fmt(v));
+  useEffect(() => {
+    if (reduce) spring.jump(value);
+    else spring.set(value);
+  }, [value, reduce, spring]);
+  return (
+    <span className={`num inline-block ${className}`}>
+      <motion.span aria-hidden>{text}</motion.span>
+      <span className="sr-only">{fmt(value)}</span>
+    </span>
   );
 }
 
@@ -125,21 +219,43 @@ export function Spinner({ size = 16, className = "" }: { size?: number; classNam
 
 // ---------------------------------------------------------------------------- choices
 
-/** A toggle choice (aria-pressed). Selected: ink border and a check, never a green fill. */
+/** A toggle choice (aria-pressed), a pill. Selected: ink fill (scaling in on a spring), surface text and a check; never lime. */
 export function Chip({ on, onClick, children, disabled, className = "" }: { on: boolean; onClick: () => void; children: ReactNode; disabled?: boolean; className?: string }) {
+  const { reduce, t } = useMotion();
   return (
-    <button
+    <motion.button
       type="button"
       aria-pressed={on}
       disabled={disabled}
       onClick={onClick}
-      className={`inline-flex min-h-11 items-center gap-2.5 rounded-control border bg-raised px-3.5 py-2 text-left text-body text-ink transition active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 ${on ? "border-ink font-medium shadow-[inset_0_0_0_1px_var(--ink)]" : "border-control-border hover:bg-wash"} ${className}`}
+      whileTap={reduce || disabled ? undefined : { scale: 0.95 }}
+      transition={t(MOTION.press)}
+      className={`relative isolate inline-flex min-h-11 items-center gap-2 overflow-hidden rounded-pill border py-2 pr-4 pl-3 text-left text-body transition-[border-color,color] disabled:cursor-not-allowed disabled:opacity-50 ${on ? "border-ink font-medium text-surface" : "border-control-border bg-surface text-ink hover:bg-sunken"} ${className}`}
     >
-      <span aria-hidden className={`grid size-[18px] shrink-0 place-items-center rounded-full border ${on ? "border-ink bg-ink text-bg" : "border-control-border"}`}>
-        {on && <Check size={12} weight="bold" />}
+      <AnimatePresence initial={false}>
+        {on && (
+          <motion.span
+            key="fill"
+            aria-hidden
+            initial={reduce ? { opacity: 0 } : { scale: 0.4, opacity: 0.4 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={reduce ? { opacity: 0 } : { scale: 0.6, opacity: 0 }}
+            transition={t({ type: "spring", stiffness: 520, damping: 30 })}
+            className="absolute inset-0 -z-10 rounded-pill bg-ink"
+          />
+        )}
+      </AnimatePresence>
+      <span aria-hidden className={`grid size-[18px] shrink-0 place-items-center rounded-full border transition-colors ${on ? "border-surface bg-surface text-ink" : "border-control-border"}`}>
+        <AnimatePresence initial={false}>
+          {on && (
+            <motion.span key="check" initial={reduce ? { opacity: 0 } : { scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} exit={{ opacity: 0, scale: 0 }} transition={t({ type: "spring", stiffness: 600, damping: 22, delay: 0.04 })} className="grid">
+              <Check size={12} weight="bold" />
+            </motion.span>
+          )}
+        </AnimatePresence>
       </span>
       <span className="min-w-0">{children}</span>
-    </button>
+    </motion.button>
   );
 }
 
@@ -168,8 +284,8 @@ export function Switch({ checked, onChange, label, description, disabled }: { ch
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-11 w-[52px] shrink-0 items-center rounded-full disabled:cursor-not-allowed disabled:opacity-50`}
       >
-        <span aria-hidden className={`absolute inset-x-0 top-1/2 h-7 -translate-y-1/2 rounded-full border transition-colors ${checked ? "border-ink bg-ink" : "border-control-border bg-raised"}`} />
-        <span aria-hidden className={`absolute top-1/2 size-5 -translate-y-1/2 rounded-full transition-[left,background-color] ${checked ? "left-[28px] bg-bg" : "left-1 bg-ink-3"}`} />
+        <span aria-hidden className={`absolute inset-x-0 top-1/2 h-7 -translate-y-1/2 rounded-full border transition-colors ${checked ? "border-ink bg-ink" : "border-control-border bg-sunken"}`} />
+        <span aria-hidden className={`absolute top-1/2 size-5 -translate-y-1/2 rounded-full shadow-[0_1px_2px_rgb(14_15_16/0.2)] transition-[left,background-color] ${checked ? "left-[28px] bg-surface" : "left-1 bg-ink-3"}`} />
       </button>
     </div>
   );
@@ -193,7 +309,7 @@ export function Field({ label, help, error, children }: { label: ReactNode; help
         </p>
       )}
       {error && (
-        <p id={errId} role="alert" className="text-caption font-medium text-brick">
+        <p id={errId} role="alert" className="text-caption font-medium text-danger">
           {error}
         </p>
       )}
@@ -202,35 +318,36 @@ export function Field({ label, help, error, children }: { label: ReactNode; help
 }
 
 // --control-border is 3:1 against the page (WCAG 1.4.11); focus keeps the global ring.
-const CONTROL = "w-full rounded-control border border-control-border bg-raised text-body text-ink placeholder:text-ink-3 hover:border-ink-3 focus:border-ink aria-invalid:border-brick disabled:cursor-not-allowed disabled:opacity-60";
-export const inputClass = `h-11 px-3 ${CONTROL}`;
-export const textareaClass = `px-3 py-2 leading-relaxed ${CONTROL}`;
-export const selectClass = `h-11 appearance-none bg-[length:16px] bg-[right_12px_center] bg-no-repeat pr-10 pl-3 ${CONTROL} bg-[url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath fill='%23878c86' d='M213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80a8 8 0 0 1 11.32-11.32L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32Z'/%3E%3C/svg%3E")]`;
+// Inputs and selects are pills; multi-line textareas are 16.
+const CONTROL = "w-full border border-control-border bg-surface text-body text-ink placeholder:text-ink-3 hover:border-ink-3 focus:border-ink aria-invalid:border-danger disabled:cursor-not-allowed disabled:opacity-60";
+export const inputClass = `h-11 rounded-pill px-4 ${CONTROL}`;
+export const textareaClass = `rounded-field px-4 py-3 leading-relaxed ${CONTROL}`;
+export const selectClass = `h-11 appearance-none rounded-pill bg-[length:16px] bg-[right_14px_center] bg-no-repeat pr-10 pl-4 ${CONTROL} bg-[url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath fill='%238C8F94' d='M213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80a8 8 0 0 1 11.32-11.32L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32Z'/%3E%3C/svg%3E")]`;
 
 // ---------------------------------------------------------------------------- notices and pills
 
 export type Tone = "info" | "warn" | "error" | "ok" | "trace";
 
-const NOTICE: Record<Tone, { box: string; bar: string; icon: string; Icon: typeof Info }> = {
-  info: { box: "bg-surface border border-line", bar: "before:bg-ink-3", icon: "text-ink-2", Icon: Info },
-  warn: { box: "bg-ochre-soft", bar: "before:bg-ochre", icon: "text-ochre", Icon: Warning },
-  error: { box: "bg-brick-soft", bar: "before:bg-brick", icon: "text-brick", Icon: WarningOctagon },
-  ok: { box: "bg-accent-soft", bar: "before:bg-accent", icon: "text-accent-text", Icon: CheckCircle },
-  trace: { box: "bg-trace-soft", bar: "before:bg-trace", icon: "text-trace", Icon: Path },
+const NOTICE: Record<Tone, { box: string; icon: string; Icon: typeof Info }> = {
+  info: { box: "border border-line bg-surface", icon: "text-ink-2", Icon: Info },
+  warn: { box: "bg-warn-soft", icon: "text-warn", Icon: Warning },
+  error: { box: "bg-danger-soft", icon: "text-danger", Icon: WarningOctagon },
+  ok: { box: "bg-pop-soft", icon: "text-ink", Icon: CheckCircle },
+  trace: { box: "bg-pop-soft", icon: "text-ink", Icon: Path },
 };
 
 /**
- * A message in the page: left icon, 3px coloured left border, ink text.
+ * A message in the page: a tinted panel (radius 20), left icon, ink text.
  * Errors are role="alert"; the rest role="status" unless announce is false (static copy).
  */
 export function Notice({ tone = "info", title, children, action, className = "", announce = true }: { tone?: Tone; title?: ReactNode; children?: ReactNode; action?: ReactNode; className?: string; announce?: boolean }) {
   const t = NOTICE[tone];
   const role = tone === "error" ? "alert" : announce ? "status" : undefined;
   return (
-    <div role={role} className={`relative flex gap-3 overflow-hidden rounded-control py-3 pr-4 pl-4 text-body text-ink before:absolute before:inset-y-0 before:left-0 before:w-[3px] ${t.box} ${t.bar} ${className}`}>
+    <div role={role} className={`flex gap-3 rounded-panel px-4 py-3 text-body text-ink ${t.box} ${className}`}>
       <t.Icon size={20} weight="fill" aria-hidden className={`mt-0.5 shrink-0 ${t.icon}`} />
       <div className="min-w-0 flex-1">
-        {title && <p className="font-bold">{title}</p>}
+        {title && <p className="font-semibold">{title}</p>}
         {children && <div className={title ? "mt-0.5 text-ink-2" : ""}>{children}</div>}
         {action && <div className="mt-2 flex flex-wrap gap-2">{action}</div>}
       </div>
@@ -238,17 +355,20 @@ export function Notice({ tone = "info", title, children, action, className = "",
   );
 }
 
-export type PillTone = "neutral" | "go" | "trace" | "ochre" | "brick";
+/** neutral, go (pop-soft with ink text), warn, danger. trace, ochre and brick are deprecated v2 names for go, warn and danger. */
+export type PillTone = "neutral" | "go" | "warn" | "danger" | "trace" | "ochre" | "brick";
 
 const PILL: Record<PillTone, string> = {
   neutral: "border border-line bg-surface text-ink-2",
-  go: "bg-accent-soft text-accent-text",
-  trace: "bg-trace-soft text-trace",
-  ochre: "bg-ochre-soft text-ochre",
-  brick: "bg-brick-soft text-brick",
+  go: "bg-pop-soft text-ink",
+  warn: "bg-warn-soft text-warn",
+  danger: "bg-danger-soft text-danger",
+  trace: "bg-pop-soft text-ink",
+  ochre: "bg-warn-soft text-warn",
+  brick: "bg-danger-soft text-danger",
 };
 
-/** A short label: "Early career" (neutral), "Strong match" (go), "Stretch" (ochre), "Blocked" (brick), "3 sources" (trace). */
+/** A short label: "Early career" (neutral), "Strong match" (go), "Stretch" (warn), "Blocked" (danger). */
 export function Pill({ tone = "neutral", icon, children, className = "", ...rest }: HTMLAttributes<HTMLSpanElement> & { tone?: PillTone; icon?: ReactNode }) {
   return (
     <span {...rest} className={`inline-flex h-6 items-center gap-1 rounded-full px-2.5 text-caption font-medium whitespace-nowrap ${PILL[tone]} ${className}`}>
@@ -260,66 +380,49 @@ export function Pill({ tone = "neutral", icon, children, className = "", ...rest
 export const Badge = Pill;
 
 export function Kbd({ children }: { children: ReactNode }) {
-  return <kbd className="inline-flex min-w-6 items-center justify-center rounded-control border border-control-border bg-raised px-1.5 font-mono text-caption text-ink-2 shadow-[0_1px_0_var(--line)]">{children}</kbd>;
+  return <kbd className="inline-flex h-6 min-w-6 items-center justify-center rounded-pill border border-line bg-surface px-2 font-mono text-[12px] text-ink-2">{children}</kbd>;
 }
 
 // ---------------------------------------------------------------------------- surfaces and layout
 
-/** A paper surface. raised: white with the card shadow (cards, sheets); default: the quieter surface with a hairline. */
+/** A panel (radius 20). raised: the card shadow (sheets, floating panels); default: a hairline. */
 export function Surface({ raised, className = "", children, ...rest }: HTMLAttributes<HTMLDivElement> & { raised?: boolean }) {
   return (
-    <div {...rest} className={`rounded-surface ${raised ? "bg-raised shadow-card" : "border border-line bg-surface"} ${className}`}>
+    <div {...rest} className={`rounded-panel bg-surface ${raised ? "shadow-card" : "border border-line"} ${className}`}>
       {children}
     </div>
   );
 }
 
-/** The Irish eyebrows over each page title. The first four are the brief's; the rest follow the same pattern. */
-export const EYEBROW = {
-  deck: "Poist",
-  tracker: "Iarratais",
-  application: "Iarratas",
-  profile: "Próifíl",
-  settings: "Socruithe",
-  model: "Samhail",
-  licence: "Ceadúnas",
-  welcome: "Fáilte",
-} as const;
-
 /**
- * Every screen's title block. The Irish eyebrow is aria-hidden (screen readers hear the English
- * title only). The h1 takes focus on a route change (useRouteFocus) and names document.title.
+ * Every screen's title block: an h1 in Bricolage 800 (28 on phones, 36 from sm), no eyebrow.
+ * The h1 takes focus on a route change (useRouteFocus) and names document.title.
  */
-export function PageHeader({ eyebrow, title, description, actions, className = "" }: { eyebrow?: string; title: ReactNode; description?: ReactNode; actions?: ReactNode; className?: string }) {
+export function PageHeader({ title, description, actions, className = "" }: { title: ReactNode; description?: ReactNode; actions?: ReactNode; className?: string }) {
   return (
     <header className={`mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 lg:mb-8 ${className}`}>
-      <div className="min-w-0 max-w-[68ch]">
-        {eyebrow && (
-          <p aria-hidden="true" lang="ga" className="eyebrow mb-1">
-            {eyebrow}
-          </p>
-        )}
-        <h1 data-page-title tabIndex={-1} className="display text-title text-ink text-balance sm:text-page">
+      <div className="min-w-0 max-w-[65ch]">
+        <h1 data-page-title tabIndex={-1} className="display text-[28px] leading-[1.1] text-ink text-balance sm:text-page">
           {title}
         </h1>
-        {description && <div className="mt-2 text-body text-ink-2 sm:text-[16px]">{description}</div>}
+        {description && <div className="mt-2 text-body text-ink-2">{description}</div>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
   );
 }
 
-/** A titled section inside a page: h2 in Atkinson bold 18, optional description and actions. */
+/** A titled section inside a page: h2 in Geist semibold 18, optional description and actions. */
 export function Section({ title, description, actions, children, className = "" }: { title: ReactNode; description?: ReactNode; actions?: ReactNode; children?: ReactNode; className?: string }) {
   const id = useId();
   return (
     <section aria-labelledby={id} className={`grid gap-4 ${className}`}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h2 id={id} className="text-lead font-bold text-ink">
+          <h2 id={id} className="text-lead font-semibold tracking-[-0.01em] text-ink">
             {title}
           </h2>
-          {description && <div className="mt-1 max-w-[64ch] text-body text-ink-2">{description}</div>}
+          {description && <div className="mt-1 max-w-[65ch] text-body text-ink-2">{description}</div>}
         </div>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </div>
@@ -334,34 +437,33 @@ export function Skeleton({ className = "" }: { className?: string }) {
   return <div aria-hidden className={`skeleton ${className}`} />;
 }
 
-/** A page-shaped placeholder: eyebrow, title and a few blocks. Announces "Loading" once. */
+/** A page-shaped placeholder: a title and a few blocks. Announces "Loading" once. */
 export function PageSkeleton({ label = "Loading" }: { label?: string }) {
   return (
     <div aria-busy="true">
       <span className="sr-only" role="status">
         {label}
       </span>
-      <Skeleton className="mb-2 h-3 w-16" />
       <Skeleton className="h-8 w-64 max-w-full sm:h-10" />
       <Skeleton className="mt-3 h-4 w-96 max-w-full" />
       <div className="mt-8 grid gap-3">
-        <Skeleton className="h-28 w-full rounded-surface" />
-        <Skeleton className="h-28 w-full rounded-surface" />
+        <Skeleton className="h-28 w-full rounded-panel" />
+        <Skeleton className="h-28 w-full rounded-panel" />
       </div>
     </div>
   );
 }
 
-/** Nothing here yet: an icon, a display title, one sentence and one action. */
+/** Nothing here yet: an icon, a big Bricolage line, one sentence and one action. */
 export function EmptyState({ icon, title, children, action, className = "" }: { icon?: ReactNode; title: ReactNode; children?: ReactNode; action?: ReactNode; className?: string }) {
   return (
-    <div className={`grid justify-items-center gap-3 rounded-surface border border-dashed border-control-border bg-surface px-6 py-12 text-center ${className}`}>
+    <div className={`grid justify-items-center gap-3 rounded-panel border border-line bg-surface px-6 py-12 text-center ${className}`}>
       {icon && (
-        <div aria-hidden className="grid size-12 place-items-center rounded-full bg-wash text-ink-2">
+        <div aria-hidden className="grid size-12 place-items-center rounded-full bg-sunken text-ink-2">
           {icon}
         </div>
       )}
-      <p className="display text-title text-ink">{title}</p>
+      <p className="display text-[28px] leading-[1.1] text-ink text-balance">{title}</p>
       {children && <div className="max-w-[48ch] text-body text-ink-2">{children}</div>}
       {action && <div className="mt-2">{action}</div>}
     </div>
@@ -384,7 +486,8 @@ export function Elapsed({ since }: { since: number }) {
 
 // ---------------------------------------------------------------------------- meters and steps
 
-const BAR: Record<PillTone, string> = { neutral: "bg-ink-3", go: "bg-accent", trace: "bg-trace", ochre: "bg-ochre", brick: "bg-brick" };
+// Bars are data, not "go": the go tone is ink, never lime.
+const BAR: Record<PillTone, string> = { neutral: "bg-ink-3", go: "bg-ink", warn: "bg-warn", danger: "bg-danger", trace: "bg-ink", ochre: "bg-warn", brick: "bg-danger" };
 
 /** One labelled bar: "Needs 3+ years · 12". The text carries the value; the bar is decoration. */
 export function Meter({ label, value, max, tone = "neutral", detail }: { label: ReactNode; value: number; max: number; tone?: PillTone; detail?: ReactNode }) {
@@ -393,9 +496,9 @@ export function Meter({ label, value, max, tone = "neutral", detail }: { label: 
     <div className="grid gap-1">
       <div className="flex items-baseline justify-between gap-3 text-body">
         <span className="min-w-0 text-ink">{label}</span>
-        <span className="display num shrink-0 text-lead text-ink">{value}</span>
+        <span className="num shrink-0 font-mono text-body text-ink">{value}</span>
       </div>
-      <div aria-hidden className="h-1.5 overflow-hidden rounded-full bg-wash">
+      <div aria-hidden className="h-1.5 overflow-hidden rounded-full bg-sunken">
         <div className={`h-full rounded-full ${BAR[tone]}`} style={{ width: `${pct}%` }} />
       </div>
       {detail && <p className="text-caption text-ink-2">{detail}</p>}
@@ -433,7 +536,8 @@ export function StepBar({ total, current, label = "Progress" }: { total: number;
 export type TabItem = { id: string; label: ReactNode; content: ReactNode; badge?: ReactNode; disabled?: boolean };
 
 /**
- * WAI-ARIA tabs: a tablist of tabs, one tabpanel. Arrow keys move and select (wrapping),
+ * WAI-ARIA tabs as a segmented pill: a tablist of tabs, one tabpanel. The selected tab sits on an
+ * ink pill that slides between tabs (Motion layoutId). Arrow keys move and select (wrapping),
  * Home and End jump; only the selected tab is in the Tab order. Panels cross-fade in 120 ms.
  * Controlled (value + onChange) or not (defaultValue). keepMounted keeps hidden panels' state.
  */
@@ -489,7 +593,7 @@ export function Tabs({
 
   return (
     <div className={className}>
-      <div role="tablist" aria-label={label} onKeyDown={onKey} className={`flex gap-1 overflow-x-auto border-b border-line ${listClassName}`}>
+      <div role="tablist" aria-label={label} onKeyDown={onKey} className={`inline-flex max-w-full gap-1 overflow-x-auto rounded-pill bg-sunken p-1 ${listClassName}`}>
         {items.map((i) => {
           const on = i.id === current?.id;
           return (
@@ -507,11 +611,13 @@ export function Tabs({
               tabIndex={on ? 0 : -1}
               disabled={i.disabled}
               onClick={() => select(i.id)}
-              className={`relative -mb-px inline-flex min-h-11 shrink-0 items-center gap-2 px-3 text-body transition-colors disabled:opacity-50 ${on ? "font-bold text-ink" : "text-ink-2 hover:text-ink"}`}
+              className={`relative inline-flex h-9 shrink-0 items-center gap-2 rounded-pill px-4 text-body font-medium transition-colors disabled:opacity-50 pointer-coarse:h-11 ${on ? "text-surface" : "text-ink-2 hover:text-ink"}`}
             >
-              {i.label}
-              {i.badge}
-              <span aria-hidden className={`absolute inset-x-2 bottom-0 h-[3px] rounded-full transition-colors ${on ? "bg-ink" : "bg-transparent"}`} />
+              {on && <motion.span aria-hidden layoutId={`${base}-tab`} transition={t(MOTION.indicator)} className="absolute inset-0 rounded-pill bg-ink" />}
+              <span className="relative inline-flex items-center gap-2">
+                {i.label}
+                {i.badge}
+              </span>
             </button>
           );
         })}
@@ -556,13 +662,13 @@ export function Dialog({ open, onClose, title, description, children, footer, wi
         initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={t({ duration: 0.18, ease: [0.22, 1, 0.36, 1] })}
-        className={`flex max-h-[92dvh] w-full flex-col rounded-t-surface bg-raised shadow-lift sm:rounded-surface ${wide ? "sm:max-w-3xl" : "sm:max-w-lg"}`}
+        className={`flex max-h-[92dvh] w-full flex-col rounded-t-panel bg-surface shadow-lift sm:rounded-panel ${wide ? "sm:max-w-3xl" : "sm:max-w-lg"}`}
       >
         <div className="overflow-y-auto px-5 pt-3 pb-5 sm:px-6 sm:pt-6">
           <div aria-hidden className="mx-auto mb-3 h-1 w-10 rounded-full bg-line sm:hidden" />
           <div className="mb-4 flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h2 id={titleId} className="display text-title text-ink">
+              <h2 id={titleId} className="display text-title text-ink text-balance">
                 {title}
               </h2>
               {description && (
@@ -571,7 +677,7 @@ export function Dialog({ open, onClose, title, description, children, footer, wi
                 </div>
               )}
             </div>
-            <button type="button" onClick={onClose} className="-m-1 grid size-11 shrink-0 place-items-center rounded-control text-ink-2 hover:bg-wash hover:text-ink">
+            <button type="button" onClick={onClose} className="-m-1 grid size-11 shrink-0 place-items-center rounded-full text-ink-2 hover:bg-sunken hover:text-ink">
               <X size={20} aria-hidden />
               <span className="sr-only">Close</span>
             </button>
@@ -622,7 +728,7 @@ export function dismissToast(id: number) {
 
 const EMPTY: ToastItem[] = [];
 
-/** Mounted once by the shell. Inverse colours; sits above the mobile nav; one polite live region. */
+/** Mounted once by the shell. Inverse colours; bottom right on desktop, above the tab bar on phones; one polite live region. */
 export function Toaster() {
   const items = useSyncExternalStore(
     subscribe,
@@ -631,7 +737,7 @@ export function Toaster() {
   );
   const { reduce, t } = useMotion();
   return (
-    <div aria-live="polite" aria-relevant="additions" className="pointer-events-none fixed inset-x-0 bottom-20 z-[60] flex flex-col items-center gap-2 px-4 lg:bottom-6 lg:left-auto lg:right-6 lg:items-end">
+    <div aria-live="polite" aria-relevant="additions" className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--mobile-nav)+12px)] z-[60] flex flex-col items-center gap-2 px-4 lg:bottom-6 lg:left-auto lg:right-6 lg:items-end">
       <AnimatePresence initial={false}>
         {items.map((item) => (
           <motion.div
@@ -666,7 +772,7 @@ function ToastView({ item }: { item: ToastItem }) {
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
-      className="flex max-w-[min(92vw,520px)] items-center gap-3 rounded-control bg-ink py-2 pr-2 pl-4 text-body text-bg shadow-lift"
+      className="flex max-w-[min(92vw,520px)] items-center gap-2 rounded-panel bg-ink py-1.5 pr-1.5 pl-4 text-body text-bg shadow-lift"
     >
       <span className="min-w-0 flex-1 py-1.5">{item.message}</span>
       {action && (
@@ -676,7 +782,7 @@ function ToastView({ item }: { item: ToastItem }) {
             dismissToast(item.id);
             await action.run();
           }}
-          className="h-9 shrink-0 rounded-control px-3 font-bold underline underline-offset-2 hover:bg-[color-mix(in_oklab,var(--bg)_14%,transparent)] focus-visible:outline-[var(--bg)] pointer-coarse:h-11"
+          className="h-9 shrink-0 rounded-pill px-3 font-semibold underline underline-offset-2 hover:bg-[color-mix(in_oklab,var(--bg)_14%,transparent)] focus-visible:outline-[var(--bg)] pointer-coarse:h-11"
         >
           {action.label}
         </button>
@@ -684,7 +790,7 @@ function ToastView({ item }: { item: ToastItem }) {
       <button
         type="button"
         onClick={() => dismissToast(item.id)}
-        className="grid size-9 shrink-0 place-items-center rounded-control hover:bg-[color-mix(in_oklab,var(--bg)_14%,transparent)] focus-visible:outline-[var(--bg)] pointer-coarse:size-11"
+        className="grid size-9 shrink-0 place-items-center rounded-full hover:bg-[color-mix(in_oklab,var(--bg)_14%,transparent)] focus-visible:outline-[var(--bg)] pointer-coarse:size-11"
       >
         <X size={16} aria-hidden />
         <span className="sr-only">Dismiss</span>
@@ -693,16 +799,99 @@ function ToastView({ item }: { item: ToastItem }) {
   );
 }
 
+// ---------------------------------------------------------------------------- fly to a tab
+
+/**
+ * Shell targets that things can fly into: the Applications tab in the top bar and the phone
+ * tab bar carry data-fly-target="applications". The deck flies a small copy of an applied
+ * card there, then calls arrive("applications") so the tab pulses once.
+ */
+export type FlyTarget = "applications";
+
+/** The visible element for a target (the top bar's on desktop, the tab bar's on phones), or null. */
+export function flyTarget(name: FlyTarget): HTMLElement | null {
+  const all = document.querySelectorAll<HTMLElement>(`[data-fly-target="${name}"]`);
+  for (const el of all) {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) return el;
+  }
+  return null;
+}
+
+const ARRIVE = "deis:arrive";
+
+/** Something just landed on a target: it pulses once. */
+export function arrive(name: FlyTarget) {
+  window.dispatchEvent(new CustomEvent(ARRIVE, { detail: name }));
+}
+
+/** For the shell: a ref for a target element that pulses (scale 1 → 1.12 → 1) when something arrives. Nothing under reduced motion. */
+export function useArrivalPulse<T extends HTMLElement>(name: FlyTarget) {
+  const [scope, animate] = useAnimate<T>();
+  const reduce = useReducedMotion();
+  useEffect(() => {
+    const on = (e: Event) => {
+      if (reduce || (e as CustomEvent).detail !== name || !scope.current) return;
+      void animate(scope.current, { scale: [1, 1.12, 0.98, 1] }, { duration: 0.5, ease: [0.22, 1, 0.36, 1] });
+    };
+    window.addEventListener(ARRIVE, on);
+    return () => window.removeEventListener(ARRIVE, on);
+  }, [name, reduce, animate, scope]);
+  return scope;
+}
+
 // ---------------------------------------------------------------------------- brand
 
-/** "Deis" in Newsreader italic with OPPORTUNITY in small tracked capitals, after the Irish road-sign convention. */
+/**
+ * The wordmark: lowercase "deis" in Bricolage 800 and a small lime square, the brand's only
+ * decorative lime. The square is drawn with a hairline so it reads on the light page.
+ */
 export function Wordmark({ large }: { large?: boolean }) {
   return (
-    <span className="inline-flex items-baseline gap-2">
-      <span lang="ga" className={`ga leading-none text-ink ${large ? "text-[56px]" : "text-[28px]"}`}>
-        Deis
+    <span className={`inline-flex items-baseline leading-none text-ink ${large ? "gap-1.5" : "gap-1"}`}>
+      <span lang="ga" className={`display tracking-[-0.045em] ${large ? "text-[56px]" : "text-[24px]"}`}>
+        deis
       </span>
-      <span className={`uppercase tracking-[0.16em] text-ink-3 ${large ? "text-caption" : "text-[11px]"}`}>Opportunity</span>
+      <span aria-hidden className={`inline-block shrink-0 rounded-[2px] bg-pop shadow-[inset_0_0_0_1px_rgb(14_15_16/0.14)] ${large ? "size-3.5" : "size-[7px]"}`} />
+    </span>
+  );
+}
+
+// Words that say nothing about which company it is.
+const MARK_SKIP = new Set(["the", "and", "of", "ltd", "limited", "inc", "plc", "llc", "gmbh", "dac", "uc", "group", "ireland", "irl", "co", "company", "holdings"]);
+
+/** Up to two initials for a company name: "Bank of Ireland" -> "BI", "Tines" -> "T", "Stripe Ltd" -> "S". */
+export function companyInitials(name: string): string {
+  const words = name
+    .split(/[\s\-_/&.,()]+/)
+    .map((w) => w.replace(/[^\p{L}\p{N}]/gu, ""))
+    .filter(Boolean);
+  const kept = words.filter((w, i) => i === 0 || !MARK_SKIP.has(w.toLowerCase()));
+  const picked = (kept.length ? kept : words).slice(0, 2);
+  return picked.map((w) => w[0]!.toLocaleUpperCase("en-IE")).join("") || "?";
+}
+
+/** A stable hue (0 to 359) from a company name, so the same company always gets the same tile. */
+export function companyHue(name: string): number {
+  let h = 0;
+  for (const ch of name.trim().toLowerCase()) h = (Math.imul(h, 31) + ch.codePointAt(0)!) | 0;
+  return Math.abs(h) % 360;
+}
+
+/**
+ * A company's monogram tile: up to two initials on a muted hue hashed from the name
+ * (hsl(h 35% 88%) light, hsl(h 25% 22%) dark, ink text). Radius 12, 40 px by default.
+ * Decorative (aria-hidden): always show the company name as text beside it.
+ */
+export function CompanyMark({ name, size = 40, className = "" }: { name: string; size?: number; className?: string }) {
+  const initials = companyInitials(name);
+  return (
+    <span
+      aria-hidden
+      className={`company-mark display inline-grid shrink-0 place-items-center rounded-mark font-bold tracking-[-0.02em] select-none ${className}`}
+      style={{ width: size, height: size, fontSize: Math.round(size * (initials.length > 1 ? 0.38 : 0.45)), ["--mark-h" as string]: companyHue(name) }}
+    >
+      {initials}
     </span>
   );
 }

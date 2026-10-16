@@ -15,7 +15,7 @@ import { AddFact, SlipGroup } from "./profile/FactSlips";
 import { HeaderForm, NeverClaim } from "./profile/HeaderForm";
 import { ImportPanel, type ImportState } from "./profile/ImportPanel";
 import { factUsage } from "./profile/usage";
-import { Button, EmptyState, EYEBROW, Notice, PageHeader, PageSkeleton, Section } from "./ui";
+import { Button, EmptyState, Notice, PageHeader, PageSkeleton, RollingNumber, Section } from "./ui";
 
 // The profile builder: a ledger of small true statements the user has confirmed.
 // Imports (CV, LinkedIn PDF, LinkedIn data export) arrive unconfirmed; nothing is used
@@ -114,7 +114,6 @@ export function ProfileScreen() {
   return (
     <div>
       <PageHeader
-        eyebrow={EYEBROW.profile}
         title="Your profile"
         description={
           <>
@@ -128,20 +127,20 @@ export function ProfileScreen() {
 
       <div className="grid gap-12">
         <Section title="Add from a CV or LinkedIn">
-          <ImportPanel state={importState} onFile={(f) => void onFile(f)} onText={(t) => void extract(t, /linkedin\.com\/in\//i.test(t) ? "linkedin" : "cv")} privacyLine={privacyLine} />
+          <ImportPanel state={importState} onFile={(f) => void onFile(f)} onText={(t) => void extract(t, /linkedin\.com\/in\//i.test(t) ? "linkedin" : "cv")} privacyLine={privacyLine} primary={facts.length === 0} />
         </Section>
 
         {proposals.length > 0 && (
           <Section title="New facts from your answers" description="You told Deis these while applying. Add the ones that are right.">
             <ul className="grid gap-2">
               {proposals.map((p) => (
-                <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-surface border-l-[3px] border-trace bg-raised p-4 shadow-card">
-                  <span className="text-body text-ink">
+                <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-panel border border-line bg-surface py-3 pr-3 pl-5">
+                  <span className="min-w-0 text-body text-ink">
                     {p.text}
                     {p.org && <span className="text-ink-2">, at {p.org}</span>}
                   </span>
                   <span className="flex gap-2">
-                    <Button size="sm" variant="primary" onClick={() => approve(p.id)}>
+                    <Button size="sm" onClick={() => approve(p.id)}>
                       <Check size={16} aria-hidden />
                       Add<span className="sr-only">: {p.text}</span>
                     </Button>
@@ -158,7 +157,9 @@ export function ProfileScreen() {
         <Section
           title={
             <>
-              What Deis knows about you <span className="num font-normal text-ink-3">({facts.length})</span>
+              What Deis knows about you <span className="ml-1 font-mono text-[14px] font-normal text-ink-3">
+                <RollingNumber value={facts.length} />
+              </span>
             </>
           }
           actions={
@@ -185,14 +186,14 @@ export function ProfileScreen() {
               Drop a CV or LinkedIn file above, or add facts one at a time.
             </EmptyState>
           ) : (
-            <div className="grid gap-4">
-              {roles.map((r) => (
-                <SlipGroup key={r.id} head={r} items={byOrg(r.org, r)} subtitle={[r.org, r.where, dateRange(r.start, r.end)].filter(Boolean).join(", ")} uses={uses} onSave={putFacts} onRemove={removeFact} />
+            <div className="gap-4 lg:columns-2">
+              {roles.map((r, i) => (
+                <SlipGroup key={r.id} order={i} head={r} items={byOrg(r.org, r)} subtitle={[r.org, r.where, dateRange(r.start, r.end)].filter(Boolean).join(", ")} uses={uses} onSave={putFacts} onRemove={removeFact} />
               ))}
-              {schools.map((s) => (
-                <SlipGroup key={s.id} head={s} items={byOrg(s.org, s)} subtitle={dateRange(s.start, s.end)} uses={uses} onSave={putFacts} onRemove={removeFact} />
+              {schools.map((s, i) => (
+                <SlipGroup key={s.id} order={roles.length + i} head={s} items={byOrg(s.org, s)} subtitle={dateRange(s.start, s.end)} uses={uses} onSave={putFacts} onRemove={removeFact} />
               ))}
-              {loose.length > 0 && <SlipGroup title="Skills, projects and more" items={loose} uses={uses} onSave={putFacts} onRemove={removeFact} />}
+              {loose.length > 0 && <SlipGroup order={roles.length + schools.length} title="Skills, projects and more" items={loose} uses={uses} onSave={putFacts} onRemove={removeFact} />}
             </div>
           )}
         </Section>
@@ -210,7 +211,7 @@ export function ProfileScreen() {
             </Button>
           }
         >
-          <dl className="grid gap-x-8 gap-y-3 rounded-surface border border-line bg-surface p-5 sm:grid-cols-2">
+          <dl className="grid gap-x-8 gap-y-4 rounded-panel border border-line bg-surface p-5 sm:grid-cols-2 lg:grid-cols-3">
             {PREF_ROWS.map(([k, label]) => (
               <div key={k}>
                 <dt className="text-caption text-ink-3">{label}</dt>

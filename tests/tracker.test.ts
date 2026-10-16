@@ -63,6 +63,6 @@ describe("fitPill", () => {
     expect(fitPill(null)).toBeNull();
     expect(fitPill({ requirements: [req("strong"), req("strong"), req("transferable")] })).toEqual({ label: "Strong match", tone: "go" });
     expect(fitPill({ requirements: [req("strong"), req("gap"), req("transferable")] })?.label).toBe("Good fit");
-    expect(fitPill({ requirements: [req("gap"), req("gap"), req("strong")] })).toEqual({ label: "Stretch, 2 gaps", tone: "ochre" });
+    expect(fitPill({ requirements: [req("gap"), req("gap"), req("strong")] })).toEqual({ label: "Stretch, 2 gaps", tone: "warn" });
   });
 });

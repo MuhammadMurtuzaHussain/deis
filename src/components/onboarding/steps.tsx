@@ -24,10 +24,10 @@ export type Step = { id: string; title: string; short: string; why: string; vali
 
 const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
-/** A labelled group of chips: two columns from small screens up. */
-function Choices({ label, wide, children }: { label: string; wide?: boolean; children: ReactNode }) {
+/** A labelled group of pill chips that wrap at their natural width. */
+function Choices({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div role="group" aria-label={label} className={`grid gap-2 ${wide ? "grid-cols-2 sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+    <div role="group" aria-label={label} className="flex flex-wrap gap-2">
       {children}
     </div>
   );
@@ -42,7 +42,7 @@ export const STEPS: Step[] = [
     valid: (p) => p.cities.length > 0 || p.remoteOk,
     body: (p, set) => (
       <div className="grid gap-4">
-        <Choices label="Places" wide>
+        <Choices label="Places">
           {CITY_CHOICES.map((c) => (
             <Chip key={c} on={p.cities.includes(c)} onClick={() => set({ ...p, cities: toggle(p.cities, c) })}>
               {c}
@@ -64,14 +64,19 @@ export const STEPS: Step[] = [
     why: "Deis hides jobs that ask for 3 or more years, and labels the ones that ask for about 2.",
     valid: (p) => Boolean(p.stage),
     body: (p, set) => (
-      <Choices label="Stage">
-        {STAGES.map((s) => (
-          <Chip key={s} on={p.stage === s} onClick={() => set({ ...p, stage: s })}>
-            <span className="block">{STAGE_LABEL[s]}</span>
-            <span className="block text-caption font-normal text-ink-2">{STAGE_HELP[s]}</span>
-          </Chip>
-        ))}
-      </Choices>
+      <div className="grid gap-4">
+        <Choices label="Stage">
+          {STAGES.map((s) => (
+            <Chip key={s} on={p.stage === s} onClick={() => set({ ...p, stage: s })}>
+              {STAGE_LABEL[s]}
+            </Chip>
+          ))}
+        </Choices>
+        {/* What the choice changes, said once for the selected stage rather than squeezed into each pill. */}
+        <p aria-live="polite" className="min-h-6 text-body text-ink-2">
+          {p.stage ? STAGE_HELP[p.stage] : null}
+        </p>
+      </div>
     ),
   },
   {
@@ -113,7 +118,7 @@ export const STEPS: Step[] = [
     why: "Lots of Dublin roles need a second language. Deis hides the ones that need a language you don't have. Skip if it's just English.",
     valid: () => true,
     body: (p, set) => (
-      <Choices label="Languages" wide>
+      <Choices label="Languages">
         {COMMON_LANGUAGES.filter((l) => LANGUAGES.includes(l)).map((l) => (
           <Chip key={l} on={p.languages.includes(l)} onClick={() => set({ ...p, languages: toggle(p.languages, l) })}>
             {l}

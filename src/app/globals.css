@@ -1,94 +1,93 @@
 @import "tailwindcss";
 
-/* Deis design tokens: "Estuary paper". Documented in docs/DESIGN.md.
-   Warm paper, ink and one green that only ever means "go". Calm on purpose: people
-   use this while job hunting, which is stressful enough.
-   Every text pair is 5:1 or better; --control-border is 3:1 or better (WCAG 1.4.11).
-   One meaning per colour: accent = go, trace = where a line came from,
-   ochre = gap, stretch or follow-up, brick = blocked or error.
-   Shapes: controls 10px, surfaces 16px, the job card 20px. Nothing else. */
+/* Deis design tokens, v3 "Highlighter". Documented in docs/DESIGN.md.
+   Cool monochrome plus one lime that only means "go" (the primary action, Apply) or
+   "proven" (the highlighter stroke behind traced text, the fact marker fill).
+   Lime is never text on a light background: text on lime is --pop-ink.
+   Text pairs are 4.5:1 or better; --control-border is 3:1 or better (WCAG 1.4.11).
+   Shapes, one rule: controls are full pill (textareas 16), containers 20, the swipe
+   card 28, company marks 12. */
 
 :root {
-  --bg: #f4f1ea;
-  --surface: #fffdf8;
-  --raised: #ffffff;
-  /* Hover fills, skeletons and quiet wells. Not a surface. */
-  --wash: #ebe6db;
-  --ink: #1a1e1c;
-  --ink-2: #4a524e;
-  --ink-3: #5e6661;
-  --line: #ddd6c8;
-  --control-border: #878c86;
-  --accent: #0f5c45;
-  --accent-ink: #ffffff;
-  --accent-soft: #dcebe3;
-  --accent-text: #0c4a37;
-  --trace: #2d5b8a;
-  --trace-soft: #e3ecf5;
-  --ochre: #8a5a00;
-  --ochre-soft: #f7ebcf;
-  --brick: #a23b2a;
-  --brick-soft: #f6e0da;
-  --focus: #1b6fd1;
-  --scrim: rgb(26 30 28 / 0.5);
-  --elev-card: 0 1px 0 rgb(0 0 0 / 0.04), 0 8px 24px -8px rgb(26 30 28 / 0.18);
-  --elev-lift: 0 24px 48px -16px rgb(26 30 28 / 0.35);
+  --bg: #f5f5f4;
+  --surface: #ffffff;
+  --sunken: #ededec;
+  --ink: #0e0f10;
+  --ink-2: #4b4d52;
+  --ink-3: #6b6e74;
+  --line: #e3e3e1;
+  --control-border: #8c8f94;
+  --pop: #c8f03c;
+  --pop-ink: #0e0f10;
+  --pop-soft: #ecfbc2;
+  --warn: #9a5b00;
+  --warn-soft: #fff1d6;
+  --danger: #c42b1c;
+  --danger-soft: #fde4e1;
+  --focus: #2e5bff;
+  --scrim: rgb(14 15 16 / 0.45);
+  /* Shadows are ink at low alpha. */
+  --elev-card: 0 1px 2px rgb(14 15 16 / 0.05), 0 10px 28px -14px rgb(14 15 16 / 0.16);
+  --elev-lift: 0 2px 6px rgb(14 15 16 / 0.06), 0 28px 56px -20px rgb(14 15 16 / 0.32);
+  /* CompanyMark tile: hsl(hue --mark-s --mark-l), hue hashed from the name. */
+  --mark-s: 35%;
+  --mark-l: 88%;
+  /* The ambient lime glow behind the page: dark mode only. */
+  --glow: 0;
   color-scheme: light;
 }
 
-/* Dark: a lighter surface plus a hairline instead of a heavy shadow. */
+/* Dark: a 1px line plus a lighter surface instead of a heavy shadow. */
 :root[data-theme="dark"] {
-  --bg: #121614;
-  --surface: #1a1f1c;
-  --raised: #202622;
-  --wash: #262d29;
-  --ink: #ece8df;
-  --ink-2: #b8b4aa;
-  --ink-3: #959a93;
-  --line: #323a35;
-  --control-border: #6e766f;
-  --accent: #6ccfa6;
-  --accent-ink: #08241a;
-  --accent-soft: #18382b;
-  --accent-text: #8fe0be;
-  --trace: #8db4e2;
-  --trace-soft: #1c2836;
-  --ochre: #e8b55a;
-  --ochre-soft: #2e2412;
-  --brick: #f2917f;
-  --brick-soft: #351c17;
-  --focus: #7ab4ff;
+  --bg: #0b0b0c;
+  --surface: #151517;
+  --sunken: #1c1c1f;
+  --ink: #f2f2f3;
+  --ink-2: #b4b5ba;
+  --ink-3: #8e9096;
+  --line: #26272b;
+  --control-border: #5e6168;
+  --pop: #c8f03c;
+  --pop-ink: #0e0f10;
+  --pop-soft: rgb(200 240 60 / 0.16);
+  --warn: #f0b45a;
+  --warn-soft: #2a2112;
+  --danger: #ff8a7a;
+  --danger-soft: #2c1614;
+  --focus: #8fa8ff;
   --scrim: rgb(0 0 0 / 0.6);
   --elev-card: 0 0 0 1px var(--line);
-  --elev-lift: 0 0 0 1px var(--line), 0 24px 48px -16px rgb(0 0 0 / 0.6);
+  --elev-lift: 0 0 0 1px var(--line), 0 28px 56px -20px rgb(0 0 0 / 0.7);
+  --mark-s: 25%;
+  --mark-l: 22%;
+  --glow: 1;
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #121614;
-    --surface: #1a1f1c;
-    --raised: #202622;
-    --wash: #262d29;
-    --ink: #ece8df;
-    --ink-2: #b8b4aa;
-    --ink-3: #959a93;
-    --line: #323a35;
-    --control-border: #6e766f;
-    --accent: #6ccfa6;
-    --accent-ink: #08241a;
-    --accent-soft: #18382b;
-    --accent-text: #8fe0be;
-    --trace: #8db4e2;
-    --trace-soft: #1c2836;
-    --ochre: #e8b55a;
-    --ochre-soft: #2e2412;
-    --brick: #f2917f;
-    --brick-soft: #351c17;
-    --focus: #7ab4ff;
+    --bg: #0b0b0c;
+    --surface: #151517;
+    --sunken: #1c1c1f;
+    --ink: #f2f2f3;
+    --ink-2: #b4b5ba;
+    --ink-3: #8e9096;
+    --line: #26272b;
+    --control-border: #5e6168;
+    --pop: #c8f03c;
+    --pop-ink: #0e0f10;
+    --pop-soft: rgb(200 240 60 / 0.16);
+    --warn: #f0b45a;
+    --warn-soft: #2a2112;
+    --danger: #ff8a7a;
+    --danger-soft: #2c1614;
+    --focus: #8fa8ff;
     --scrim: rgb(0 0 0 / 0.6);
     --elev-card: 0 0 0 1px var(--line);
-    --elev-lift: 0 0 0 1px var(--line), 0 24px 48px -16px rgb(0 0 0 / 0.6);
+    --elev-lift: 0 0 0 1px var(--line), 0 28px 56px -20px rgb(0 0 0 / 0.7);
+    --mark-s: 25%;
+    --mark-l: 22%;
+    --glow: 1;
     color-scheme: dark;
   }
 }
@@ -96,65 +95,83 @@
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
-  --color-raised: var(--raised);
-  --color-wash: var(--wash);
+  --color-sunken: var(--sunken);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
   --color-line: var(--line);
   --color-control-border: var(--control-border);
-  --color-accent: var(--accent);
-  --color-accent-ink: var(--accent-ink);
-  --color-accent-soft: var(--accent-soft);
-  --color-accent-text: var(--accent-text);
-  --color-trace: var(--trace);
-  --color-trace-soft: var(--trace-soft);
-  --color-ochre: var(--ochre);
-  --color-ochre-soft: var(--ochre-soft);
-  --color-brick: var(--brick);
-  --color-brick-soft: var(--brick-soft);
+  --color-pop: var(--pop);
+  --color-pop-ink: var(--pop-ink);
+  --color-pop-soft: var(--pop-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
   --color-focus: var(--focus);
   --color-scrim: var(--scrim);
 
-  /* Deprecated names from before the redesign, kept so unconverted screens still render.
-     Don't use them in new code: surface-2 is wash, amber is ochre. */
-  --color-surface-2: var(--wash);
-  --color-amber: var(--ochre);
-  --color-amber-soft: var(--ochre-soft);
+  /* Deprecated v2 names, mapped onto v3 so unconverted screens still render.
+     Don't use them in new code. accent = pop (fills, with accent-ink text), trace = ink
+     and pop-soft, ochre and amber = warn, brick = danger, raised = surface, wash and
+     surface-2 = sunken. */
+  --color-raised: var(--surface);
+  --color-wash: var(--sunken);
+  --color-surface-2: var(--sunken);
+  --color-accent: var(--pop);
+  --color-accent-ink: var(--pop-ink);
+  --color-accent-soft: var(--pop-soft);
+  --color-accent-text: var(--ink);
+  --color-trace: var(--ink);
+  --color-trace-soft: var(--pop-soft);
+  --color-ochre: var(--warn);
+  --color-ochre-soft: var(--warn-soft);
+  --color-amber: var(--warn);
+  --color-amber-soft: var(--warn-soft);
+  --color-brick: var(--danger);
+  --color-brick-soft: var(--danger-soft);
 
-  --font-display: var(--font-newsreader), "Iowan Old Style", Georgia, serif;
-  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-atkinson-mono), ui-monospace, monospace;
+  /* Bricolage Grotesque for display, Geist for everything else, Geist Mono for ids and counts. */
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   /* The CV sheet only, so the preview matches the Word file. */
   --font-paper: Arial, "Helvetica Neue", Helvetica, sans-serif;
 
-  --radius-control: 10px;
-  --radius-surface: 16px;
-  --radius-card: 20px;
+  /* One shape rule. pill: controls. panel: containers and dialogs. card: the swipe card. mark: company marks. */
+  --radius-pill: 9999px;
+  --radius-panel: 20px;
+  --radius-card: 28px;
+  --radius-mark: 12px;
+  --radius-field: 16px;
+  /* Deprecated v2 radii: control was 10, surface 16. */
+  --radius-control: 12px;
+  --radius-surface: 20px;
 
   --shadow-card: var(--elev-card);
   --shadow-lift: var(--elev-lift);
 
-  /* The type scale: 13 / 15 / 18 / 24 / 32 / 44. text-caption … text-hero. */
+  /* The type scale. text-caption … text-hero. */
   --text-caption: 13px;
   --text-caption--line-height: 1.45;
   --text-body: 15px;
-  --text-body--line-height: 1.55;
+  --text-body--line-height: 1.6;
   --text-lead: 18px;
-  --text-lead--line-height: 1.5;
+  --text-lead--line-height: 1.45;
   --text-title: 24px;
-  --text-title--line-height: 1.2;
-  --text-page: 32px;
-  --text-page--line-height: 1.12;
-  --text-hero: 44px;
-  --text-hero--line-height: 1.05;
+  --text-title--line-height: 1.15;
+  --text-page: 36px;
+  --text-page--line-height: 1.05;
+  --text-hero: 56px;
+  --text-hero--line-height: 1.02;
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Space the phone's bottom nav takes. Sticky bars on phones sit at bottom: var(--mobile-nav). */
+/* Space the phone's bottom tab bar takes. Sticky bars on phones sit at bottom: var(--mobile-nav). */
 :root {
   --mobile-nav: calc(4rem + env(safe-area-inset-bottom));
+  --top-bar: 4rem;
 }
 @media (min-width: 64rem) {
   :root {
@@ -173,15 +190,58 @@ body {
   min-height: 100dvh;
   background: var(--bg);
   font-family: var(--font-sans);
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.6;
+  /* A stacking context, so the ambient glow (z-index -1) paints over the page colour but under everything else. */
+  isolation: isolate;
+  /* Thrown cards fly past the edges; clip (not hidden) so sticky positioning still works. */
+  overflow-x: clip;
+}
+
+/* Ambient layer 1: a very faint film grain over everything (feTurbulence, greyscale). */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Ambient layer 2, dark mode only: one soft lime-tinted glow behind the main column, drifting
+   slowly (40 s, transform only). Off under reduced motion. */
+body::before {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  left: 50%;
+  top: -10vh;
+  width: min(1100px, 110vw);
+  height: 75vh;
+  margin-left: calc(min(1100px, 110vw) / -2);
+  pointer-events: none;
+  opacity: calc(var(--glow) * 1);
+  background: radial-gradient(closest-side, rgb(200 240 60 / 0.075), rgb(200 240 60 / 0.025) 55%, transparent);
+  animation: glow-drift 40s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes glow-drift {
+  0% {
+    transform: translate3d(-6%, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(4%, 6%, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(7%, -3%, 0) scale(0.96);
+  }
 }
 
 /* One visible focus style everywhere, for keyboard users. */
 :focus-visible {
-  outline: 3px solid var(--focus);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
-  border-radius: 6px;
 }
 
 /* The page h1 takes focus on a route change so screen readers start there. It isn't a
@@ -191,7 +251,7 @@ h1[tabindex="-1"]:focus {
   outline: none;
 }
 
-/* Links: ink, underlined. Never green. */
+/* Links: ink, underlined. Never lime. */
 .link {
   color: var(--ink);
   text-decoration: underline;
@@ -202,50 +262,86 @@ h1[tabindex="-1"]:focus {
   text-decoration-thickness: 2px;
 }
 
+/* Bricolage Grotesque: page titles, the card title, big numbers, the Welcome hero.
+   Weight 800 by default; add font-semibold for the 600 cut. */
 @utility display {
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-weight: 560;
-  letter-spacing: -0.012em;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   font-variant-numeric: lining-nums;
 }
 
-/* The Irish word over an English title: small italic Atkinson, never in the accessible name. */
+/* Deprecated: v3 has no eyebrows. Kept so an unconverted screen still compiles. */
 @utility eyebrow {
-  font-family: var(--font-sans);
   font-size: 13px;
   line-height: 1.3;
-  font-style: italic;
   color: var(--ink-3);
 }
 
-/* Company names on the index card and the wordmark's "OPPORTUNITY". */
+/* Deprecated: was tracked capitals. Now the company name style: Geist medium in ink-2. */
 @utility smallcaps {
-  font-size: 13px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-2);
 }
 
-/* The Irish road-sign convention: the Irish word in italics. */
+/* Deprecated: the Irish word in running text. Same family, bolder; no serif, no italic. */
 .ga {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 560;
-  letter-spacing: -0.01em;
+  font-weight: 600;
 }
 
-/* Figures line up in counters and timers without switching to a monospace face. */
+/* Figures line up in counters and timers. */
 .num {
   font-variant-numeric: tabular-nums;
 }
 
+/* The highlighter: a pop-soft stroke behind traced text. It draws left to right
+   (background-size 0 → 100%, 220 ms) when data-on="true". Spans across lines draw per line.
+   Under reduced motion it fades instead. */
+.highlight {
+  background-image: linear-gradient(var(--pop-soft), var(--pop-soft));
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 0% 100%;
+  border-radius: 3px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-size 220ms var(--ease-out-soft);
+}
+.highlight:is([data-on="true"], [data-on=""]) {
+  background-size: 100% 100%;
+}
+
+/* The deck card's spotlight: a gradient twice the card's size whose centre follows the pointer
+   (background-position, set by SwipeCard). Light mode darkens away from the pointer a touch;
+   dark mode lifts under it. */
+.spotlight {
+  background-image: radial-gradient(circle at 50% 50%, transparent 0, transparent 14%, rgb(14 15 16 / 0.045) 52%);
+  background-size: 200% 200%;
+  background-repeat: no-repeat;
+}
+:root[data-theme="dark"] .spotlight {
+  background-image: radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.075), transparent 42%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .spotlight {
+    background-image: radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.075), transparent 42%);
+  }
+}
+
+/* CompanyMark tile colour. --mark-h is set inline from a hash of the company name. */
+.company-mark {
+  background: hsl(var(--mark-h, 220) var(--mark-s) var(--mark-l));
+  color: var(--ink);
+}
+
 /* Skeleton shimmer for loading states; still under reduced motion. */
 .skeleton {
-  background: linear-gradient(90deg, var(--wash) 0%, color-mix(in oklab, var(--wash) 55%, var(--surface)) 50%, var(--wash) 100%);
+  background: linear-gradient(90deg, var(--sunken) 0%, color-mix(in oklab, var(--sunken) 50%, var(--surface)) 50%, var(--sunken) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.6s ease-in-out infinite;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 @keyframes shimmer {
@@ -257,22 +353,46 @@ h1[tabindex="-1"]:focus {
   }
 }
 
-/* Routes fade in over 160 ms. */
+/* Routes fade in and rise 8 px out of a 4 px blur, 220 ms. Reduced motion: the fade only. */
 .route-fade {
-  animation: route-fade 160ms var(--ease-out-soft);
+  animation: route-fade 220ms var(--ease-out-soft);
+}
+@keyframes route-fade-plain {
+  from {
+    opacity: 0;
+  }
 }
 @keyframes route-fade {
   from {
     opacity: 0;
+    transform: translateY(8px);
+    filter: blur(4px);
   }
   to {
     opacity: 1;
+    transform: none;
+    filter: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .skeleton {
     animation: none;
+  }
+  body::before {
+    animation: none;
+  }
+  .route-fade {
+    animation: route-fade-plain 140ms linear;
+  }
+  .highlight {
+    background-size: 100% 100%;
+    background-image: none;
+    background-color: transparent;
+    transition: background-color 220ms linear;
+  }
+  .highlight:is([data-on="true"], [data-on=""]) {
+    background-color: var(--pop-soft);
   }
   *,
   *::before,
@@ -293,8 +413,12 @@ h1[tabindex="-1"]:focus {
 }
 
 /* The CV sheet prints as the CV alone: "Save as PDF" from the print dialog.
-   Trace markers and footnotes ([data-trace]) never print. */
+   Trace markers and footnotes ([data-trace]) never print, nor do highlights. */
 @media print {
+  body::before,
+  body::after {
+    display: none;
+  }
   body * {
     visibility: hidden;
   }
@@ -305,6 +429,9 @@ h1[tabindex="-1"]:focus {
   #cv-print [data-trace],
   #cv-print [data-print-hidden] {
     display: none !important;
+  }
+  #cv-print .highlight {
+    background: none !important;
   }
   #cv-print {
     position: absolute;

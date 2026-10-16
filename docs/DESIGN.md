@@ -1,9 +1,14 @@
-# Deis design system: "Estuary paper"
+# Deis design system v3: "Highlighter"
 
-The design system as built. It replaces the flat green-on-grey UI of the first version. The mood is calm and editorial, like a desk with paper on it. The job card is an index card. The CV is a real sheet, with proof-reader's margin marks showing where each line came from.
+The design system as built. It replaces v2 ("Estuary paper": cream paper, a serif, ochre, Irish eyebrows and a sidebar) entirely.
+
+**Read:** a mobile-first consumer swipe app for anxious early-career job seekers in Ireland. Crisp and confident: Linear's precision with Hinge's single-card focus. Dials: variance 5, motion 6, density 4.
+
+**The one idea.** Every CV line is proven by a fact you gave, so the visual language is a highlighter pen. Lime (`pop`) is the only accent. It means **go** (Apply, the primary action) and **proven** (the highlighter stroke behind traced text, the fact marker fill). Nothing else is lime. Everything else is cool monochrome.
 
 Source of truth:
-- tokens: `src/app/globals.css`;
+- tokens and utilities: `src/app/globals.css`;
+- fonts: `src/app/layout.tsx`;
 - primitives: `src/components/ui.tsx`;
 - shell: `src/components/App.tsx`;
 - client contracts: `src/lib/client/*`.
@@ -12,220 +17,198 @@ Use these. Don't invent parallel colours, radii, buttons or headings.
 
 ## Tokens
 
-Light and dark switch on `prefers-color-scheme`, or on `data-theme="light|dark"` on `<html>`, which Settings saves as `deis.theme`. Every token is a Tailwind colour: `bg-surface`, `text-ink-2`, `border-control-border` and so on. Every text pair is 5:1 or better.
+Light and dark switch on `prefers-color-scheme`, or on `data-theme="light|dark"` on `<html>`, which Settings saves as `deis.theme`. Every token is a Tailwind colour: `bg-surface`, `text-ink-2`, `border-control-border`, `bg-pop`, `bg-pop-soft` and so on.
 
 | Token | Light | Dark | Use |
 |---|---|---|---|
-| `bg` | `#F4F1EA` | `#121614` | The page (the desk) |
-| `surface` | `#FFFDF8` | `#1A1F1C` | Quiet panels, the sidebar, notices |
-| `raised` | `#FFFFFF` | `#202622` | Cards, sheets, dialogs, controls |
-| `wash` | `#EBE6DB` | `#262D29` | Hover fills, skeletons, wells. Not a surface |
-| `ink` / `ink-2` / `ink-3` | `#1A1E1C` / `#4A524E` / `#5E6661` | `#ECE8DF` / `#B8B4AA` / `#959A93` | Text: primary, secondary, tertiary |
-| `line` | `#DDD6C8` | `#323A35` | Decorative hairlines only |
-| `control-border` | `#878C86` | `#6E766F` | Borders of inputs, chips and secondary buttons (3:1, WCAG 1.4.11) |
-| `accent` / `accent-ink` | `#0F5C45` / `#FFF` | `#6CCFA6` / `#08241A` | **Go only**: the primary action, Apply, a ready kit |
-| `accent-soft` / `accent-text` | `#DCEBE3` / `#0C4A37` | `#18382B` / `#8FE0BE` | Go pills, "ready" counts |
-| `trace` / `trace-soft` | `#2D5B8A` / `#E3ECF5` | `#8DB4E2` / `#1C2836` | Provenance: trace markers, fact slips, the demo bar |
-| `ochre` / `ochre-soft` | `#8A5A00` / `#F7EBCF` | `#E8B55A` / `#2E2412` | Gap, stretch, follow-up, warnings, the licence bar |
-| `brick` / `brick-soft` | `#A23B2A` / `#F6E0DA` | `#F2917F` / `#351C17` | Blocked, errors, destructive actions |
-| `focus` | `#1B6FD1` | `#7AB4FF` | The global 3 px focus ring (automatic) |
-| `scrim` | ink at 50% | black at 60% | Behind dialogs |
+| `bg` | `#F5F5F4` | `#0B0B0C` | The page |
+| `surface` | `#FFFFFF` | `#151517` | Cards, panels, dialogs, controls |
+| `sunken` | `#EDEDEC` | `#1C1C1F` | Wells, segmented tracks, hover fills, skeletons |
+| `ink` | `#0E0F10` | `#F2F2F3` | Primary text; selected states (chips, nav, tabs, switches) |
+| `ink-2` | `#4B4D52` | `#B4B5BA` | Secondary text |
+| `ink-3` | `#6B6E74` | `#8E9096` | Tertiary text, meta, mono hints (4.6:1 on bg) |
+| `line` | `#E3E3E1` | `#26272B` | Hairlines only |
+| `control-border` | `#8C8F94` | `#5E6168` | Borders of inputs, chips, secondary buttons (3:1) |
+| `pop` | `#C8F03C` | `#C8F03C` | **Go and proven only**: primary button, Apply, the brand square |
+| `pop-ink` | `#0E0F10` | `#0E0F10` | Text on `pop`. Lime is never text on a light background |
+| `pop-soft` | `#ECFBC2` | lime at 16% | The highlighter stroke, fact marker pills, the go pill |
+| `warn` / `warn-soft` | `#9A5B00` / `#FFF1D6` | `#F0B45A` / `#2A2112` | Gaps, stretch, follow-up, the licence lock |
+| `danger` / `danger-soft` | `#C42B1C` / `#FDE4E1` | `#FF8A7A` / `#2C1614` | Blocked, errors, destructive actions |
+| `focus` | `#2E5BFF` | `#8FA8FF` | The global 2 px focus ring (automatic) |
+| `scrim` | ink at 45% | black at 60% | Behind dialogs |
 
-Deprecated aliases keep old screens rendering until they're converted: `surface-2` (now `wash`), `amber` and `amber-soft` (now `ochre`). Don't use them in new code.
+**Elevation.** `shadow-card` (cards, sheets) and `shadow-lift` (dragging, dialogs, toasts) are ink at low alpha in light mode. In dark mode they become a 1 px `line` ring on a lighter surface. No pure black or white page backgrounds.
 
-**Elevation**
-- `shadow-card`: cards and sheets.
-- `shadow-lift`: dragging, dialogs, toasts.
-- In dark mode both become a hairline plus a soft shadow.
+**Deprecated v2 names** still resolve so unconverted screens render. Don't use them in new code:
 
-**Radii:** `rounded-control` (10 px) for controls, `rounded-surface` (16 px) for surfaces, `rounded-card` (20 px) for the job card. Round buttons and pills are `rounded-full`. Nothing else.
+| Old | Now |
+|---|---|
+| `accent`, `accent-ink`, `accent-soft` | `pop`, `pop-ink`, `pop-soft` (fills only) |
+| `accent-text`, `trace` | `ink` |
+| `trace-soft` | `pop-soft` |
+| `ochre`, `amber` (+ `-soft`) | `warn` (+ `-soft`) |
+| `brick` (+ `-soft`) | `danger` (+ `-soft`) |
+| `raised` | `surface` |
+| `wash`, `surface-2` | `sunken` |
+| `rounded-control` (12), `rounded-surface` (20) | `rounded-pill`, `rounded-panel` |
+| Pill tones `trace`, `ochre`, `brick` | `go`, `warn`, `danger` |
 
-**Layout variable:** `--mobile-nav` is the height of the phone's bottom nav, including the safe area. It's `0px` from `lg` up. A sticky mobile bar sits at `bottom-(--mobile-nav)`.
+**Layout variables.** `--mobile-nav` is the phone tab bar's height including the safe area, `0px` from `lg` up. A sticky mobile bar sits at `bottom-(--mobile-nav)`. `--top-bar` is 4rem (the sticky top bar), for sticky offsets: `top-(--top-bar)`.
 
-### Colour meanings, one each
+### Colour meaning, one each
 
-- **Green** means go: the primary button, Apply, a ready kit, a strong-match tick. Not selection, not links, not "early career".
-- **Selected chips:** an ink border plus a check. Never a green fill.
-- **Links:** ink, underlined. Use the `.link` class.
-- **Demo bar:** `trace-soft`.
-- **"Early career":** a neutral pill.
-- **Toasts:** inverse (an `ink` background with `bg`-coloured text).
-- **Tabs and the check-in progress:** ink, not green.
+- **Lime fill** (`bg-pop text-pop-ink`): the primary action and Apply. One per view.
+- **Lime soft** (`pop-soft`): proven. The highlighter, fact markers, "Strong match" pills.
+- **Ink**: selection. Selected chips, the nav and tab indicators, switches that are on, the check-in progress bar.
+- **Warn**: gaps, stretch, follow-up. **Danger**: blocked and errors.
+- **Links**: ink, underlined (`.link`). Never lime.
+- **Toasts**: inverse (`ink` background, `bg` text).
+- **Company marks**: a muted hue from the name, never lime.
+
+## Shapes: one rule, used everywhere
+
+| Radius | Utility | For |
+|---|---|---|
+| full | `rounded-pill` (or `rounded-full`) | Every interactive control: buttons, chips, segmented nav and tabs, inputs, selects, pills, Kbd |
+| 16 | `rounded-field` | Multi-line textareas only |
+| 20 | `rounded-panel` | Containers: panels, notices, dialogs, toasts, empty states |
+| 28 | `rounded-card` | The swipe card |
+| 12 | `rounded-mark` | Company marks |
 
 ## Type
 
-| Utility | Size / line height | Use |
+| Face | Variable | Use |
 |---|---|---|
-| `text-caption` | 13 / 1.45 | Meta, help text, pills, eyebrows |
-| `text-body` | 15 / 1.55 | UI and body text (the page default is 16) |
-| `text-lead` | 18 / 1.5 | Section headings (`<h2>`, Atkinson bold), counts |
-| `text-title` | 24 / 1.2 | Page titles on mobile, card titles, dialog titles |
-| `text-page` | 32 / 1.12 | Page titles from `sm` |
-| `text-hero` | 44 / 1.05 | The Welcome hero (go larger with `md:text-[56px]`) |
+| Bricolage Grotesque (variable, `opsz`) | `font-display`, `.display` | Page titles (28 to 36), the card's job title (30 to 34, `leading-[1.05]`), big numbers (deck and tracker counts), the Welcome hero (48 to 64, max 2 lines), dialog titles, the wordmark |
+| Geist | `font-sans` (default) | All UI and body, 14 to 16. Body is 15/24; prose stays within `max-w-[65ch]` |
+| Geist Mono | `font-mono` | Fact ids, trace markers, counts in tables, "n / N", keyboard hints |
+| Arial | `font-paper` | The CV sheet only, so the preview matches the Word file |
 
-**Faces**
-- `display` (utility class): Newsreader at weight 560 with optical sizing, as `font-display`. Use it for page titles, the card title (28 px), the fit verdict, money and counts, the Welcome hero and dialog titles. Nothing else.
-- `font-sans` (the default): Atkinson Hyperlegible Next. It was chosen for low vision, so keep it for all UI and body text.
-- `font-mono`: Atkinson Hyperlegible Mono, for trace markers, fact ids and small tabular counters.
-- `font-paper`: Arial, for the CV sheet only, so the preview matches the Word file.
-
-**Helpers**
-- `eyebrow`: 13 px italic in `ink-3`, for the Irish word over a title.
-- `smallcaps`: 13 px tracked capitals, for the company on the index card.
+- `.display` sets Bricolage at **800** with `letter-spacing: -0.03em` and optical sizing. Add `font-semibold` for the 600 cut.
+- Emphasis is the same family in bold. No mixed-family emphasis, no serif, no italic display.
+- Scale utilities: `text-caption` 13, `text-body` 15/1.6, `text-lead` 18, `text-title` 24, `text-page` 36, `text-hero` 56.
 - `.num`: tabular figures.
-- `.ga`: Newsreader italic, for the Irish word "Deis" in running text.
+- Deprecated, kept for compilation only: `eyebrow` (plain 13 px ink-3), `smallcaps` (now Geist medium 14 in ink-2, the company name style) and `.ga` (bold).
 
-## Irish eyebrows
+## Utilities (`globals.css`)
 
-Every page title has an Irish eyebrow above it: `EYEBROW` in `ui.tsx`.
-
-| Key | Irish | English title |
-|---|---|---|
-| `deck` | *Poist* | Jobs for you |
-| `tracker` | *Iarratais* | Applications |
-| `application` | *Iarratas* | The job title |
-| `profile` | *Próifíl* | Your profile |
-| `settings` | *Socruithe* | Settings |
-| `model` | *Samhail* | The model page |
-| `licence` | *Ceadúnas* | Licence |
-| `welcome` | *Fáilte* | The Welcome page |
-
-The approach, used everywhere: the eyebrow is `aria-hidden="true"` with `lang="ga"`. Screen readers hear the English title only. `PageHeader` does this for you.
+- **`.highlight`**: the highlighter. A `pop-soft` linear-gradient background whose `background-size` animates from `0% 100%` to `100% 100%` over 220 ms when `data-on="true"` (or a bare `data-on`). It uses `box-decoration-break: clone`, so a span that wraps draws per line. Under reduced motion it fades the colour in instead. Highlights never print.
+  `<span className="highlight" data-on={selected || showSources}>Built a dashboard in Power BI</span>`
+- **`.company-mark`**: the tile colour behind `CompanyMark` (`hsl(var(--mark-h) var(--mark-s) var(--mark-l))`). Use the component, not the class.
+- **`.link`**, **`.skeleton`**, **`.route-fade`** (140 ms), **`.visually-hidden`**.
 
 ## Motion
 
-Use `motion/react`. Take timings from `MOTION` in `ui.tsx`, and pass them through `useMotion().t()`, which returns an instant transition under reduced motion. When `useMotion().reduce` is true, animate opacity only and never transforms.
+Use `motion/react`. Take timings from `MOTION` in `ui.tsx` and pass them through `useMotion().t()`, which returns an instant transition under reduced motion. When `useMotion().reduce` is true, animate opacity only. Motion is motivated only: nothing loops, nothing decorates.
 
 | What | Spec |
 |---|---|
-| Swipe exit | `MOTION.exit`: 260 ms, ease `[0.4,0,1,1]`; x to ±560 |
-| Next card rising | `MOTION.spring` (stiffness 380, damping 32), from scale .96 and y 12 |
-| Rubber stamps | Apply (accent), Skip (ink), Later (ochre), rotated −8°; opacity follows drag progress |
+| Card enter, next card rising | `MOTION.spring` (stiffness 380, damping 32), from scale .96 and y 14, rising with drag progress |
+| Card exit | `MOTION.exit`: 240 ms |
+| Stamps while dragging | "APPLY" (lime fill, ink text) and "SKIP" (ink outline), Bricolage 800 at 28, rotated −10°; opacity follows drag |
+| Nav and tab indicator | `MOTION.indicator` spring via `layoutId` (built into the shell and `Tabs`) |
+| Highlighter | 220 ms `background-size` 0 → 100% (`.highlight`, or `MOTION.highlight`). The signature moment |
 | "How you match" lines | `MOTION.stagger`: 60 ms between lines |
-| Trace highlight | `MOTION.trace`: 150 ms |
-| Tabs | `MOTION.tab`: 120 ms cross-fade (built into `Tabs`) |
-| Routes | 160 ms fade (the shell's `.route-fade`) |
+| Tab panels | `MOTION.tab`: 120 ms cross-fade |
+| Routes | 140 ms opacity fade (the shell's `.route-fade`) |
 | Toasts | `MOTION.toast` spring (built in) |
 
 The global CSS also cuts every CSS transition and animation to near zero under `prefers-reduced-motion`.
 
 ## Primitives (`src/components/ui.tsx`)
 
-**Buttons**
-- `Button`: `variant` is `primary | secondary | ghost | danger`; `size` is `sm | md | lg`. `sm` is 36 px with a mouse and 44 px on touch. `busy` shows a spinner and disables the button.
+**Buttons** (all full pill, `active:scale-[0.98]`)
+- `Button`: `variant` is `primary | secondary | ghost | danger`; `size` is `sm | md | lg` (36 / 44 / 48; `sm` is 44 on touch). Primary is `pop` with `pop-ink` text; secondary is `surface` with `control-border`; ghost is text that fills `sunken` on hover; danger is a secondary with danger text. `busy` shows a spinner and disables it. Labels fit on one line.
   `<Button variant="primary" busy={saving} onClick={save}>Save</Button>`
 - `buttonClass(variant, size)`: the same styles, for an `<a>` or `<label>`.
-- `LinkButton`: an outside link styled as a button. It opens a new tab and says so to screen readers. Pass `external={false}` for hash routes.
-  `<LinkButton href={job.url} variant="primary">Open the posting</LinkButton>`
-- `IconButton`: round, `size` 44, 48, 56 or 64, with a required `label` (sr-only plus a tooltip). The deck uses Skip 56, Later 48, Apply 64 and Undo 44.
-  `<IconButton label="Apply" size={64} variant="primary"><Check size={28} /></IconButton>`
+- `LinkButton`: an outside link styled as a button. Opens a new tab and says so to screen readers; `external={false}` for hash routes.
+- `IconButton`: round, `size` 36, 40, 44, 48, 52, 56, 60, 64 or 72, with a required `label` (sr-only plus a tooltip). The deck: Undo 44 (ghost), Later 52 (secondary), Skip 60 (secondary), Apply 72 (primary).
+  `<IconButton label="Apply" size={72} variant="primary"><Check size={30} weight="bold" /></IconButton>`
 - `Spinner`: a 16 px decorative spinner.
 
 **Choices**
-- `Chip`: a toggle with `aria-pressed`. When selected, it gets an ink border and a check.
-  `<Chip on={has(x)} onClick={() => toggle(x)}>Data</Chip>`
-- `Switch`: `role="switch"` with a visible label and optional help.
-  `<Switch checked={on} onChange={setOn} label="Work offline" description="Deis connects to nothing but this computer." />`
+- `Chip`: a pill toggle with `aria-pressed`. Selected is an ink fill, surface text and a check. Never lime.
+- `Switch`: `role="switch"` with a visible label and optional help. On is ink.
 
 **Forms**
-- `Field`: label, help and error, wired with ids. `inputClass`, `textareaClass` and `selectClass` style the controls with `control-border`, and turn brick with `aria-invalid`.
-  `<Field label="Company" error={err}>{(id, d) => <input id={id} aria-describedby={d} className={inputClass} />}</Field>`
+- `Field`: label above, help and error below, wired with ids.
+- `inputClass` and `selectClass` are pills (44 tall); `textareaClass` is `rounded-field` (16). `control-border`, ink on focus, danger with `aria-invalid`.
 
 **Messages and labels**
-- `Notice`: a left icon, a 3 px coloured left border and ink text. `tone` is `info | warn | error | ok | trace`. It takes optional `title` and `action`. Errors are `role="alert"`. Pass `announce={false}` for static copy that shouldn't be a live region.
-  `<Notice tone="warn" title="Saved jobs" action={<Button size="sm">Refresh</Button>}>Some may have closed.</Notice>`
-- `Pill` (also exported as `Badge`): `tone` is `neutral | go | trace | ochre | brick`, with an optional `icon`.
-  `<Pill tone="ochre">Stretch</Pill>`
-- `Kbd`: `<Kbd>Z</Kbd>`.
+- `Notice`: a tinted panel (radius 20) with a left icon and ink text. `tone` is `info` (surface and hairline), `warn`, `error`, `ok` or `trace` (both `pop-soft`). Optional `title` and `action`. Errors are `role="alert"`; `announce={false}` for static copy.
+- `Pill` (also `Badge`): `tone` is `neutral | go | warn | danger` (go is `pop-soft` with ink text). Optional `icon`.
+  `<Pill tone="warn">Stretch</Pill>`
+- `Kbd`: a mono pill. `<Kbd>Z</Kbd>`.
 
 **Structure**
-- `Surface`: paper. `raised` gives white with the card shadow. Without it, you get the quieter surface with a hairline.
-  `<Surface raised className="p-6">…</Surface>`
-- `PageHeader`: the Irish eyebrow, a Newsreader h1, an optional `description` and right-aligned `actions`. The h1 carries `data-page-title` and `tabIndex={-1}`, so the shell focuses it on a route change and copies its text into `document.title`. Use exactly one per screen.
-  `<PageHeader eyebrow={EYEBROW.deck} title="Jobs for you" description="21 matches in Ireland" actions={<AddJobButton />} />`
-- `Section`: an `<h2>` in Atkinson bold 18, plus an optional description and actions, inside a labelled `<section>`.
-  `<Section title="Your data" description="…">…</Section>`
+- `PageHeader`: an h1 in Bricolage 800 (28 on phones, 36 from `sm`), an optional `description` and right-aligned `actions`. **No eyebrow.** The h1 carries `data-page-title` and `tabIndex={-1}` so the shell focuses it and copies it into `document.title`. One per screen.
+  `<PageHeader title="Jobs for you" description="22 matches" actions={<AddJobButton />} />`
+- `Section`: an `<h2>` in Geist semibold 18, optional description and actions, inside a labelled `<section>`.
+- `Surface`: a panel (radius 20, `surface`). Default has a hairline; `raised` has the card shadow.
+
+**Company mark**
+- `CompanyMark`: a monogram tile of up to two initials ("Bank of Ireland" → BI, "Tines" → T; words like Ltd, Group, Ireland are skipped). `size` defaults to 40, radius 12, Bricolage bold. The background is a muted hue hashed from the name: `hsl(h 35% 88%)` light, `hsl(h 25% 22%)` dark, ink text. It's `aria-hidden`, so always put the company name beside it as text.
+  `<CompanyMark name={job.company} />`, `<CompanyMark name={app.company} size={32} />`
+- `companyInitials(name)` and `companyHue(name)` are exported for tests and odd layouts.
 
 **Loading and empty**
-- `Skeleton` and `PageSkeleton`: placeholders. `PageSkeleton` is a header-shaped placeholder that announces "Loading" once. Use it instead of a blank screen (UX-9).
-- `EmptyState`: an icon, a display title, one sentence and **one** action.
-  `<EmptyState icon={<Cards size={24} />} title="That's every match for now" action={<AddJobButton />}>Paste a job you found elsewhere.</EmptyState>`
-- `Elapsed`: a ticking "12 s" that is `aria-hidden`. Never put it inside a live region. Announce only the start ("Writing your kit") and the finish.
+- `Skeleton` and `PageSkeleton` (announces "Loading" once). Use them instead of a blank screen.
+- `EmptyState`: an icon, a big Bricolage line (28), one sentence and **one** action.
+- `Elapsed`: a ticking "12 s", `aria-hidden`. Announce only the start and the finish.
 
 **Meters and steps**
-- `Meter`: a label, a Newsreader count and a decorative bar. The text carries the value.
-- `BarList`: a `<ul>` of meters that scales to the largest value. It's for the deck's hidden-for-you reasons.
-  `<BarList items={[{ key: "senior", label: "Needs 3+ years", value: 41, tone: "neutral" }, { key: "student", label: "Students only", value: 6, tone: "ochre" }]} />`
-- `StepBar`: a segmented `role="progressbar"` showing "Step 2 of 5", in ink.
-  `<StepBar total={5} current={2} label="Check-in progress" />`
+- `Meter` and `BarList`: a label, a mono count and a decorative bar (the go tone is ink, not lime).
+- `StepBar`: a segmented `role="progressbar"` in ink.
 
 **Tabs**
-- `Tabs`: the WAI-ARIA tabs pattern. Each `items` entry is `{ id, label, content, badge?, disabled? }`.
-  - Arrow keys move and select, wrapping round; Home and End jump.
-  - Roving tabindex, with a 3 px ink underline on the selected tab.
-  - The panel cross-fades in 120 ms.
-  - It works controlled (`value` and `onChange`) or uncontrolled (`defaultValue`).
-  - `keepMounted` keeps hidden panels in the DOM to preserve state, such as a half-typed note.
-  `<Tabs label="Kit" value={tab} onChange={setTab} items={[{ id: "cv", label: "CV", content: <CvSheet /> }, { id: "checks", label: "Checks", badge: <Pill>3</Pill>, content: <ChecksPanel /> }]} />`
+- `Tabs`: the WAI-ARIA tabs pattern as a segmented pill on `sunken`. The selected tab sits on an ink pill that slides between tabs (`layoutId`), with surface text. Arrow keys move and select (wrapping), Home and End jump, roving tabindex. Panels cross-fade in 120 ms. Controlled (`value`, `onChange`) or not (`defaultValue`); `keepMounted` keeps hidden panels' state.
+  `<Tabs label="Kit" value={tab} onChange={setTab} items={[{ id: "cv", label: "CV", content: <CvSheet /> }, { id: "checks", label: "Checks", badge: <span className="font-mono text-[12px]">3</span>, content: <ChecksPanel /> }]} />`
 
 **Dialog**
-- `Dialog`: a bottom sheet on phones (with a grab handle and safe-area padding) and centred from `sm` up.
-  - Focus is trapped, and Escape or a click on the scrim closes it.
-  - The page behind doesn't scroll, and nested dialogs only respond on the top one.
-  - Props: `title` (display), optional `description` and a `footer` for the actions; `wide` makes it 768 px.
-  `<Dialog open={open} onClose={close} title="Add a job" footer={<><Button variant="ghost" onClick={close}>Cancel</Button><Button variant="primary" type="submit" form="add-job">Add it</Button></>}>…</Dialog>`
+- `Dialog`: a bottom sheet on phones and centred from `sm` up, radius 20. Focus is trapped; Escape and the scrim close it; the page behind doesn't scroll. `title` (Bricolage), optional `description`, `footer`; `wide` makes it 768 px.
 
 **Toasts**
-- Call `toast("Saved")` or `toast({ message, undo, action, duration })` from anywhere, with no provider needed. The shell mounts `<Toaster />` once.
-  - Toasts are inverse colours and sit above the mobile nav.
-  - At most three show at once.
-  - Each lasts 5 s, or 8 s with an action. Hover or focus pauses the timer, and `duration: 0` keeps a toast until it's closed.
-  - `undo` adds an Undo button.
-  - They're announced through one polite live region.
-  - `dismissToast(id)` closes one early.
-  `toast({ message: "Skipped. Graduate Data Analyst at Corrib Health.", undo: () => undoSkip(id) })`
+- `toast("Saved")` or `toast({ message, undo, action, duration })` from anywhere; the shell mounts `<Toaster />` once. Inverse (ink background, bg text), radius 20; bottom right on desktop, above the tab bar on phones. At most three; 5 s, or 8 s with an action; hover or focus pauses. One polite live region. `dismissToast(id)` closes one early.
 
 **Brand**
-- `Wordmark`: "Deis" in Newsreader italic with "OPPORTUNITY" in small tracked capitals. `large` is for Welcome. It's also re-exported from `App.tsx` for older imports.
-
-## Layout patterns
-
-- **Page header:** `<PageHeader>` first in every screen, with an `mb-6` or `mb-8` gap below it. Primary actions go in `actions`, top right on desktop. They wrap under the title on phones.
-- **Content width:** the shell's `<main>` is `max-w-[1200px]` with `px-4 sm:px-8`. Long text stays within `max-w-[64ch]`.
-- **Two-pane workspace** (the kit):
-  - `grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]`.
-  - The paper goes on the left, with a sticky toolbar above it (`sticky top-0 z-10 bg-bg/95 backdrop-blur`).
-  - The inspector goes on the right (`lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto`).
-  - Below `lg`, the inspector becomes a section under the sheet.
-- **Inspector column** (deck and kit): a stack of `Surface` blocks, each with a `text-caption` label in `ink-3` (sentence case, not capitals) and its content. Counts use `display num`.
-- **Sticky mobile action bar** (the deck):
-  - `fixed inset-x-0 bottom-(--mobile-nav) z-20 lg:static`, on `bg-surface/95` with a top hairline.
-  - Round buttons are centred.
-  - Give the page `pb-28 lg:pb-0` so nothing hides behind it.
-- **CV sheet:** `font-paper`, white (`bg-white text-black` in both themes, since it's paper), `shadow-card` and a 28 px trace gutter.
-  - Trace markers and footnotes carry `data-trace`, and the print CSS hides them inside `#cv-print`.
-  - Anything else that mustn't print gets `data-print-hidden`.
+- `Wordmark`: lowercase "deis" in Bricolage 800 and a small lime square, the only decorative lime in the app. `large` is for Welcome and the splash. Re-exported from `App.tsx`. The only Irish in the UI is the wordmark and the Welcome line explaining "deis = opportunity".
 
 ## Shell (`App.tsx`)
 
-- **Desktop:**
-  - a sticky aside 248 px wide, with the wordmark at the top;
-  - nav items with a 3 px accent bar on the active one, ink bold text and a wash fill;
-  - a "ready kits" count on Applications;
-  - at the bottom, the model pill (from `effectiveModel`, with "· Offline" and a cloud-slash icon when offline) and the AGPL source link.
-- **Phones:** a bottom nav with 4 items and a 3 px accent bar on top of the active one. The page gets `pb-(--mobile-nav)`.
-- **Bars under the top edge, in order:**
-  - the demo bar: one line in trace-soft, with "Leave the demo";
-  - the licence bar: ochre-soft, shown when locked, linking "Buy or enter a key" to `#/licence`;
-  - the offline banner: "No internet. Showing jobs saved on Thu 15 Oct." with "Work offline" on local runs, or "Offline mode is on." with "Go online".
-- **Skip to content:** a button that focuses `<main id="main" tabIndex={-1}>`. It never navigates.
-- **Route change** (`useRouteFocus`): scroll to the top, focus the page's `[data-page-title]` h1, and set `document.title` to "<h1 text> · Deis". It waits up to 1.5 s for a screen that loads first, then falls back to focusing `<main>`. Full-screen routes (Welcome, check-in) are found through their own `<main>`.
-- **Errors:** each screen sits inside an `ErrorBoundary`, which resets on route change. It offers Reload, "Download a backup" and "Try this screen again". `src/app/global-error.tsx` covers the root.
-- **Licence lock (read-only):** when `useStore().locked`:
-  - the deck, Welcome and check-in show the licence screen, so no new kits get made;
-  - Applications, Profile, Settings, export and the model page stay usable;
-  - the KitQueue doesn't build.
-- **Demo routes:** `#/demo/aoife` and `#/demo/rahul` load that persona (with `enterDemo`) and replace the hash with `#/deck`. An unknown persona goes to Welcome.
+- **Desktop (`lg` up):** a sticky 64 px top bar on `bg/80` with backdrop blur and a bottom hairline.
+  - Left: the wordmark (links to the deck).
+  - Centre: a segmented pill nav (Jobs, Applications, Profile) on `sunken`; the active item sits on an ink pill that slides (`layoutId`). Applications shows the ready-kit count in mono.
+  - Right: the demo pill (when a persona is loaded), the model status pill and a round settings button.
+- **Phones:** the top bar keeps the wordmark, the demo pill and the model pill (glyph only beside the demo pill). A bottom tab bar (64 px plus the safe area) holds Jobs, Applications, Profile and Settings with icons and labels; the active tab gets an ink pill behind its icon. The page gets `pb-(--mobile-nav)`.
+- **Model status pill:** plain text (`effectiveModel.label`) and a Phosphor glyph: Laptop (this computer), Cloud, CloudSlash in warn with "Offline", or Warning in danger when the choice isn't usable. Links to `#/model`.
+- **Demo pill:** "Demo: Rahul · Leave". Leave runs `exitDemo()` and goes to Welcome.
+- **Notices under the top bar:** slim inline panels inside the page width: the licence lock (warn-soft, "Buy or enter a key") and the offline notice ("No internet. Showing jobs saved on Thu 15 Oct." with "Work offline" on local runs, or "Offline mode is on." with "Go online").
+- **Page container:** `max-w-[1200px] px-4 md:px-8`. A quiet "Source code (AGPL-3.0)" link closes every page.
+- **Skip to content:** a button that focuses `<main id="main" tabIndex={-1}>`.
+- **Route change** (`useRouteFocus`): scroll to the top, focus the page's `[data-page-title]` h1 and set `document.title` to "<h1 text> · Deis". Waits up to 1.5 s, then focuses `<main>`.
+- **Errors:** each screen sits in an `ErrorBoundary` that resets on route change. `src/app/global-error.tsx` covers the root.
+- **Licence lock (read-only):** when `useStore().locked`, the deck, Welcome and check-in show the licence screen; Applications, Profile, Settings, export and the model page stay usable; the KitQueue doesn't build.
+- **Demo routes:** `#/demo/aoife` and `#/demo/rahul` load that persona and replace the hash with `#/deck`.
+
+## Layout patterns
+
+- **Page header:** `<PageHeader>` first in every screen. Primary actions go in `actions`.
+- **Deck:** one centred column, 440 to 480 px wide, the card and the actions directly under it. On phones the actions are `fixed inset-x-0 bottom-(--mobile-nav)`; give the page bottom padding so nothing hides behind them.
+- **Two-pane workspace** (the kit): `grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]`, the CV sheet left, the inspector right and sticky (`lg:sticky lg:top-[calc(var(--top-bar)+1.5rem)]`). Below `lg` the inspector follows the sheet.
+- **CV sheet:** `font-paper`, white paper (`bg-white text-black` in both themes), 1 px line and a subtle shadow. Trace markers are small mono numbers in `pop-soft` pills in the gutter, carrying `data-trace`; print CSS hides them inside `#cv-print`. Anything else that mustn't print gets `data-print-hidden`.
+
+## Bans (pre-flight)
+
+- No em or en dashes in UI strings, except the CV date ranges that code owns.
+- No eyebrows. No Irish over titles.
+- No decorative dots, except the single brand square.
+- No cream or beige, no serif.
+- No lime text on light backgrounds, no lime links, badges or decoration.
+- No three equal cards.
+- No gradients except the lime highlighter.
+- No pure `#000` or `#fff` page backgrounds.
+- Every button label fits on one line.
+- Copy: plain words, sentence case, Irish/British English, no exclamation marks.
 
 ## Contracts for screens
 
@@ -260,7 +243,7 @@ The store value is memoised.
 - `worksOffline`;
 - `standIn`: provider `demo` answered by local Gemma, because there are no demo hosts or offline mode is on.
 
-`PRIVACY_BADGE[where]` gives the badge text. `modelPill(m, offline)` gives the sidebar text. Never write "never leaves your device" by hand: use `privacy.sentence`.
+`PRIVACY_BADGE[where]` gives the badge text. `modelPill(m, offline)` gives the model pill text. Never write "never leaves your device" by hand: use `privacy.sentence`.
 
 ### Offline helpers (`src/lib/client/offline.ts`)
 

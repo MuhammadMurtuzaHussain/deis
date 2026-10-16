@@ -3,15 +3,16 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import type { Fact } from "@/lib/profile/types";
 
-// Which fact is selected in the trace rail, shared by the CV's margin markers and the
-// inspector's fact slips. Selecting either side highlights the other (UX-2).
+// Which fact is selected, shared by the CV's gutter markers and the inspector's fact slips.
+// Selecting either side draws the highlighter over every line that cites it (UX-2). "Highlight
+// sources" draws it over every traced line at once. Markers always show on screen; never in print.
 
 export type TraceFrom = "marker" | "slip";
 
 type Trace = {
-  /** Traced markers are showing. Off: the paper reads like the Word file. */
-  on: boolean;
-  setOn: (on: boolean) => void;
+  /** "Highlight sources": every traced line carries the highlighter, not just the selected fact's. */
+  all: boolean;
+  setAll: (all: boolean) => void;
   /** Fact id to its number (1, 2, 3 by first use on the page). */
   numbers: Map<string, number>;
   /** How many lines cite each fact. */
@@ -36,16 +37,12 @@ export function useTrace(): Trace {
 export const useTraceMaybe = () => useContext(Ctx);
 
 export function TraceProvider({ numbers, uses, facts, children }: { numbers: Map<string, number>; uses: Map<string, number>; facts: Map<string, Fact>; children: ReactNode }) {
-  const [on, setOnState] = useState(true);
+  const [all, setAll] = useState(false);
   const [sel, setSel] = useState<{ id: string | null; from: TraceFrom | null }>({ id: null, from: null });
   const railRef = useRef<HTMLDivElement | null>(null);
   // Selecting the selected fact again clears it.
   const select = useCallback((id: string | null, from: TraceFrom) => setSel((s) => (s.id === id ? { id: null, from } : { id, from })), []);
-  const setOn = useCallback((v: boolean) => {
-    setOnState(v);
-    if (!v) setSel({ id: null, from: null });
-  }, []);
-  const value = useMemo(() => ({ on, setOn, numbers, uses, facts, active: sel.id, from: sel.from, select, railRef }), [on, setOn, numbers, uses, facts, sel, select]);
+  const value = useMemo(() => ({ all, setAll, numbers, uses, facts, active: sel.id, from: sel.from, select, railRef }), [all, numbers, uses, facts, sel, select]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

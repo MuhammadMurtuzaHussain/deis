@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, DownloadSimple, Path, Printer } from "@phosphor-icons/react";
+import { Check, Copy, DownloadSimple, Highlighter, Printer } from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
 import type { Kit } from "@/lib/client/db";
 import { cvText } from "@/lib/cv/compose";
@@ -9,8 +9,9 @@ import { download } from "./copy";
 import { letterText } from "./LetterView";
 import { useTrace } from "./useTrace";
 
-// The sticky bar above the paper: download, print, copy and the sources switch. The Word
-// writer (docx, about 125 KB gzipped) loads only when a download is asked for (CH-11).
+// The sticky bar above the paper: download, print, copy and "Highlight sources", which draws
+// the highlighter over every traced line at once. The Word writer (docx, about 125 KB
+// gzipped) loads only when a download is asked for (CH-11).
 
 export function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
   const [done, setDone] = useState(false);
@@ -34,19 +35,27 @@ export function CopyButton({ text, label = "Copy" }: { text: string; label?: str
   );
 }
 
-function SourcesToggle() {
-  const { on, setOn } = useTrace();
+/** A pill toggle: off is a ghost button, on wears the highlighter (pop-soft), never lime text. */
+function HighlightToggle() {
+  const { all, setAll } = useTrace();
   return (
-    <Button size="sm" variant="ghost" aria-pressed={on} onClick={() => setOn(!on)} className={`ml-auto ${on ? "text-trace" : ""}`}>
-      <Path size={16} weight={on ? "bold" : "regular"} aria-hidden />
-      Sources {on ? "on" : "off"}
-    </Button>
+    <button
+      type="button"
+      aria-pressed={all}
+      onClick={() => setAll(!all)}
+      className={`ml-auto inline-flex h-9 shrink-0 items-center gap-2 rounded-pill border px-4 text-body font-medium whitespace-nowrap transition-[background-color,border-color,color] active:scale-[0.98] pointer-coarse:h-11 ${
+        all ? "border-transparent bg-pop-soft text-ink" : "border-line text-ink-2 hover:bg-sunken hover:text-ink"
+      }`}
+    >
+      <Highlighter size={16} weight={all ? "fill" : "regular"} aria-hidden />
+      Highlight sources
+    </button>
   );
 }
 
 function Bar({ children }: { children: ReactNode }) {
   return (
-    <div data-print-hidden className="sticky top-0 z-10 -mx-1 flex items-center gap-1 overflow-x-auto bg-bg/95 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-bg/80">
+    <div data-print-hidden className="sticky top-(--top-bar) z-10 -mx-1 flex flex-wrap items-center gap-1.5 bg-bg/90 px-1 py-2 backdrop-blur-md">
       {children}
     </div>
   );
@@ -80,8 +89,8 @@ export function CvToolbar({ kit, job, name }: { kit: Kit; job: { company: string
         <Printer size={16} aria-hidden />
         Save as PDF
       </Button>
-      <CopyButton text={cvText(kit.cv, header)} label="Copy as text" />
-      <SourcesToggle />
+      <CopyButton text={cvText(kit.cv, header)} label="Copy text" />
+      <HighlightToggle />
     </Bar>
   );
 }
@@ -110,8 +119,8 @@ export function LetterToolbar({ kit, job, name }: { kit: Kit; job: { company: st
         {!busy && <DownloadSimple size={16} aria-hidden />}
         Download Word
       </Button>
-      <CopyButton text={letterText(letter, name)} label="Copy as text" />
-      <SourcesToggle />
+      <CopyButton text={letterText(letter, name)} label="Copy text" />
+      <HighlightToggle />
     </Bar>
   );
 }

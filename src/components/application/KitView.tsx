@@ -2,17 +2,30 @@
 
 import type { Application, Kit } from "@/lib/client/db";
 import type { Fact } from "@/lib/profile/types";
-import { Button, Elapsed, Notice, Pill, Tabs } from "../ui";
+import { CircleDashed } from "@phosphor-icons/react";
+import { motion } from "motion/react";
+import { useState } from "react";
+import { Button, Elapsed, MOTION, Notice, Tabs, useMotion } from "../ui";
 import { AnswersView } from "./AnswersView";
 import { ChecksPanel } from "./ChecksPanel";
 import { PART_COPY } from "./copy";
 import { CvSheet } from "./CvSheet";
 import { LetterView } from "./LetterView";
+import { CheckRow, type useKitReveal } from "./reveal";
 import { CvToolbar, LetterToolbar } from "./Toolbar";
 import { failedParts } from "./trace";
 
-// The kit's left pane: notices, then CV / Letter / Answers / Checks as accessible tabs. A
-// part Gemma couldn't write keeps its tab, with "Write it again" (CH-10).
+// The kit's left pane: notices, then CV / Letter / Answers / Checks as a segmented pill
+// tablist. A part Gemma couldn't write keeps its tab, marked with a warn glyph, with
+// "Write it again" (CH-10).
+
+/** A part that wasn't written: a small warn glyph in its tab. */
+const notWrittenBadge = (
+  <span className="inline-flex text-warn">
+    <CircleDashed size={14} weight="bold" aria-hidden />
+    <span className="sr-only">, not written</span>
+  </span>
+);
 
 export type KitTab = "cv" | "letter" | "answers" | "checks";
 
@@ -26,6 +39,7 @@ export function KitView({
   stale,
   rewrite,
   canRewrite,
+  reveal,
 }: {
   app: Application;
   kit: Kit;
@@ -36,6 +50,7 @@ export function KitView({
   stale: boolean;
   rewrite: { busy: { since: number } | null; error: string | null; run: (recheck: boolean) => void };
   canRewrite: boolean;
+  reveal: ReturnType<typeof useKitReveal>;
 }) {
   const failed = failedParts(kit.errors);
   const missing = failed.filter((p) => (p === "letter" ? !kit.letter : p === "answers" ? !kit.answers : false));
@@ -57,9 +72,12 @@ export function KitView({
       id: "cv",
       label: "CV",
       content: (
-        <div className="grid gap-2">
+        <div className="grid gap-1">
           <CvToolbar kit={kit} job={job} name={name} />
-          <CvSheet cv={kit.cv} />
+          <CheckRow kit={kit} playing={reveal.playing} run={reveal.run} total={reveal.total} replay={reveal.replay} canReplay={reveal.canReplay} />
+          <div className={`mt-2 transition-opacity duration-150 ${reveal.hidden ? "opacity-0" : ""}`}>
+            <CvSheet cv={kit.cv} />
+          </div>
         </div>
       ),
     },
@@ -67,10 +85,10 @@ export function KitView({
       ? [
           {
             id: "letter",
-            label: "Cover letter",
-            badge: kit.letter ? undefined : <Pill tone="ochre">Not written</Pill>,
+            label: "Letter",
+            badge: kit.letter ? undefined : notWrittenBadge,
             content: kit.letter ? (
-              <div className="grid gap-2">
+              <div className="grid gap-1">
                 <LetterToolbar kit={kit} job={job} name={name} />
                 <LetterView letter={kit.letter} title={app.job.title} name={name} />
               </div>
@@ -84,8 +102,8 @@ export function KitView({
       ? [
           {
             id: "answers",
-            label: "Form answers",
-            badge: kit.answers ? undefined : <Pill tone="ochre">Not written</Pill>,
+            label: "Answers",
+            badge: kit.answers ? undefined : notWrittenBadge,
             content: kit.answers ? <AnswersView answers={kit.answers} /> : notWritten("answers"),
           },
         ]
@@ -93,10 +111,31 @@ export function KitView({
     {
       id: "checks",
       label: "Checks",
-      badge: kit.events.length ? <Pill>{kit.events.length}</Pill> : undefined,
+      badge: kit.events.length ? (
+        <span className="num font-mono text-[12px] opacity-70">
+          {kit.events.length}
+          <span className="sr-only"> removed</span>
+        </span>
+      ) : undefined,
       content: <ChecksPanel kit={kit} facts={facts} />,
     },
   ];
+
+  // Tab content slides in from the side of the tab you came from (MAGIC moment 5).
+  const { reduce, t } = useMotion();
+  const current = items.some((i) => i.id === tab) ? tab : "cv";
+  const at = items.findIndex((i) => i.id === current);
+  const [last, setLast] = useState({ at, dir: 1 });
+  const dir = last.at === at ? last.dir : at > last.at ? 1 : -1;
+  if (last.at !== at) setLast({ at, dir });
+  const slid = items.map((i) => ({
+    ...i,
+    content: (
+      <motion.div initial={reduce ? false : { x: dir * 20 }} animate={{ x: 0 }} transition={t(MOTION.spring)}>
+        {i.content}
+      </motion.div>
+    ),
+  }));
 
   return (
     <div className="grid min-w-0 gap-4">
@@ -116,7 +155,7 @@ export function KitView({
           This kit was checked by an older version of Deis&apos;s rules, so some checks may be out of date. Write it again to check it with the current ones.
         </Notice>
       )}
-      <Tabs label="Your application kit" value={items.some((i) => i.id === tab) ? tab : "cv"} onChange={(id) => onTab(id as KitTab)} items={items} className="min-w-0" panelClassName="pt-2" />
+      <Tabs label="Your application kit" value={current} onChange={(id) => onTab(id as KitTab)} items={slid} className="min-w-0" panelClassName="pt-3" />
     </div>
   );
 }

@@ -110,9 +110,9 @@ export function Coach({ app, onBuilt, onCancel }: { app: Application; onBuilt: (
   };
 
   return (
-    <section aria-labelledby="coach" className="grid gap-5 rounded-surface bg-raised p-5 shadow-card sm:p-6">
+    <section aria-labelledby="coach" className="grid gap-5 rounded-panel bg-surface p-5 shadow-card sm:p-6">
       <div>
-        <h2 id="coach" className="text-lead font-bold text-ink">
+        <h2 id="coach" className="text-lead font-semibold tracking-[-0.01em] text-ink">
           {rebuilding ? "Go through your gaps, then rebuild" : "Before Deis writes anything: your gaps"}
         </h2>
         <p className="mt-1 max-w-[64ch] text-body text-ink-2">
@@ -138,9 +138,9 @@ export function Coach({ app, onBuilt, onCancel }: { app: Application; onBuilt: (
 
       {proposals.length > 0 && (
         <div className="grid gap-2">
-          <h3 className="font-bold text-ink">Add these to your profile?</h3>
+          <h3 className="font-semibold text-ink">Add these to your profile?</h3>
           {proposals.map((p) => (
-            <div key={p.key} className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-line bg-surface p-3 text-body">
+            <div key={p.key} className="flex flex-wrap items-center justify-between gap-3 rounded-field border border-line bg-surface p-3 pl-4 text-body">
               <span className={p.state === "skipped" ? "text-ink-3 line-through" : "text-ink"}>
                 {p.text}
                 {p.org && <span className="text-ink-3">, at {p.org}</span>}

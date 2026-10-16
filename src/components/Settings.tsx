@@ -10,7 +10,7 @@ import { ModelSetup } from "./ModelSetup";
 import { DataSection } from "./settings/DataSection";
 import { OfflineSection } from "./settings/OfflineSection";
 import { SettingsSection } from "./settings/parts";
-import { Chip, EYEBROW, PageHeader } from "./ui";
+import { Chip, PageHeader } from "./ui";
 
 // Settings: the model, offline mode, how kits are built, appearance, and the user's own
 // data, which they can export, restore or delete in one go. Each topic is a two-column
@@ -64,7 +64,7 @@ export function Settings() {
 
   return (
     <div>
-      <PageHeader eyebrow={EYEBROW.settings} title="Settings" description="The model, offline mode, how kits are built and your data." />
+      <PageHeader title="Settings" description="The model, offline mode, how kits are built and your data." />
 
       <div className="grid gap-10">
         <SettingsSection title="AI model" description="Deis is the app; the model is yours. Switch any time, nothing is lost.">
@@ -120,7 +120,7 @@ export function Settings() {
         <SettingsSection title="About Deis">
           <div className="grid max-w-[64ch] gap-3 text-body text-ink-2">
             <p>
-              <span lang="ga" className="ga text-ink">
+              <span lang="ga" className="font-semibold text-ink">
                 Deis
               </span>{" "}
               is Irish for opportunity. It&apos;s open source under AGPL-3.0: you can read every line, build it yourself and run it for free. The paid app saves you the setup and pays for the daily Irish job feed.

@@ -15,12 +15,15 @@ export function ImportPanel({
   onFile,
   onText,
   privacyLine,
+  primary = true,
 }: {
   state: ImportState;
   onFile: (f: File) => void;
   onText: (text: string) => void;
   /** Where the text goes to be split into facts, from effectiveModel. */
   privacyLine: string;
+  /** Choose a file is the page's lime action only while there's nothing else to do. */
+  primary?: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
@@ -44,17 +47,17 @@ export function ImportPanel({
         }}
         onDragLeave={() => setOver(false)}
         onDrop={onDrop}
-        className={`grid justify-items-center gap-3 rounded-surface border-2 border-dashed px-6 py-8 text-center transition-colors ${over ? "border-ink bg-wash" : "border-control-border bg-surface"}`}
+        className={`grid gap-5 rounded-panel border-[1.5px] border-dashed px-5 py-6 transition-colors sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:px-6 ${over ? "border-ink bg-sunken" : "border-control-border bg-surface"}`}
       >
-        <span aria-hidden className="grid size-12 place-items-center rounded-full bg-wash text-ink-2">
+        <span aria-hidden className="grid size-12 place-items-center rounded-full bg-sunken text-ink-2">
           <FileArrowUp size={24} />
         </span>
-        <div>
-          <p className="text-body font-bold text-ink">Drop a CV or LinkedIn file here</p>
+        <div className="min-w-0">
+          <p className="text-[16px] font-semibold text-ink">Drop a CV or LinkedIn file here</p>
           <p className="mt-1 text-caption text-ink-2">PDF or Word CV, LinkedIn &ldquo;Save to PDF&rdquo;, or LinkedIn&apos;s data export ZIP</p>
         </div>
-        <div className="flex flex-wrap justify-center gap-2">
-          <Button variant="primary" busy={state.state === "reading"} disabled={busy} onClick={() => fileRef.current?.click()}>
+        <div className="flex flex-wrap gap-2">
+          <Button variant={primary ? "primary" : "secondary"} busy={state.state === "reading"} disabled={busy} onClick={() => fileRef.current?.click()}>
             Choose a file
           </Button>
           <Button disabled={busy} onClick={() => setPasteOpen(true)}>
@@ -75,11 +78,11 @@ export function ImportPanel({
             e.target.value = "";
           }}
         />
-        <p className="max-w-[60ch] text-caption text-ink-2">{privacyLine}</p>
+        <p className="max-w-[72ch] border-t border-line pt-4 text-caption text-ink-2 sm:col-span-3">{privacyLine}</p>
       </div>
 
       <details className="max-w-[70ch] text-body text-ink-2">
-        <summary className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-ink">
+        <summary className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-pill font-medium text-ink">
           <LinkedinLogo size={18} aria-hidden />
           Getting your LinkedIn into Deis
         </summary>

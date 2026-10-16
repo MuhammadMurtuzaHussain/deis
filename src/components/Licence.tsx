@@ -4,7 +4,7 @@ import { Check, GithubLogo, Key } from "@phosphor-icons/react";
 import { useState } from "react";
 import { api, ApiError } from "@/lib/client/api";
 import { routeHref, useStore, type Licence as LicenceInfo } from "@/lib/client/store";
-import { Button, EYEBROW, Field, inputClass, LinkButton, Notice, PageHeader, Surface } from "./ui";
+import { Button, Field, inputClass, LinkButton, Notice, PageHeader, Surface } from "./ui";
 
 // The desktop app's licence: try everything for 14 days, then a Polar licence key.
 // The code is AGPL, so this is honest about what the money pays for. LicenceScreen is
@@ -25,8 +25,9 @@ export function LicenceForm({ licence, onChange }: { licence: LicenceInfo; onCha
   return (
     <div className="grid gap-4">
       {licence.state === "trial" && (
-        <p className="text-body text-ink-2">
-          Free trial: <span className="display num text-lead text-ink">{licence.daysLeft}</span> {licence.daysLeft === 1 ? "day" : "days"} left with everything included.
+        <p className="flex items-baseline gap-2 text-body text-ink-2">
+          <span className="display num text-[28px] leading-none text-ink">{licence.daysLeft}</span>
+          <span>{licence.daysLeft === 1 ? "day" : "days"} left in the free trial, with everything included.</span>
         </p>
       )}
       <form
@@ -76,7 +77,6 @@ export function LicenceScreen({ licence, onChange }: { licence: LicenceInfo; onC
   return (
     <div className="max-w-3xl">
       <PageHeader
-        eyebrow={EYEBROW.licence}
         title={ended ? "Your free trial has ended" : "Licence"}
         description={
           ended
@@ -85,21 +85,24 @@ export function LicenceScreen({ licence, onChange }: { licence: LicenceInfo; onC
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <Surface raised className="grid content-start gap-5 p-5 sm:p-6">
-          <p className="display text-title text-ink">
-            <span className="num">€9</span> once. No subscription.
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-10">
+        <Surface raised className="grid content-start gap-6 p-5 sm:p-7">
+          <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="display text-[44px] leading-none text-ink">€9 once</span>
+            <span className="text-body text-ink-2">No subscription.</span>
           </p>
           <LicenceForm licence={licence} onChange={onChange} />
         </Surface>
 
         <div className="grid content-start gap-4">
           <div>
-            <h2 className="text-body font-bold text-ink">What the €9 pays for</h2>
-            <ul className="mt-2 grid gap-2">
+            <h2 className="text-body font-semibold text-ink">What the €9 pays for</h2>
+            <ul className="mt-3 grid gap-3">
               {PAYS_FOR.map((t) => (
-                <li key={t} className="flex items-start gap-2 text-body text-ink-2">
-                  <Check size={16} weight="bold" aria-hidden className="mt-1 shrink-0 text-ink" />
+                <li key={t} className="grid grid-cols-[24px_1fr] items-start gap-2.5 text-body text-ink-2">
+                  <span aria-hidden className="mt-0.5 grid size-6 place-items-center rounded-full bg-sunken text-ink">
+                    <Check size={13} weight="bold" />
+                  </span>
                   {t}
                 </li>
               ))}

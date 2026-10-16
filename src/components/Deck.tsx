@@ -1,12 +1,13 @@
 "use client";
 
-import { Cards, WarningCircle } from "@phosphor-icons/react";
+import { ArrowClockwise, Cards, Lightning, Path, WarningCircle } from "@phosphor-icons/react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { CardWhy } from "@/lib/ai/schema";
 import { api, ApiError, isAbort, isPausable } from "@/lib/client/api";
 import { db, factsKey, getCard, getMeta, putCard, setMeta, type CardCache } from "@/lib/client/db";
+import { isStale, savedOn } from "@/lib/client/offline";
 import { newApplication } from "@/lib/client/kit";
 import { useStore } from "@/lib/client/store";
 import { categoryById } from "@/lib/jobs/categories";
@@ -15,13 +16,15 @@ import { workFit } from "@/lib/jobs/rightToWork";
 import type { ScoredJob } from "@/lib/jobs/types";
 import { AddJobButton } from "./AddJob";
 import { ActionBar, KeyHint } from "./deck/ActionBar";
-import { Inspector } from "./deck/Inspector";
 import { hiddenBars, pastedFirst, type Dir } from "./deck/logic";
+import { HiddenDialog, QueueLine } from "./deck/Status";
 import { SwipeCard } from "./deck/SwipeCard";
 import { useFeed } from "./deck/useFeed";
+import { flyToApplications } from "./deck/fly";
 import { useSwipeDeck } from "./deck/useSwipeDeck";
+import { WhyShown } from "./deck/Why";
 import { JobCard } from "./JobCard";
-import { Button, dismissToast, Dialog, EmptyState, EYEBROW, LinkButton, Notice, PageHeader, Skeleton, toast } from "./ui";
+import { Button, dismissToast, Dialog, EmptyState, IconButton, LinkButton, Notice, PageHeader, RollingNumber, Skeleton, Spinner, toast, useMotion } from "./ui";
 
 // The deck. Code decides which cards you see and in what order (src/lib/jobs/rank.ts);
 // Gemma only writes the "how you match" lines, and only for the next three cards, so the
@@ -54,12 +57,15 @@ function DeckLoading({ categories }: { categories: string[] }) {
 
 function CardSkeleton() {
   return (
-    <div aria-hidden className="relative mx-auto h-[420px] w-full max-w-[460px]">
-      <div className="absolute inset-x-4 top-3 bottom-0 rounded-card border border-line bg-surface" />
-      <div className="absolute inset-0 bottom-3 grid content-start gap-4 rounded-card border border-line bg-raised p-6 shadow-card">
-        <Skeleton className="h-3 w-1/3" />
-        <Skeleton className="h-8 w-4/5" />
-        <Skeleton className="h-4 w-1/2" />
+    <div aria-hidden className="relative h-[420px] w-full">
+      <div className="absolute inset-x-0 top-3.5 bottom-0 scale-[0.96] rounded-card border border-line bg-surface" />
+      <div className="absolute inset-0 bottom-3.5 grid content-start gap-4 rounded-card border border-line bg-surface p-6 shadow-card">
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-10 rounded-mark" />
+          <Skeleton className="h-4 w-1/3" />
+        </div>
+        <Skeleton className="mt-2 h-8 w-4/5" />
+        <Skeleton className="h-6 w-1/2 rounded-pill" />
         <Skeleton className="mt-6 h-4 w-11/12" />
         <Skeleton className="h-4 w-3/4" />
       </div>
@@ -74,6 +80,8 @@ export function Deck() {
   const feed = useFeed(categories, isOffline);
   const swipes = useLiveQuery(() => db.swipes.toArray(), [], null);
   const hintId = useId();
+  const deckRef = useRef<HTMLDivElement>(null);
+  const { reduce } = useMotion();
 
   // This session's decisions, newest last: they leave the deck at once (the database catches
   // up a moment later), they count towards "n of N", and Undo walks back through them.
@@ -87,6 +95,7 @@ export function Deck() {
   const toasts = useRef(new Map<string, number>());
 
   const [details, setDetails] = useState<ScoredJob | null>(null);
+  const [hiddenOpen, setHiddenOpen] = useState(false);
   const [laneAsk, setLaneAsk] = useState<ScoredJob | null>(null);
   const [lastSkip, setLastSkip] = useState<ScoredJob | null>(null);
   const [announce, setAnnounce] = useState("");
@@ -132,7 +141,7 @@ export function Deck() {
 
   const keys = useRef<(a: Dir | "undo") => void>(() => undefined);
   const onKey = useCallback((a: Dir | "undo") => keys.current(a), []);
-  const swipe = useSwipeDeck({ enabled: Boolean(current) && !details && !laneAsk, onKey });
+  const swipe = useSwipeDeck({ enabled: Boolean(current) && !details && !laneAsk && !hiddenOpen, onKey });
   const { setFlow, clear: clearIntent } = swipe;
 
   // ---- Gemma's "how you match" lines, for the next three cards, one call at a time
@@ -227,6 +236,9 @@ export function Deck() {
       const useLane = chosen ?? laneRef.current;
       // Ask how to apply before the card leaves, so closing the question leaves it in place.
       if (dir === "apply" && !useLane) return setLaneAsk(job);
+      // A Quick apply: a copy of the card flies into Applications, where the kit is now being built.
+      const topCard = deckRef.current?.querySelector<HTMLElement>("[data-deck-top]");
+      if (dir === "apply" && useLane === "quick" && topCard && !reduce) flyToApplications(topCard, job);
       setFlow({ dir, kind: "decide", id: job.id });
       clearIntent();
       setDecided((list) => [...list, { id: job.id, dir, job }]);
@@ -246,7 +258,7 @@ export function Deck() {
         say(`Building a kit for ${name}. Find it in Applications.`);
       }
     },
-    [entries, go, describe, undoId, setFlow, clearIntent],
+    [entries, go, describe, undoId, setFlow, clearIntent, reduce],
   );
 
   // The keys reach the latest decide and undo through a ref, so the listener isn't re-bound each render.
@@ -258,7 +270,10 @@ export function Deck() {
 
   const matches = deck?.entries.length ?? 0;
   const firstRun = feed.jobs !== null && feed.jobs.length === 0;
-  const visible = entries.slice(0, 2);
+  const visible = entries.slice(0, 3);
+  const hiddenTotal = bars.reduce((s, b) => s + b.value, 0);
+  const canShowStretch = !prefs.showStretch && (deck?.hidden.stretch ?? 0) > 0;
+  const showStretch = () => void setPreferences({ ...prefs, showStretch: true });
 
   let body;
   if (feed.jobs === null || !deck) {
@@ -278,21 +293,22 @@ export function Deck() {
     );
   } else if (!current) {
     body = (
-      <EmptyState icon={<Cards size={24} />} title="That's every match for now" action={<AddJobButton variant="primary" label="Paste a job you found" />}>
+      <EmptyState icon={<Cards size={24} />} title={<TypeLine text="That's every match for now" />} action={<AddJobButton variant="primary" label="Paste a job you found" />}>
         New jobs come in daily. Found one somewhere else? Paste it and Deis will tailor a kit for it.
-        {!prefs.showStretch && deck.hidden.stretch > 0 && " You can also show stretch roles from the list beside this."}
+        {canShowStretch && " Stretch roles are hidden: the hidden count above can show them."}
       </EmptyState>
     );
   } else {
     body = (
       <>
         <div
+          ref={deckRef}
           role="group"
           aria-roledescription="card deck"
           aria-label="Job cards"
           aria-describedby={hintId}
           tabIndex={0}
-          className="relative mx-auto h-[clamp(360px,calc(100dvh-var(--mobile-nav)-19.5rem),620px)] w-full max-w-[460px] rounded-card lg:h-[clamp(420px,calc(100dvh-22rem),600px)]"
+          className="relative mb-8 h-[clamp(340px,calc(100dvh-var(--mobile-nav)-21.5rem),620px)] w-full rounded-card lg:h-[clamp(390px,calc(100dvh-26rem),600px)]"
         >
           <span id={hintId} className="sr-only">
             Right arrow applies, left arrow skips, up arrow keeps it for later. Z or Backspace undoes.
@@ -303,14 +319,22 @@ export function Deck() {
                 <SwipeCard
                   key={e.job.id}
                   id={e.job.id}
-                  depth={depth as 0 | 1}
+                  depth={depth as 0 | 1 | 2}
                   intent={swipe.intent}
                   flow={swipe.flow}
                   label={`${e.job.title} at ${e.job.company}`}
                   onTrack={swipe.track}
                   onRelease={(dir) => dir && void decide(dir)}
                 >
-                  <JobCard job={e.job} work={e.work} why={cardMap.get(e.job.id) ?? null} whyError={whyErrorFor(e.job.id)} onDetails={() => setDetails(e.job)} />
+                  <JobCard
+                    job={e.job}
+                    work={e.work}
+                    why={cardMap.get(e.job.id) ?? null}
+                    whyError={whyErrorFor(e.job.id)}
+                    onDetails={() => setDetails(e.job)}
+                    explain={<WhyShown entry={e} prefs={prefs} />}
+                    active={depth === 0}
+                  />
                 </SwipeCard>
               ))
               // The top card last in the DOM, so a leaving card paints over the one rising underneath.
@@ -319,16 +343,15 @@ export function Deck() {
         </div>
 
         <ActionBar onDecide={(d) => void decide(d)} onUndo={undo} canUndo={decided.length > 0} disabled={!current} />
-        <KeyHint />
+        <KeyHint position={position} />
 
         {lastSkip && (
-          <div className="mx-auto mt-4 flex max-w-[460px] flex-wrap items-center justify-center gap-2" role="group" aria-label="Why did you skip it? Optional.">
-            <span className="text-caption text-ink-2">Why skip? Optional:</span>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Why did you skip it? Optional.">
+            <span className="w-full text-center text-caption text-ink-3">Why skip? Optional</span>
             {SKIP_REASONS.map((r) => (
               <Button
                 key={r}
                 size="sm"
-                className="rounded-full"
                 onClick={async () => {
                   await db.swipes.update(lastSkip.id, { reason: r });
                   setLastSkip(null);
@@ -344,53 +367,55 @@ export function Deck() {
   }
 
   return (
-    <div className="pb-32 lg:pb-0">
+    <div className="mx-auto w-full max-w-[460px] pb-32 lg:pb-0">
       <PageHeader
-        eyebrow={EYEBROW.deck}
+        className="mb-1! flex-nowrap! items-center! lg:mb-1!"
         title="Jobs for you"
-        description={
-          deck ? (
-            <>
-              <span className="num">{matches}</span> {matches === 1 ? "match" : "matches"}
-              <span className="hidden sm:inline"> in Ireland</span>, best first.
-            </>
-          ) : (
-            "Finding jobs in Ireland that fit you."
-          )
+        actions={
+          <>
+            <IconButton
+              label={isOffline ? "You're offline, so Deis can't look for new jobs" : "Look for new jobs"}
+              size={40}
+              variant="ghost"
+              disabled={isOffline || feed.refreshing}
+              aria-busy={feed.refreshing || undefined}
+              onClick={feed.refresh}
+            >
+              {feed.refreshing ? <Spinner /> : <ArrowClockwise size={18} weight="bold" aria-hidden />}
+            </IconButton>
+            <AddJobButton size="sm" label={<span className="max-sm:sr-only">Paste a job</span>} />
+          </>
         }
-        actions={<AddJobButton size="sm" />}
       />
+      <MetaLine
+        deckReady={Boolean(deck)}
+        matches={matches}
+        savedAt={feedSavedAt}
+        starter={feed.starter}
+        hidden={hiddenTotal}
+        onHidden={() => setHiddenOpen(true)}
+      />
+      {feed.error && !firstRun && !isOffline && <p className="mt-1 text-caption text-warn">{feed.error.message}</p>}
       <p className="sr-only" aria-live="polite">
         {announce}
       </p>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-10">
-        <section aria-label="Your deck" className="min-w-0">
-          {noFacts && (
-            <Notice tone="warn" className="mx-auto mb-4 max-w-[460px]" action={<Button size="sm" onClick={() => go({ name: "profile" })}>Build your profile</Button>}>
-              Your profile has no confirmed facts yet, so Deis can&apos;t tailor anything.
-            </Notice>
-          )}
-          {body}
-        </section>
+      <section aria-label="Your deck" className="mt-5 min-w-0 lg:mt-6">
+        {noFacts && (
+          <Notice tone="warn" className="mb-4" action={<Button size="sm" onClick={() => go({ name: "profile" })}>Build your profile</Button>}>
+            Your profile has no confirmed facts yet, so Deis can&apos;t tailor anything.
+          </Notice>
+        )}
+        {body}
+        {deck && <QueueLine lane={lane} />}
+      </section>
 
-        <aside aria-label="About this job" className="lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto">
-          <Inspector
-            entry={current}
-            position={position}
-            prefs={prefs}
-            onShowStretch={() => void setPreferences({ ...prefs, showStretch: true })}
-            bars={bars}
-            lane={lane}
-            saved={{ at: feedSavedAt, starter: feed.starter, refreshing: feed.refreshing, error: feed.error && !firstRun ? feed.error.message : null, offline: isOffline, refresh: feed.refresh }}
-          />
-        </aside>
-      </div>
+      <HiddenDialog open={hiddenOpen} onClose={() => setHiddenOpen(false)} bars={bars} canShowStretch={canShowStretch} onShowStretch={showStretch} />
 
       <Dialog open={Boolean(details)} onClose={() => setDetails(null)} title={details ? `${details.title}, ${details.company}` : ""} description={details?.location} wide>
         {details && (
           <div className="grid gap-4">
-            <div className="max-h-[55dvh] overflow-y-auto rounded-control border border-line bg-surface p-4 text-body leading-relaxed whitespace-pre-line">
+            <div className="max-h-[55dvh] overflow-y-auto rounded-panel border border-line bg-bg p-4 text-body leading-relaxed whitespace-pre-line text-ink">
               {details.description || "This board didn't share a description. Open the original posting."}
             </div>
             {details.apply.length > 0 ? (
@@ -409,17 +434,17 @@ export function Deck() {
       </Dialog>
 
       <Dialog open={Boolean(laneAsk)} onClose={() => setLaneAsk(null)} title="How do you want to apply?" description="Deis remembers this. Change it any time in Settings, or pick Careful from any application.">
-        <div className="grid gap-3">
+        <div className="grid gap-2.5">
           {(
             [
-              ["quick", "Quick", "Deis checks the fit and writes your CV, a letter and draft answers in the background. You keep swiping, then review and apply."],
-              ["careful", "Careful", "Deis shows the fit first and asks about your gaps. What you tell it can strengthen your profile for every job after this one."],
+              ["quick", "Quick", Lightning, "Deis checks the fit and writes your CV, a letter and draft answers in the background. You keep swiping, then review and apply."],
+              ["careful", "Careful", Path, "Deis shows the fit first and asks about your gaps. What you tell it can strengthen your profile for every job after this one."],
             ] as const
-          ).map(([l, title, text]) => (
+          ).map(([l, title, Icon, text]) => (
             <button
               key={l}
               type="button"
-              className="rounded-surface border border-control-border bg-raised p-4 text-left transition hover:border-ink hover:bg-wash active:translate-y-px"
+              className="grid grid-cols-[40px_1fr] items-start gap-3 rounded-panel border border-control-border bg-surface p-4 text-left transition-[background-color,border-color,transform] hover:border-ink hover:bg-sunken active:scale-[0.99]"
               onClick={async () => {
                 await setMeta("lane", l);
                 setLane(l);
@@ -427,12 +452,77 @@ export function Deck() {
                 void decide("apply", l);
               }}
             >
-              <span className="display block text-lead text-ink">{title}</span>
-              <span className="mt-1 block text-body text-ink-2">{text}</span>
+              <span aria-hidden className="grid size-10 place-items-center rounded-full bg-sunken text-ink">
+                <Icon size={20} weight="bold" />
+              </span>
+              <span>
+                <span className="display block text-lead text-ink">{title}</span>
+                <span className="mt-1 block text-body text-ink-2">{text}</span>
+              </span>
             </button>
           ))}
         </div>
       </Dialog>
     </div>
+  );
+}
+
+/** "22 matches · saved 14:05 · 365 hidden": the deck's one line under the title. */
+function MetaLine({ deckReady, matches, savedAt, starter, hidden, onHidden }: { deckReady: boolean; matches: number; savedAt: number | null; starter: boolean; hidden: number; onHidden: () => void }) {
+  if (!deckReady) return <p className="text-body text-ink-2">Finding jobs in Ireland that fit you.</p>;
+  const today = savedAt != null && new Date(savedAt).toDateString() === new Date().toDateString();
+  const time = savedAt != null ? (today ? savedOn(savedAt, true)?.split(", ")[1] : savedOn(savedAt)) : null;
+  const stale = isStale(savedAt);
+  return (
+    <p className="flex flex-wrap items-center gap-x-1.5 text-body text-ink-2">
+      <span>
+        <RollingNumber value={matches} className="font-medium text-ink" /> {matches === 1 ? "match" : "matches"}
+      </span>
+      {time && (
+        <>
+          <span aria-hidden>·</span>
+          <span className={stale ? "text-warn" : undefined}>
+            {starter ? "starter jobs from" : "saved"} <span className="num">{time}</span>
+            {stale && ", some may have closed"}
+          </span>
+        </>
+      )}
+      {hidden > 0 && (
+        <>
+          <span aria-hidden>·</span>
+          <button
+            type="button"
+            onClick={onHidden}
+            aria-haspopup="dialog"
+            className="-mx-1.5 inline-flex min-h-8 items-center rounded-pill px-1.5 text-ink underline decoration-control-border underline-offset-4 hover:bg-sunken hover:decoration-ink pointer-coarse:min-h-11"
+          >
+            <RollingNumber value={hidden} />
+            &nbsp;hidden
+          </button>
+        </>
+      )}
+    </p>
+  );
+}
+
+/** The empty deck's line types itself out, calmly, once. Screen readers get the whole line at once. */
+function TypeLine({ text }: { text: string }) {
+  const { reduce } = useMotion();
+  const [n, setN] = useState(reduce ? text.length : 0);
+  useEffect(() => {
+    if (reduce) return;
+    const timer = setInterval(() => setN((x) => (x >= text.length ? (clearInterval(timer), x) : x + 1)), 34);
+    return () => clearInterval(timer);
+  }, [text, reduce]);
+  const shown = reduce ? text.length : n;
+  return (
+    <>
+      <span className="sr-only">{text}</span>
+      <span aria-hidden>
+        {text.slice(0, shown)}
+        {shown < text.length && <span className="-mr-[3px] inline-block h-[0.85em] w-[3px] translate-y-[0.1em] bg-ink" />}
+        <span className="invisible">{text.slice(shown)}</span>
+      </span>
+    </>
   );
 }

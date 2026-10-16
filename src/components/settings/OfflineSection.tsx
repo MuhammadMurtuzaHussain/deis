@@ -7,8 +7,8 @@ import { ApiError } from "@/lib/client/api";
 import { db } from "@/lib/client/db";
 import { savedOn } from "@/lib/client/offline";
 import { routeHref, useStore, type Licence } from "@/lib/client/store";
-import { Button, Notice, Switch, toast } from "../ui";
-import { CheckItem, CopyLine, SettingsSection } from "./parts";
+import { Button, Notice, toast } from "../ui";
+import { CheckItem, CopyLine, SettingsSection, SpringSwitch } from "./parts";
 import { hasGemma, useOllama } from "./useOllama";
 
 // Offline mode, for the desktop app and local runs (hidden on the hosted demo). With it on,
@@ -52,8 +52,8 @@ export function OfflineSection() {
 
   return (
     <SettingsSection title="Offline" description="Work on a train or with Wi-Fi off. You keep your profile, saved jobs, pasted jobs, kits, Word and PDF. New jobs wait until you're back online.">
-      <div className="grid gap-4 rounded-surface border border-line bg-raised p-4 sm:p-5">
-        <Switch
+      <div className="grid gap-4 rounded-panel border border-line bg-surface p-4 sm:p-5">
+        <SpringSwitch
           checked={on}
           onChange={toggle}
           disabled={busy || Boolean(blocked)}
@@ -69,8 +69,8 @@ export function OfflineSection() {
       </div>
 
       <div className="grid gap-3">
-        <h3 className="text-body font-bold text-ink">Ready to go offline?</h3>
-        <ul className="grid gap-3" aria-busy={ollama === null || undefined}>
+        <h3 className="text-body font-semibold text-ink">Ready to go offline?</h3>
+        <ul className="grid gap-3 rounded-panel border border-line bg-surface p-4 sm:p-5" aria-busy={ollama === null || undefined}>
           <CheckItem ok={ollama ? ollama.running : null} detail={ollama && !ollama.running ? "Install it from ollama.com and open it." : undefined}>
             {ollama === null ? "Looking for Ollama" : ollama.running ? "Ollama is running" : "Ollama isn't running"}
           </CheckItem>

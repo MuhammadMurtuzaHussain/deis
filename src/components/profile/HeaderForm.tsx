@@ -70,9 +70,9 @@ export function NeverClaim({ items, onSave }: { items: string[]; onSave: (n: str
       {items.length > 0 && (
         <ul className="flex flex-wrap gap-2">
           {items.map((n) => (
-            <li key={n} className="inline-flex items-center gap-1 rounded-control border border-control-border bg-raised py-0.5 pr-0.5 pl-3 text-body text-ink">
+            <li key={n} className="inline-flex items-center gap-1 rounded-pill border border-line bg-surface py-0.5 pr-0.5 pl-4 text-body text-ink">
               {n}
-              <button type="button" onClick={() => onSave(items.filter((x) => x !== n))} className="grid size-9 place-items-center rounded-control text-ink-2 hover:bg-wash hover:text-brick pointer-coarse:size-11">
+              <button type="button" onClick={() => onSave(items.filter((x) => x !== n))} className="grid size-9 place-items-center rounded-full text-ink-3 hover:bg-sunken hover:text-danger pointer-coarse:size-11">
                 <X size={16} aria-hidden />
                 <span className="sr-only">Remove {n}</span>
               </button>

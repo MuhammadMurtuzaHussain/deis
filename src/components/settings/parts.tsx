@@ -1,9 +1,10 @@
 "use client";
 
 import { Check, CloudArrowUp, Copy, Laptop } from "@phosphor-icons/react";
+import { motion } from "motion/react";
 import { useId, useState, type ReactNode } from "react";
 import type { Privacy } from "@/lib/client/model";
-import { Pill } from "../ui";
+import { Pill, useMotion } from "../ui";
 
 // Small pieces shared by Settings and the model chooser.
 
@@ -14,12 +15,12 @@ import { Pill } from "../ui";
 export function SettingsSection({ title, description, children }: { title: ReactNode; description?: ReactNode; children: ReactNode }) {
   const id = useId();
   return (
-    <section aria-labelledby={id} className="grid gap-4 border-t border-line pt-8 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] lg:gap-10">
-      <div className="min-w-0">
-        <h2 id={id} className="text-lead font-bold text-ink">
+    <section aria-labelledby={id} className="grid gap-4 border-t border-line pt-8 first:border-t-0 first:pt-0 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] lg:gap-12">
+      <div className="min-w-0 lg:sticky lg:top-[calc(var(--top-bar)+1.5rem)] lg:self-start">
+        <h2 id={id} className="text-lead font-semibold tracking-[-0.01em] text-ink">
           {title}
         </h2>
-        {description && <div className="mt-1 max-w-[64ch] text-body text-ink-2">{description}</div>}
+        {description && <div className="mt-1.5 max-w-[64ch] text-body text-ink-2">{description}</div>}
       </div>
       <div className="grid min-w-0 content-start gap-4">{children}</div>
     </section>
@@ -41,11 +42,11 @@ export function PrivacyBadge({ privacy }: { privacy: Privacy }) {
 export function CopyLine({ text, label = "Copy" }: { text: string; label?: string }) {
   const [done, setDone] = useState(false);
   return (
-    <div className="flex min-w-0 items-center justify-between gap-3 rounded-control border border-line bg-wash py-1 pr-1 pl-3">
+    <div className="flex min-w-0 items-center justify-between gap-3 rounded-pill bg-sunken py-1 pr-1 pl-4">
       <code className="min-w-0 overflow-x-auto font-mono text-caption whitespace-nowrap text-ink">{text}</code>
       <button
         type="button"
-        className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-control px-3 text-caption font-medium text-ink hover:bg-raised pointer-coarse:h-11"
+        className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-pill bg-surface px-3.5 text-caption font-medium text-ink shadow-card hover:bg-bg pointer-coarse:h-11"
         onClick={async () => {
           try {
             await navigator.clipboard.writeText(text);
@@ -70,7 +71,7 @@ export function CheckItem({ ok, children, detail }: { ok: boolean | null; childr
     <li className="flex items-start gap-3">
       <span
         aria-hidden
-        className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border ${ok ? "border-accent bg-accent text-accent-ink" : ok === null ? "border-line" : "border-control-border"}`}
+        className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full ${ok ? "bg-pop-soft text-ink" : ok === null ? "border border-dashed border-line" : "border border-control-border"}`}
       >
         {ok && <Check size={12} weight="bold" />}
       </span>
@@ -82,5 +83,48 @@ export function CheckItem({ ok, children, detail }: { ok: boolean | null; childr
         {detail && <div className="text-caption text-ink-2">{detail}</div>}
       </div>
     </li>
+  );
+}
+
+/**
+ * The Switch from ui.tsx, with a knob that springs across (MAGIC moment 5). Same contract:
+ * role="switch", a visible label, optional help, on is ink.
+ */
+export function SpringSwitch({ checked, onChange, label, description, disabled }: { checked: boolean; onChange: (on: boolean) => void; label: ReactNode; description?: ReactNode; disabled?: boolean }) {
+  const id = useId();
+  const { t } = useMotion();
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div className="min-w-0">
+        <span id={`${id}-l`} className="block text-body font-medium text-ink">
+          {label}
+        </span>
+        {description && (
+          <span id={`${id}-d`} className="mt-0.5 block text-caption text-ink-2">
+            {description}
+          </span>
+        )}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-labelledby={`${id}-l`}
+        aria-describedby={description ? `${id}-d` : undefined}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+        className="group relative inline-flex h-11 w-[52px] shrink-0 items-center rounded-full disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <span aria-hidden className={`absolute inset-x-0 top-1/2 h-7 -translate-y-1/2 rounded-full border transition-colors duration-200 ${checked ? "border-ink bg-ink" : "border-control-border bg-sunken"}`} />
+        <motion.span
+          aria-hidden
+          className={`absolute top-1/2 left-1 -mt-2.5 size-5 rounded-full shadow-[0_1px_2px_rgb(14_15_16/0.2)] transition-colors duration-200 ${checked ? "bg-surface" : "bg-ink-3"}`}
+          initial={false}
+          animate={{ x: checked ? 24 : 0 }}
+          whileTap={{ scaleX: 1.25 }}
+          transition={t({ type: "spring", stiffness: 700, damping: 30 })}
+        />
+      </button>
+    </div>
   );
 }

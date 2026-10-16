@@ -1,26 +1,31 @@
 import { ImageResponse } from "next/og";
+import type { ReactNode } from "react";
+import { BRICOLAGE, markFont } from "@/lib/brand/font";
+import { INK, POP } from "@/lib/brand/icon";
 
-// The link preview for the hosted demo and the DEV post (PRD-16): the Estuary paper
-// palette, the Newsreader wordmark and a small index card. Generated once at build time.
-// Newsreader and Atkinson come from Google Fonts as TTF (next/og can't read woff2); if a fetch
-// fails the image still builds, in the default face.
+// The link preview for the hosted demo and the DEV post (PRD-16), in v3 "Highlighter": the
+// cool grey page, the lowercase Bricolage wordmark with its lime square, and the deck card with
+// one CV line under the highlighter. Generated once at build time. Bricolage is read from the
+// repo (src/lib/brand); Geist comes from Google Fonts as TTF (next/og can't read woff2), and if
+// that fetch fails the image still builds in the default face.
 
 export const alt = "Deis: early-career jobs in Ireland, with a CV tailored by open-weight Gemma and every line traced to your own facts.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const PAPER = "#F4F1EA";
-const RAISED = "#FFFFFF";
-const INK = "#1A1E1C";
-const INK2 = "#4A524E";
-const INK3 = "#5E6661";
-const LINE = "#DDD6C8";
-const ACCENT = "#0F5C45";
-const ACCENT_SOFT = "#DCEBE3";
-const ACCENT_TEXT = "#0C4A37";
-const TRACE = "#2D5B8A";
+const BG = "#F5F5F4";
+const SURFACE = "#FFFFFF";
+const SUNKEN = "#EDEDEC";
+const INK2 = "#4B4D52";
+const INK3 = "#6B6E74";
+const LINE = "#E3E3E1";
+const POP_SOFT = "#ECFBC2";
+const WARN = "#9A5B00";
+const WARN_SOFT = "#FFF1D6";
+// CompanyMark's tile for "Corrib Health": hsl(companyHue 35% 88%).
+const MARK = "hsl(225 35% 88%)";
 
-/** One face from Google Fonts as TTF, or null when it can't be fetched. family: "Newsreader:wght@500". */
+/** One face from Google Fonts as TTF, or null when it can't be fetched. family: "Geist:wght@400". */
 async function googleFont(family: string): Promise<ArrayBuffer | null> {
   try {
     const css = await (await fetch(`https://fonts.googleapis.com/css2?family=${family}`, { signal: AbortSignal.timeout(8000) })).text();
@@ -33,86 +38,91 @@ async function googleFont(family: string): Promise<ArrayBuffer | null> {
   }
 }
 
-const HERO = "Jobs you can actually get.";
-const CARD_TITLE = "Graduate Data Analyst";
+/** A glyph tile for a "how you match" line: 30 px circle, a simple stroke icon inside. */
+function Tile({ bg, children }: { bg: string; children: ReactNode }) {
+  return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 999, background: bg, flexShrink: 0 }}>{children}</div>;
+}
 
 export default async function Image() {
-  const [body, italic, roman] = await Promise.all([googleFont("Atkinson+Hyperlegible+Next:wght@400"), googleFont("Newsreader:ital,wght@1,500"), googleFont("Newsreader:wght@500")]);
+  const [display, geist, geistMedium] = await Promise.all([markFont(), googleFont("Geist:wght@400"), googleFont("Geist:wght@500")]);
   // Body text first: the first font is the default for everything without a fontFamily.
   const fonts = [
-    ...(body ? [{ name: "Atkinson Hyperlegible Next", data: body, style: "normal" as const, weight: 400 as const }] : []),
-    ...(italic ? [{ name: "Newsreader Italic", data: italic, style: "italic" as const, weight: 500 as const }] : []),
-    ...(roman ? [{ name: "Newsreader", data: roman, style: "normal" as const, weight: 500 as const }] : []),
+    ...(geist ? [{ name: "Geist", data: geist, style: "normal" as const, weight: 400 as const }] : []),
+    ...(geistMedium ? [{ name: "Geist", data: geistMedium, style: "normal" as const, weight: 500 as const }] : []),
+    ...display,
   ];
-  const display = roman ? "Newsreader" : undefined;
+
+  const lines: { kind: "strong" | "carries" | "gap"; text: string }[] = [
+    { kind: "strong", text: "Built Power BI dashboards for 5 managers" },
+    { kind: "carries", text: "MSc thesis forecasting in Python" },
+    { kind: "gap", text: "No healthcare data yet" },
+  ];
 
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", background: PAPER, padding: "64px 72px", color: INK, fontFamily: body ? "Atkinson Hyperlegible Next" : undefined }}>
-        <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: 620 }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-            <span style={{ fontFamily: italic ? "Newsreader Italic" : undefined, fontStyle: "italic", fontSize: 64, lineHeight: 1 }}>Deis</span>
-            <span style={{ fontSize: 18, letterSpacing: 4, color: INK3 }}>OPPORTUNITY</span>
+      <div style={{ width: "100%", height: "100%", display: "flex", background: BG, padding: "60px 72px", color: INK, fontFamily: geist ? "Geist" : undefined }}>
+        <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: 580 }}>
+          <div style={{ display: "flex", alignItems: "flex-end" }}>
+            <span style={{ fontFamily: BRICOLAGE, fontWeight: 800, fontSize: 52, lineHeight: 1, letterSpacing: -2 }}>deis</span>
+            <span style={{ width: 13, height: 13, borderRadius: 2, background: POP, marginLeft: 6, marginBottom: 11 }} />
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <span style={{ fontFamily: display, fontSize: 76, lineHeight: 1.02, letterSpacing: -1 }}>{HERO}</span>
-            <span style={{ fontSize: 28, lineHeight: 1.35, color: INK2 }}>Early-career roles in Ireland. A CV tailored by open-weight Gemma, every line traced to something you told it.</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
+            <span style={{ fontFamily: BRICOLAGE, fontWeight: 800, fontSize: 84, lineHeight: 0.98, letterSpacing: -2.6 }}>Jobs you can actually get.</span>
+            <span style={{ fontSize: 28, lineHeight: 1.35, color: INK2 }}>Early-career roles in Ireland. A CV tailored by open-weight Gemma, every line traced to your facts.</span>
           </div>
           <span style={{ fontSize: 22, color: INK3 }}>Open source, AGPL-3.0</span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", flex: 1, position: "relative" }}>
-          <div style={{ position: "absolute", right: 24, top: 150, width: 380, height: 330, borderRadius: 20, background: "#FFFDF8", border: `1px solid ${LINE}` }} />
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              width: 400,
-              padding: 28,
-              borderRadius: 20,
-              background: RAISED,
-              border: `1px solid ${LINE}`,
-              boxShadow: "0 8px 24px -8px rgba(26,30,28,0.18)",
-              transform: "rotate(-2deg)",
-            }}
-          >
-            <span style={{ fontSize: 16, letterSpacing: 2, color: INK2 }}>CORRIB HEALTH</span>
-            <span style={{ fontFamily: display, fontSize: 34, lineHeight: 1.1, marginTop: 6 }}>{CARD_TITLE}</span>
-            <span style={{ fontSize: 18, color: INK2, marginTop: 10 }}>Galway · €34,000 to €38,000</span>
-            <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-              <span style={{ fontSize: 15, padding: "4px 12px", borderRadius: 999, border: `1px solid ${LINE}`, color: INK2 }}>Early career</span>
-              <span style={{ fontSize: 15, padding: "4px 12px", borderRadius: 999, background: ACCENT_SOFT, color: ACCENT_TEXT }}>Good fit</span>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", flex: 1, gap: 14 }}>
+          <div style={{ display: "flex", flexDirection: "column", width: 430, padding: 28, borderRadius: 28, background: SURFACE, border: `1px solid ${LINE}`, boxShadow: "0 18px 40px -18px rgba(14,15,16,0.22)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 12, background: MARK, fontFamily: BRICOLAGE, fontWeight: 800, fontSize: 15 }}>CH</div>
+              <span style={{ fontSize: 18, fontWeight: 500, flex: 1 }}>Corrib Health</span>
+              <span style={{ fontSize: 14, color: INK3 }}>3d ago</span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 18, borderTop: `1px solid ${LINE}`, paddingTop: 16 }}>
-              {["Built Power BI dashboards for 5 managers", "Python forecasting from the MSc thesis"].map((t, i) => (
-                <div key={t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 17 }}>
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: 24,
-                      height: 24,
-                      borderRadius: 999,
-                      fontSize: 13,
-                      color: i === 0 ? "#FFFFFF" : TRACE,
-                      background: i === 0 ? TRACE : RAISED,
-                      border: `1.5px solid ${TRACE}`,
-                    }}
-                  >
-                    {i + 1}
-                  </span>
-                  <span>{t}</span>
+            <span style={{ fontFamily: BRICOLAGE, fontWeight: 800, fontSize: 38, lineHeight: 1.04, letterSpacing: -1.1, marginTop: 18 }}>Graduate Data Analyst</span>
+            <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+              {["Galway", "Early career"].map((p) => (
+                <span key={p} style={{ fontSize: 14, padding: "4px 12px", borderRadius: 999, border: `1px solid ${LINE}`, color: INK2 }}>
+                  {p}
+                </span>
+              ))}
+              <span style={{ fontSize: 14, padding: "4px 12px", borderRadius: 999, background: POP_SOFT, color: INK }}>Strong match</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 18, borderTop: `1px solid ${LINE}`, paddingTop: 16 }}>
+              {lines.map((l) => (
+                <div key={l.text} style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 17 }}>
+                  {l.kind === "strong" ? (
+                    <Tile bg={POP_SOFT}>
+                      <svg width="16" height="16" viewBox="0 0 16 16">
+                        <path d="M3.5 8.5l3 3 6-7" fill="none" stroke={INK} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </Tile>
+                  ) : l.kind === "carries" ? (
+                    <Tile bg={SUNKEN}>
+                      <svg width="16" height="16" viewBox="0 0 16 16">
+                        <path d="M2.5 5.5h11M10.5 2.5l3 3-3 3M13.5 10.5h-11M5.5 7.5l-3 3 3 3" fill="none" stroke={INK2} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </Tile>
+                  ) : (
+                    <Tile bg={WARN_SOFT}>
+                      <svg width="16" height="16" viewBox="0 0 16 16">
+                        <circle cx="8" cy="8" r="5.5" fill="none" stroke={WARN} strokeWidth="1.8" strokeDasharray="2.6 2.2" />
+                      </svg>
+                    </Tile>
+                  )}
+                  <span>{l.text}</span>
                 </div>
               ))}
             </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
-              <span style={{ fontSize: 17, padding: "10px 22px", borderRadius: 999, background: ACCENT, color: "#FFFFFF" }}>Apply</span>
-            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, width: 430, padding: "14px 18px", borderRadius: 20, background: "#FFFFFF", border: `1px solid ${LINE}`, fontSize: 16, color: INK }}>
+            <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 20, height: 20, borderRadius: 999, background: POP_SOFT, fontSize: 11 }}>1</span>
+            <span style={{ background: POP_SOFT, padding: "2px 4px", borderRadius: 3 }}>Built Power BI dashboards for 5 regional managers.</span>
           </div>
         </div>
       </div>
     ),
-    { ...size, fonts: fonts.length ? fonts : undefined },
+    { ...size, fonts },
   );
 }

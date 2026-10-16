@@ -15,29 +15,33 @@ import { RULE_COPY } from "./application/copy";
 import { PrintSheet } from "./application/CvSheet";
 import { Inspector } from "./application/Inspector";
 import { KitView, type KitTab } from "./application/KitView";
+import { RevealProvider, useKitReveal } from "./application/reveal";
+import { TraceConnectors } from "./application/TraceConnectors";
 import { numberFacts, tracedLines, usage } from "./application/trace";
 import { useRewrite } from "./application/useRewrite";
 import { TraceProvider, useTrace } from "./application/useTrace";
 import { useKitQueue } from "./KitQueue";
-import { Button, Elapsed, EYEBROW, LinkButton, Notice, PageHeader, PageSkeleton, Pill, selectClass, Skeleton, type PillTone } from "./ui";
+import { Button, CompanyMark, Elapsed, LinkButton, Notice, PageHeader, PageSkeleton, Pill, selectClass, Skeleton, type PillTone } from "./ui";
 
-// One application: a two-pane workspace (UX-1). The paper on the left (CV, letter, answers,
-// checks), the inspector on the right (fit, right to work, sources, notes). In the Careful
-// lane Deis asks about the gaps first. The parts live in src/components/application/.
+// One application: a header (company mark, the title in Bricolage, pills, one lime "Open the
+// posting"), then a two-pane workspace (UX-1). The paper on the left (CV, letter, answers,
+// checks), the inspector on the right (fit, right to work, sources, notes). Selecting a fact
+// draws the highlighter over the lines that cite it. In the Careful lane Deis asks about the
+// gaps first. The parts live in src/components/application/.
 
 export { RULE_COPY };
 
 const LEVEL: Record<ScoredJob["seniority"]["level"], { label: string; tone: PillTone }> = {
   early: { label: "Early career", tone: "neutral" },
   open: { label: "No level stated", tone: "neutral" },
-  stretch: { label: "Stretch", tone: "ochre" },
-  senior: { label: "Senior", tone: "brick" },
+  stretch: { label: "Stretch", tone: "warn" },
+  senior: { label: "Senior", tone: "danger" },
 };
 
 /** A sheet-shaped placeholder while the kit is being written. */
 function PaperPlaceholder() {
   return (
-    <div aria-hidden className="grid aspect-[210/297] w-full min-w-0 content-start gap-3 rounded-surface bg-raised p-8 shadow-card sm:p-12">
+    <div aria-hidden className="grid aspect-[210/297] w-full min-w-0 content-start gap-3 rounded-panel border border-line bg-surface p-8 sm:p-12">
       <Skeleton className="mx-auto h-6 w-48" />
       <Skeleton className="mx-auto mb-4 h-3 w-72 max-w-full" />
       {[0, 1, 2].map((i) => (
@@ -54,20 +58,20 @@ function PaperPlaceholder() {
 
 /** On phones the inspector is far below the paper, so the selected fact shows in a small bar. */
 function FactPeek() {
-  const { active, on, facts, numbers, uses, select } = useTrace();
+  const { active, facts, numbers, uses, select } = useTrace();
   const f = active ? facts.get(active) : null;
-  if (!on || !f) return null;
+  if (!f || !numbers.has(f.id)) return null;
   const used = uses.get(f.id) ?? 0;
   return (
-    <div className="fixed inset-x-3 bottom-[calc(var(--mobile-nav)+0.75rem)] z-30 flex items-start gap-3 rounded-surface border border-trace bg-raised p-3 shadow-lift lg:hidden">
-      <span aria-hidden className="mt-0.5 grid h-5 w-6 shrink-0 place-items-center rounded-full bg-trace font-mono text-[11px] font-bold text-raised">
+    <div className="fixed inset-x-3 bottom-[calc(var(--mobile-nav)+0.75rem)] z-30 flex items-start gap-3 rounded-panel bg-surface p-3 pl-4 shadow-lift lg:hidden">
+      <span aria-hidden className="mt-0.5 grid h-5 min-w-6 shrink-0 place-items-center rounded-full bg-pop px-1 font-mono text-[11px] font-semibold text-pop-ink">
         {numbers.get(f.id)}
       </span>
       <p className="min-w-0 flex-1 text-body text-ink">
         {f.text}
-        <span className="block text-caption text-ink-2">{used === 1 ? "Used in 1 line" : `Used in ${used} lines`}</span>
+        <span className="block text-caption text-ink-3">{used === 1 ? "Used in 1 line" : `Used in ${used} lines`}</span>
       </p>
-      <button type="button" onClick={() => select(null, "slip")} className="-m-1 grid size-11 shrink-0 place-items-center rounded-control text-ink-2 hover:bg-wash">
+      <button type="button" onClick={() => select(null, "slip")} className="-m-1 grid size-11 shrink-0 place-items-center rounded-full text-ink-2 hover:bg-sunken">
         <X size={18} aria-hidden />
         <span className="sr-only">Close source</span>
       </button>
@@ -105,7 +109,7 @@ function useCarefulFit(app: Application | null | undefined, locked: boolean) {
 }
 
 export function ApplicationScreen({ id }: { id: string }) {
-  const app = useLiveQuery(() => db.applications.get(id), [id]);
+  const app = useLiveQuery(async () => (await db.applications.get(id)) ?? null, [id]); // null = not found, undefined = still loading
   const factsList = useLiveQuery(() => db.facts.toArray(), [], []);
   const facts = useMemo(() => new Map(factsList.map((f) => [f.id, f])), [factsList]);
   const { profile, locked } = useStore();
@@ -114,6 +118,7 @@ export function ApplicationScreen({ id }: { id: string }) {
   const rewrite = useRewrite(app);
   const [tab, setTab] = useState<KitTab>("cv");
   const [coaching, setCoaching] = useState(false);
+  const reveal = useKitReveal(app);
 
   // Facts numbered by first use in the document on screen.
   const kit = app?.kit ?? null;
@@ -130,7 +135,7 @@ export function ApplicationScreen({ id }: { id: string }) {
   if (!app)
     return (
       <div className="grid gap-4">
-        <PageHeader eyebrow={EYEBROW.application} title="That application isn't here any more" />
+        <PageHeader title="That application isn't here any more" />
         <a href={routeHref({ name: "tracker" })} className="link w-fit">
           Back to applications
         </a>
@@ -156,7 +161,7 @@ export function ApplicationScreen({ id }: { id: string }) {
 
   let left;
   if (app.kit && !coaching) {
-    left = <KitView app={app} kit={app.kit} facts={facts} name={name} tab={tab} onTab={setTab} stale={stale} rewrite={rewrite} canRewrite={canRewrite} />;
+    left = <KitView app={app} kit={app.kit} facts={facts} name={name} tab={tab} onTab={setTab} stale={stale} rewrite={rewrite} canRewrite={canRewrite} reveal={reveal} />;
   } else if (app.kit && coaching) {
     left = <Coach app={app} onBuilt={() => setCoaching(false)} onCancel={() => setCoaching(false)} />;
   } else if (locked) {
@@ -198,49 +203,54 @@ export function ApplicationScreen({ id }: { id: string }) {
 
   return (
     <TraceProvider numbers={numbers} uses={uses} facts={facts}>
-      <a href={routeHref({ name: "tracker" })} className="mb-3 inline-flex min-h-11 w-fit items-center gap-1.5 text-body text-ink-2 hover:text-ink lg:min-h-0">
+      <a href={routeHref({ name: "tracker" })} className="-ml-1 mb-4 inline-flex min-h-11 w-fit items-center gap-1.5 rounded-pill pr-3 pl-1 text-body text-ink-2 hover:text-ink lg:min-h-9">
         <ArrowLeft size={16} aria-hidden />
         Applications
       </a>
-      <PageHeader
-        eyebrow={EYEBROW.application}
-        title={job.title}
-        className="lg:mb-6"
-        description={
-          <span className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <span className="font-medium text-ink">{job.company}</span>
-            <span>{job.location}</span>
+      <header className="mb-6 grid gap-5 lg:mb-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-10">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3">
+            <CompanyMark name={job.company} />
+            <p className="min-w-0 text-body leading-snug">
+              <span className="block font-medium text-ink">{job.company}</span>
+              <span className="block text-caption text-ink-3">{job.location}</span>
+            </p>
+          </div>
+          <h1 data-page-title tabIndex={-1} className="display mt-4 max-w-[28ch] text-[28px] leading-[1.06] text-ink text-balance sm:text-[32px]">
+            {job.title}
+          </h1>
+          <div className="mt-3 flex flex-wrap gap-1.5">
             <Pill tone={level.tone}>{level.label}</Pill>
-            <span className="text-caption text-ink-3">{app.lane === "careful" ? "Careful lane" : "Quick lane"}</span>
-          </span>
-        }
-        actions={
-          <>
-            {posting && (
-              <LinkButton href={posting} variant="primary">
-                Open the posting
-                <ArrowSquareOut size={16} aria-hidden />
-              </LinkButton>
-            )}
-            {app.kit && app.status === "ready" && <Button onClick={() => setStatus("applied")}>I&apos;ve applied</Button>}
-            <label className="inline-flex items-center gap-2 text-body text-ink-2">
-              Status
-              <span className="w-44">
-                <select value={app.status} onChange={(e) => setStatus(e.target.value as Status)} className={selectClass}>
-                  {STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {STATUS_LABEL[s]}
-                    </option>
-                  ))}
-                </select>
-              </span>
-            </label>
-          </>
-        }
-      />
+            {job.remote && <Pill>Remote</Pill>}
+            {job.salary && <Pill>{job.salary}</Pill>}
+            <Pill>{app.lane === "careful" ? "Careful lane" : "Quick lane"}</Pill>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {posting && (
+            <LinkButton href={posting} variant="primary">
+              Open the posting
+              <ArrowSquareOut size={16} aria-hidden />
+            </LinkButton>
+          )}
+          {app.kit && app.status === "ready" && <Button onClick={() => setStatus("applied")}>I&apos;ve applied</Button>}
+          <label className="w-44">
+            <span className="sr-only">Status</span>
+            <select value={app.status} onChange={(e) => setStatus(e.target.value as Status)} className={selectClass}>
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {STATUS_LABEL[s]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-        <div className="min-w-0">{left}</div>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
+        <div className="min-w-0">
+          <RevealProvider plan={reveal.plan}>{left}</RevealProvider>
+        </div>
         <Inspector
           app={app}
           facts={facts}
@@ -252,6 +262,7 @@ export function ApplicationScreen({ id }: { id: string }) {
       </div>
 
       {app.kit && <PrintSheet cv={app.kit.cv} />}
+      <TraceConnectors />
       <FactPeek />
     </TraceProvider>
   );

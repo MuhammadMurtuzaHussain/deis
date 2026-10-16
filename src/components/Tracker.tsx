@@ -10,11 +10,12 @@ import { useKitQueue } from "./KitQueue";
 import { AppList, type Row } from "./tracker/AppList";
 import { PipelineStrip } from "./tracker/PipelineStrip";
 import { stageCounts, stageOf, toCsv, type Stage } from "./tracker/logic";
-import { Button, buttonClass, EmptyState, EYEBROW, PageHeader, PageSkeleton } from "./ui";
+import { Button, buttonClass, EmptyState, PageHeader, PageSkeleton } from "./ui";
 
 // Every application in one place: a pipeline count strip (Saved, Ready, Applied, Follow up,
-// Closed), then a table on desktop and cards on phones, with an ochre nudge to follow up
-// a week after applying (normal in Ireland, and most people don't). Export to CSV any time.
+// Closed) in big Bricolage numbers, then a table on desktop and cards on phones, each with
+// the company's mark, and a warn "Follow up" pill a week after applying (normal in Ireland,
+// and most people don't). Export to CSV any time.
 
 export function Tracker() {
   const apps = useLiveQuery(() => db.applications.orderBy("updatedAt").reverse().toArray(), []);
@@ -42,7 +43,6 @@ export function Tracker() {
   return (
     <div>
       <PageHeader
-        eyebrow={EYEBROW.tracker}
         title="Applications"
         description={
           <>
@@ -75,7 +75,7 @@ export function Tracker() {
           Swipe right on a job and its kit appears here. Found one somewhere else? Use Add a job above.
         </EmptyState>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-4 sm:gap-5">
           <PipelineStrip counts={counts} filter={filter} onFilter={setFilter} />
           <p className="sr-only" role="status">
             {filter ? `Showing ${rows.length} ${rows.length === 1 ? "job" : "jobs"}` : ""}
@@ -83,7 +83,7 @@ export function Tracker() {
           {rows.length ? (
             <AppList rows={rows} working={working} />
           ) : (
-            <p className="rounded-surface border border-dashed border-control-border bg-surface p-6 text-body text-ink-2">
+            <p className="rounded-panel border border-line bg-surface p-6 text-body text-ink-2">
               Nothing at this stage.{" "}
               <button type="button" className="link" onClick={() => setFilter(null)}>
                 Show everything

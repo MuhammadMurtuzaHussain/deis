@@ -1,13 +1,15 @@
 "use client";
 
-import { Path, PencilSimple, Trash } from "@phosphor-icons/react";
-import { useState } from "react";
+import { PencilSimple, Trash } from "@phosphor-icons/react";
+import { motion } from "motion/react";
+import { useState, type ReactNode } from "react";
 import { FACT_KINDS, newFactId, type Fact, type FactKind } from "@/lib/profile/types";
-import { Button, Dialog, Field, inputClass, selectClass, textareaClass } from "../ui";
+import { Button, CompanyMark, Dialog, Field, inputClass, MOTION, selectClass, textareaClass, useMotion } from "../ui";
 
-// Facts as paper slips. A group per employer or school, then the rest. Unconfirmed facts
-// carry an ochre left border and say so in words; edit and delete are always visible; each
-// slip says how many CV lines cite it across your kits.
+// Facts as slips, a group per employer or school with that company's mark, then the rest.
+// Unconfirmed facts carry a warn left border and say "Not confirmed" in words; edit and
+// delete are always visible; each slip says how many CV lines cite it across your kits,
+// the count in a pop-soft pill (proven).
 
 export const KIND_LABEL: Record<FactKind, string> = {
   role: "Job",
@@ -24,20 +26,25 @@ export const KIND_LABEL: Record<FactKind, string> = {
 type Save = (f: Fact[]) => Promise<void>;
 type Remove = (id: string) => Promise<void>;
 
-const ICON_BTN = "grid size-9 shrink-0 place-items-center rounded-control text-ink-2 hover:bg-wash hover:text-ink pointer-coarse:size-11";
+const ICON_BTN = "grid size-9 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-sunken hover:text-ink pointer-coarse:size-11";
 
-function FactSlip({ fact, uses, onSave, onRemove, heading, showKind }: { fact: Fact; uses: number; onSave: Save; onRemove: Remove; heading?: boolean; showKind?: boolean }) {
+function FactSlip({ fact, uses, onSave, onRemove, heading, subtitle, lead, showKind }: { fact: Fact; uses: number; onSave: Save; onRemove: Remove; heading?: boolean; subtitle?: string; lead?: ReactNode; showKind?: boolean }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(fact.text);
   return (
-    <li className={`flex items-start gap-3 rounded-control border-l-[3px] py-2 pr-1 pl-3 ${fact.confirmed ? "border-transparent" : "border-ochre bg-ochre-soft/60"}`}>
+    <li
+      className={`relative flex items-start gap-3 py-2.5 pr-2 pl-4 before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full ${
+        fact.confirmed ? "before:bg-transparent" : "before:bg-warn"
+      }`}
+    >
       <input
         type="checkbox"
         checked={fact.confirmed}
         onChange={() => onSave([{ ...fact, confirmed: !fact.confirmed }])}
         aria-label={`${fact.confirmed ? "Confirmed" : "Confirm"}: ${fact.text}`}
-        className="mt-1 size-5 shrink-0 accent-[var(--ink)]"
+        className={`size-5 shrink-0 cursor-pointer accent-[var(--ink)] ${heading ? "mt-2.5" : "mt-0.5"}`}
       />
+      {lead}
       {editing ? (
         <form
           className="flex flex-1 flex-wrap gap-2"
@@ -57,24 +64,27 @@ function FactSlip({ fact, uses, onSave, onRemove, heading, showKind }: { fact: F
           </Button>
         </form>
       ) : (
-        <div className="grid min-w-0 flex-1 gap-0.5">
-          <p className={`text-body ${heading ? "font-bold text-ink" : "text-ink"}`}>
-            {showKind && <span className="mr-2 text-caption text-ink-3">{KIND_LABEL[fact.kind]}</span>}
+        <div className="grid min-w-0 flex-1 gap-1">
+          <p className={heading ? "text-[16px] leading-snug font-semibold text-ink" : "text-body leading-snug text-ink"}>
+            {showKind && <span className="mr-2 text-caption font-medium text-ink-3">{KIND_LABEL[fact.kind]}</span>}
             {fact.text}
           </p>
-          <p className="flex flex-wrap gap-x-3 text-caption">
-            {!fact.confirmed && <span className="font-medium text-ochre">Not confirmed yet</span>}
-            {uses > 0 && (
-              <span className="inline-flex items-center gap-1 text-trace">
-                <Path size={14} aria-hidden />
-                Used in {uses} CV {uses === 1 ? "line" : "lines"}
-              </span>
-            )}
-          </p>
+          {subtitle && <p className="text-caption text-ink-2">{subtitle}</p>}
+          {(!fact.confirmed || uses > 0) && (
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption">
+              {!fact.confirmed && <span className="font-medium text-warn">Not confirmed</span>}
+              {uses > 0 && (
+                <span className="inline-flex items-center gap-1.5 text-ink-2">
+                  <span className="num grid h-5 min-w-6 place-items-center rounded-full bg-pop-soft px-1 font-mono text-[11px] font-semibold text-ink">{uses}</span>
+                  {uses === 1 ? "CV line uses this" : "CV lines use this"}
+                </span>
+              )}
+            </p>
+          )}
         </div>
       )}
       {!editing && (
-        <span className="flex shrink-0">
+        <span className={`flex shrink-0 ${heading ? "mt-1.5" : "-mt-1.5"}`}>
           <button
             type="button"
             onClick={() => {
@@ -86,7 +96,7 @@ function FactSlip({ fact, uses, onSave, onRemove, heading, showKind }: { fact: F
             <PencilSimple size={18} aria-hidden />
             <span className="sr-only">Edit: {fact.text}</span>
           </button>
-          <button type="button" onClick={() => onRemove(fact.id)} className={`${ICON_BTN} hover:text-brick`}>
+          <button type="button" onClick={() => onRemove(fact.id)} className={`${ICON_BTN} hover:text-danger`}>
             <Trash size={18} aria-hidden />
             <span className="sr-only">Delete: {fact.text}</span>
           </button>
@@ -96,7 +106,7 @@ function FactSlip({ fact, uses, onSave, onRemove, heading, showKind }: { fact: F
   );
 }
 
-/** One employer, school or the loose facts: a sheet of slips. */
+/** One employer, school or the loose facts: a panel of slips, headed by the company mark. */
 export function SlipGroup({
   head,
   title,
@@ -105,7 +115,10 @@ export function SlipGroup({
   uses,
   onSave,
   onRemove,
+  order = 0,
 }: {
+  /** Its place in the list, for the stagger as the groups arrive. */
+  order?: number;
   head?: Fact;
   title?: string;
   subtitle?: string;
@@ -114,23 +127,30 @@ export function SlipGroup({
   onSave: Save;
   onRemove: Remove;
 }) {
+  const org = head ? head.org || head.title || head.text : null;
+  const { reduce, t } = useMotion();
   return (
-    <div className="rounded-surface bg-raised p-3 shadow-card sm:p-4">
-      {title && <h3 className="px-3 pt-1 pb-2 text-body font-bold text-ink">{title}</h3>}
+    <motion.section
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={t({ ...MOTION.spring, delay: Math.min(order, 8) * 0.05 })}
+      aria-label={head ? head.org || head.text : title}
+      className="mb-4 break-inside-avoid rounded-panel border border-line bg-surface p-2"
+    >
+      {title && <h3 className="px-4 pt-3 pb-1 text-body font-semibold text-ink">{title}</h3>}
       {head && (
         <ul>
-          <FactSlip fact={head} uses={uses.get(head.id) ?? 0} onSave={onSave} onRemove={onRemove} heading />
+          <FactSlip fact={head} uses={uses.get(head.id) ?? 0} onSave={onSave} onRemove={onRemove} heading subtitle={subtitle} lead={org ? <CompanyMark name={org} size={40} className="shrink-0" /> : null} />
         </ul>
       )}
-      {subtitle && <p className="pb-1 pl-11 text-caption text-ink-2">{subtitle}</p>}
       {items.length > 0 && (
-        <ul className={`grid gap-1 ${head ? "mt-1 border-t border-line pt-2 sm:pl-4" : ""}`}>
+        <ul className={`grid ${head ? "mt-1 border-t border-line pt-1" : ""}`}>
           {items.map((f) => (
             <FactSlip key={f.id} fact={f} uses={uses.get(f.id) ?? 0} onSave={onSave} onRemove={onRemove} showKind={!head || f.kind !== "achievement"} />
           ))}
         </ul>
       )}
-    </div>
+    </motion.section>
   );
 }
 

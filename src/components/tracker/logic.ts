@@ -50,7 +50,7 @@ export function fitPill(fit: Pick<Fit, "requirements"> | null | undefined): FitP
   const gaps = reqs.filter((r) => r.match === "gap").length;
   if (gaps === 0 && strong * 2 >= reqs.length) return { label: "Strong match", tone: "go" };
   if (gaps <= 1) return { label: "Good fit", tone: "neutral" };
-  return { label: `Stretch, ${gaps} gaps`, tone: "ochre" };
+  return { label: `Stretch, ${gaps} gaps`, tone: "warn" };
 }
 
 /** What to do next, in a few words. working: the id the Quick queue is building now. */
