@@ -51,6 +51,12 @@ pnpm dev                     # http://localhost:3200
 
 For fully private use, install [Ollama](https://ollama.com) and run `ollama pull gemma4:e4b`, then choose "On this computer" in Deis. Your profile lives in your browser's IndexedDB; there are no accounts.
 
+The server can spend the keys in `.env.local` and fetches whatever model address it's given, so keep it to yourself. `pnpm dev` and `pnpm start` listen on 127.0.0.1 only, and unless `DEIS_HOSTED=1` is set the server refuses requests whose Host or Origin isn't this computer. To serve other people, set `DEIS_HOSTED=1` and run `pnpm exec next start -H 0.0.0.0`, as the hosted demo does: `DEIS_HOSTED=1` rate-limits the demo key and lets the server connect only to well-known AI hosts.
+
+### Works offline
+
+With Gemma on this computer, the desktop app works with no network: choose File > Work offline, or start it with `--offline` (`DEIS_OFFLINE=1` for a server you run yourself). The server then refuses every connection that isn't to this computer, the deck shows the jobs it last saved, and checking a licence key waits until you're back online.
+
 ## How it's built
 
 - Next.js 16, React 19, Tailwind 4, Motion, Dexie.

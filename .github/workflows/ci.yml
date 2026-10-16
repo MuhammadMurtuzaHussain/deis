@@ -1,0 +1,39 @@
+# Lint, types, tests and a production build on every push and pull request to main.
+# Render deploys a commit only once this passes (autoDeployTrigger: checksPass in render.yaml).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint, test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # The web build never runs Electron; the installers have their own workflow.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      # next-env.d.ts and the route types aren't committed; typegen writes them without a build.
+      - run: pnpm exec next typegen && npx tsc --noEmit
+      - run: pnpm test
+      - run: pnpm build

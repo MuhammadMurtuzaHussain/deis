@@ -17,10 +17,10 @@ const schema = z.object({
 
 // Turn the user's own answer into proposed facts. They join the profile only if the user approves them.
 export async function POST(req: Request) {
-  const ai = await aiFor(req, "light", 60);
-  if (ai instanceof Response) return ai;
   const input = await body(req, schema);
   if (input instanceof Response) return input;
+  const ai = await aiFor(req, "light", 60);
+  if (ai instanceof Response) return ai;
   try {
     const { data } = await structured("proposals", "coachAgent", ai.chain, proposalPrompt(input.need, input.question, input.answer, input.orgs), proposalSchema, { maxOutputTokens: 600, temperature: 0.1 });
     // An org the profile doesn't know ("MSc") is dropped rather than invented; the user can set it later.

@@ -14,11 +14,12 @@ const schema = z.object({ job: jobInputSchema, fit: fitSchema });
 
 // Careful lane: a few kind questions about the gaps, so real experience the CV missed can surface.
 export async function POST(req: Request) {
-  const ai = await aiFor(req, "light", 60);
-  if (ai instanceof Response) return ai;
   const input = await body(req, schema);
   if (input instanceof Response) return input;
+  // No gaps, no model call, so nothing to count.
   if (!input.fit.requirements.some((r) => r.match !== "strong")) return Response.json({ questions: [] });
+  const ai = await aiFor(req, "light", 60);
+  if (ai instanceof Response) return ai;
   try {
     const { data } = await structured("questions", "coachAgent", ai.chain, gapQuestionsPrompt(input.job as unknown as ScoredJob, input.fit), gapQuestionsSchema, { maxOutputTokens: 800, temperature: 0.4 });
     // Right to work comes from the user's settings, so Deis never asks about it here.

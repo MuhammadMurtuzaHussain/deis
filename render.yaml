@@ -4,39 +4,62 @@ services:
   - type: web
     name: deis
     runtime: node
+    # Free sleeps after 15 minutes idle (about 30 s to wake). Starter ($7/month) stays awake.
     plan: free
     region: frankfurt
+    # Deploy a commit only after GitHub's CI checks (.github/workflows/ci.yml) pass on it.
+    autoDeployTrigger: checksPass
     # Render's /usr/bin is read-only, so call pnpm through corepack instead of `corepack enable`.
     buildCommand: corepack pnpm install --frozen-lockfile && corepack pnpm build
-    startCommand: corepack pnpm start
+    # `pnpm start` listens on this computer only; Render must reach the server from outside.
+    startCommand: corepack pnpm exec next start -H 0.0.0.0
     healthCheckPath: /api/status
     envVars:
       - key: COREPACK_ENABLE_DOWNLOAD_PROMPT
         value: "0"
+      # Electron is for the desktop installers; the web service never runs it.
+      - key: ELECTRON_SKIP_BINARY_DOWNLOAD
+        value: "1"
       # Rate-limits the demo's own Gemma and refuses local model addresses (no SSRF).
       - key: DEIS_HOSTED
         value: "1"
       - key: SITE_URL
         value: https://deis-bu83.onrender.com
+      # The demo key's budget for everyone together, on top of each person's hourly limits.
+      - key: DEMO_HOURLY_CAP
+        value: "600"
+      - key: DEMO_DAILY_CAP
+        value: "3000"
       # The demo's Gemma: Google AI Studio's free tier first …
       - key: GOOGLE_GENERATIVE_AI_API_KEY
         sync: false
       - key: GOOGLE_MODEL
         value: gemma-4-26b-a4b-it
-      # … and a second Gemma host for when AI Studio is having a bad day. Any OpenAI-compatible
-      # server, set in the dashboard: OpenRouter (https://openrouter.ai/api/v1, model
-      # google/gemma-4-26b-a4b-it) or DigitalOcean serverless inference (https://inference.do-ai.run/v1).
+      # … then other Gemma hosts for when AI Studio is having a bad day, set in the dashboard.
+      # FALLBACK_* is DigitalOcean serverless inference (https://inference.do-ai.run/v1) and
+      # FALLBACK_2_* is OpenRouter (https://openrouter.ai/api/v1, model google/gemma-4-26b-a4b-it,
+      # on a key with a credit limit).
       - key: FALLBACK_BASE_URL
         sync: false
       - key: FALLBACK_MODEL
         sync: false
       - key: FALLBACK_API_KEY
         sync: false
+      - key: FALLBACK_2_BASE_URL
+        sync: false
+      - key: FALLBACK_2_MODEL
+        sync: false
+      - key: FALLBACK_2_API_KEY
+        sync: false
       # The shared Irish job feed: one Google Jobs search per role family, cached two days.
       - key: SERPAPI_KEY
         sync: false
+      # The key is shared with other projects, so the demo takes 150 of its 250 a month.
       - key: SERPAPI_MONTHLY_BUDGET
-        value: "200"
+        value: "150"
+      # And at most 20 a day, so one bad day can't spend the month.
+      - key: SERPAPI_DAILY_BUDGET
+        value: "20"
       - key: REDIS_URL
         fromService:
           type: keyvalue
@@ -63,5 +86,9 @@ services:
     name: deis-cache
     plan: 256mb
     region: frankfurt
-    maxmemoryPolicy: allkeys-lru
+    # Every key has an expiry, and when memory runs out the one closest to expiring goes
+    # first: rate-limit counts (an hour), then job caches (hours to days), and this month's
+    # SerpApi count last. Under allkeys-lru a flood of new keys could evict that count and
+    # reset the budget.
+    maxmemoryPolicy: volatile-ttl
     ipAllowList: []
