@@ -34,7 +34,7 @@ export const NUM_CTX = 16384;
 const KEEP_ALIVE = "15m";
 
 /** On the hosted demo, the server must not fetch arbitrary URLs for strangers (SSRF). */
-const HOSTED_OPENAI_HOSTS = ["openrouter.ai", "inference.do-ai.run", "api.groq.com", "api.together.xyz", "api.deepinfra.com", "api.fireworks.ai", "api.mistral.ai"];
+const HOSTED_OPENAI_HOSTS = ["openrouter.ai", "api.groq.com", "api.together.xyz", "api.deepinfra.com", "api.fireworks.ai", "api.mistral.ai"];
 
 export const OFFLINE_MESSAGE = "Offline mode is on. Choose Gemma on this computer in Settings.";
 
@@ -172,7 +172,7 @@ const hasDemoHosts = () => Boolean(process.env.GOOGLE_GENERATIVE_AI_API_KEY) || 
 
 /** For /api/status: which hosts the demo would ask, and which are resting after a failure. No keys, no URLs. */
 /** A name a person recognises, not "127.0.0.1:11434", for the hosts the demo asks. */
-const HOST_NAMES: Record<string, string> = { "openrouter.ai": "OpenRouter", "inference.do-ai.run": "DigitalOcean", "api.groq.com": "Groq", "api.together.xyz": "Together AI", "api.deepinfra.com": "DeepInfra", "api.fireworks.ai": "Fireworks", "api.mistral.ai": "Mistral" };
+const HOST_NAMES: Record<string, string> = { "openrouter.ai": "OpenRouter", "api.groq.com": "Groq", "api.together.xyz": "Together AI", "api.deepinfra.com": "DeepInfra", "api.fireworks.ai": "Fireworks", "api.mistral.ai": "Mistral" };
 function hostLabel(baseUrl: string): string {
   const { hostname, host } = new URL(baseUrl);
   if (/^(localhost|127\.|\[?::1\]?$)/.test(hostname)) return "Gemma on this computer";

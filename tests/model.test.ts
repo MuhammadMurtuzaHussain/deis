@@ -36,16 +36,16 @@ describe("demo chain", () => {
   it("asks AI Studio, then each fallback host in order, with no retries and no 31B", async () => {
     vi.stubEnv("DEIS_HOSTED", "1");
     vi.stubEnv("GOOGLE_GENERATIVE_AI_API_KEY", "AIza-test-key-0000000000000");
-    vi.stubEnv("FALLBACK_BASE_URL", "https://inference.do-ai.run/v1");
+    vi.stubEnv("FALLBACK_BASE_URL", "https://api.groq.com/openai/v1");
     vi.stubEnv("FALLBACK_MODEL", "gemma-4-26b");
     vi.stubEnv("FALLBACK_2_BASE_URL", "https://openrouter.ai/api/v1");
     vi.stubEnv("FALLBACK_2_MODEL", "google/gemma-4-26b-a4b-it");
     const { modelChain, demoHosts } = await load();
     const chain = modelChain({ provider: "demo" }, "careful");
     expect(chain.tier).toBe("demo");
-    expect(ids(chain)).toEqual(["demo:gemma-4-26b-a4b-it", "openai:inference.do-ai.run:gemma-4-26b", "openai:openrouter.ai:google/gemma-4-26b-a4b-it"]);
+    expect(ids(chain)).toEqual(["demo:gemma-4-26b-a4b-it", "openai:api.groq.com:gemma-4-26b", "openai:openrouter.ai:google/gemma-4-26b-a4b-it"]);
     expect(chain.models.every((m) => m.maxRetries === 0)).toBe(true);
-    expect(demoHosts().map((h) => h.label)).toEqual(["Google AI Studio", "DigitalOcean", "OpenRouter"]);
+    expect(demoHosts().map((h) => h.label)).toEqual(["Google AI Studio", "Groq", "OpenRouter"]);
   });
 
   it("keeps 31B as AI Studio's second try only when there's no other host", async () => {

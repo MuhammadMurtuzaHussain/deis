@@ -36,9 +36,8 @@ services:
       - key: GOOGLE_MODEL
         value: gemma-4-26b-a4b-it
       # … then other Gemma hosts for when AI Studio is having a bad day, set in the dashboard.
-      # FALLBACK_* is DigitalOcean serverless inference (https://inference.do-ai.run/v1) and
-      # FALLBACK_2_* is OpenRouter (https://openrouter.ai/api/v1, model google/gemma-4-26b-a4b-it,
-      # on a key with a credit limit).
+      # FALLBACK_* is OpenRouter (https://openrouter.ai/api/v1, model google/gemma-4-26b-a4b-it,
+      # on a key with a credit limit). FALLBACK_2_* is optional: any third OpenAI-compatible host.
       - key: FALLBACK_BASE_URL
         sync: false
       - key: FALLBACK_MODEL
@@ -56,10 +55,10 @@ services:
         sync: false
       # The key is shared with other projects, so the demo takes 150 of its 250 a month.
       - key: SERPAPI_MONTHLY_BUDGET
-        value: "150"
+        value: "130"
       # And at most 20 a day, so one bad day can't spend the month.
       - key: SERPAPI_DAILY_BUDGET
-        value: "20"
+        value: "30"
       - key: REDIS_URL
         fromService:
           type: keyvalue

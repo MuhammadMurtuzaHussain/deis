@@ -44,7 +44,7 @@ const YEARS = new RegExp(
 );
 const EXPERIENCE_NEAR = /experience|exp\b|background|track record|working in|in (a|an) (similar|related)|professional|hands-on/i;
 const NOT_AFTER = /^[\s-]*(?:of\s+age|old\b|ago\b|warranty|guarantee|(?:(?:graduate|rotational|training|apprenticeship|degree)\s+)?(?:programme|program(?!\s*manage)|contract|course|degree|fixed[- ]term|placement|internship))/i;
-const NOT_BEFORE = /(?:within|over the (?:next|past|last)|in the (?:next|past|last)|founded|since|for the (?:next|past|last)|(?:over|for) a period of|period of|duration of|lasting|takes(?: about)?|study for)\s*$/i;
+const NOT_BEFORE = /(?:(?:your|the) first|within|over the (?:next|past|last)|in the (?:next|past|last)|founded|since|for the (?:next|past|last)|(?:over|for) a period of|period of|duration of|lasting|takes(?: about)?|study for)\s*$/i;
 const SOFT = /\b(preferred|desirable|ideally|nice to have|bonus|advantage|advantageous|a plus|beneficial)\b/i;
 
 const toNumber = (s: string) => WORD_NUMBERS[s.toLowerCase()] ?? Number.parseInt(s, 10);
@@ -128,8 +128,8 @@ const OPEN_TO_GRADUATES = /\b(?:recent(?:ly)? graduat(?:es?|ed)|new grads?|gradu
 
 /** Only for people still studying: an intern, placement or co-op title, or text that asks for current enrolment. */
 export function studentOnly(title: string, description: string): boolean {
-  // "Graduate Intern" schemes take graduates.
-  if (/\bgraduate\b/i.test(title)) return false;
+  // "Graduate Intern" schemes and "New Grad" roles take graduates.
+  if (/\b(?:graduate|new grads?)\b/i.test(title)) return false;
   const asksEnrolment = STUDENT_TEXT.test(description);
   if (!asksEnrolment && OPEN_TO_GRADUATES.test(description)) return false;
   return asksEnrolment || STUDENT_TITLE.test(title);
@@ -154,8 +154,10 @@ export function classifySeniority(title: string, description: string): Seniority
   // experience. "Complete the ACA over 3-4 years" once hid a trainee job (held-out eval, 13 Oct).
   if (top && top.years >= 3 && !(earlyTitle && !/experience/i.test(top.quote))) return verdict("senior", yearsMin, top.quote);
   if (earlyTitle) {
-    // Graduate titles that still ask for 2 years are a stretch, and the card says so.
-    if (top && top.years === 2) return verdict("stretch", yearsMin, top.quote);
+    // Graduate titles that still ask for 2 years of experience are a stretch, and the card says so.
+    // Same safety rule as above: "rotations during your first two years" or "a driving licence
+    // held for more than two years" don't make a graduate programme a stretch (16 Oct feed).
+    if (top && top.years === 2 && /experience/i.test(top.quote)) return verdict("stretch", yearsMin, top.quote);
     return verdict("early", yearsMin, `Title says “${earlyTitle[0].trim()}”`);
   }
   if (top && top.years === 2) return verdict("stretch", yearsMin, top.quote);

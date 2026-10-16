@@ -82,6 +82,32 @@ What the metrics don't catch, from reading all 8 after kits:
 
 **Careful lane** (`EVAL_LANE=careful`, e4b, 1 posting per persona). Aoife's Stripe letter named its one confirmed gap honestly: "I haven't yet used AI tools while applying critical judgment to validate outputs, but I am ready to learn this." Rahul's gap sentence was removed: it said "I am continuing my MSc Data Analytics studies" (finished in 2025), and the guard also read its "big data technologies like Hadoop or Spark" as a tool claim, because the "haven't" sits more than 6 words before the tool name. A true version of that sentence would have been removed too.
 
+## Re-run on the current guard (16 Oct 2026, evening)
+
+The "After" column above was measured before the last guard changes (tense phrases, no repairs for led and managed, one fact must back a repaired sentence, the posting-copy rule). So the same eval was run again on the current code: `pnpm eval ollama 4`, Gemma 4 E4B through Ollama on a 16 GB MacBook, Quick lane, both personas, 4 postings each. The snapshot had changed since the morning, so 2 of Rahul's postings and 1 of Aoife's are different jobs; read this as the same test, not the same inputs.
+
+| Per kit, 8 kits | After (morning) | Current guard (evening) |
+| --- | --- | --- |
+| Sentences the guard removed | 15 of 212 (7.1%) | **11 of 207 (5.3%)** |
+| Untraceable numbers, tools or certificates left: CV, letters and answers | 0, 0 | **0, 0** |
+| Leaked prompt text | 0 | 0 |
+| A finished degree written as current, left in the kit | 2 | **0** (2 caught and removed) |
+| Facts cited on 3 or more CV lines | 0 | 0.1 |
+| Near-copy line pairs on the CV | 0 | 0 |
+| Share of cited facts used on 2 or more lines | 39% | 27% |
+| 5-word runs copied from the posting: CV, letter, answers | 0.5%, 0.5%, 0.5% | 0.3%, 0.5%, 0.4% |
+| Words: CV, letter, answer | 139, 159, 51 | 139, 162, 53 |
+| Sentences kept because the guard added a citation | 3 | 2 |
+| Median time per kit (card, fit, kit) | 50 s | **46 s** |
+| Tokens per kit, in and out | about 7,700 and 2,500 | about 8,200 and 2,200 |
+
+The 11 removals, read by hand:
+
+- **5 rightly removed.** Two lines calling Rahul's finished MSc current ("You are currently working towards your MSc in Data Analytics", "my current MSc in Data Analytics"), two lines of MongoDB's own pitch ("redefining the data platform for the AI era", "unified data platform, which helps organisations modernise"), and one empty heading ("Project Planning and Execution:").
+- **6 true or harmless.** Two fit notes that mentioned a number not in the facts (a 2.1 grade requirement, a graduation date check), Rahul's thesis sentence, removed as posting copy because its tail echoed the posting, and three "added claim" lines that were mostly true, including "cleaning and joining 2 years of shipment data in SQL", which is a confirmed fact said in different words.
+
+So the guard is a little stricter than it needs to be: about half of what it removes is a real over-claim, the same as the morning run. Nothing untraceable was left in any kit. Saved run: `eval/results/kit-ollama-2026-10-16-gemma4_e4b_on_this_computer.json`.
+
 **E4B against 12B for the kit** (`EVAL_KIT_MODEL=gemma4:12b`: e4b still writes the card and fit). The same 4 postings, 2 per persona:
 
 | 4 kits | E4B writes the kit | 12B writes the kit |

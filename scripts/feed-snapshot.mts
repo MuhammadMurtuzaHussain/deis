@@ -6,7 +6,7 @@
 //   npx tsx scripts/feed-snapshot.mts                  # writes public/starter-jobs.json
 //   npx tsx scripts/feed-snapshot.mts --out /tmp/x.json
 //
-// Run by .github/workflows/desktop.yml before each installer build.
+// Run by `pnpm desktop:build` (scripts/desktop-prepare.mjs) before each installer build.
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { BOARDS } from "../src/lib/jobs/registry";

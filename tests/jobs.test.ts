@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { sanitisePosting, findInjections } from "@/lib/jobs/sanitize";
 import { classifySeniority, yearsMentions } from "@/lib/jobs/seniority";
 import { readRightToWork, workFit } from "@/lib/jobs/rightToWork";
-import { fromAshby, fromGoogleJobs, fromGreenhouse, irishCity, mergeJobs, parseRelativeDate } from "@/lib/jobs/normalise";
+import { fromAshby, fromGoogleJobs, fromGreenhouse, fromLever, fromSmartRecruiters, irishCity, mergeJobs, parseRelativeDate } from "@/lib/jobs/normalise";
 
 describe("sanitisePosting", () => {
   it("decodes Greenhouse's double-encoded HTML into readable text", () => {
@@ -255,5 +255,40 @@ describe("quotes on the card (PRD-X3, UX-12)", () => {
     const r = readRightToWork("Eligible to work in Ireland without the need for current or future visa sponsorshipProficiency with Excel and SQL");
     expect(r.stance).toBe("no_sponsorship");
     expect(r.evidence).toBe("Eligible to work in Ireland without the need for current or future visa sponsorship");
+  });
+});
+
+describe("more boards (16 Oct)", () => {
+  it("reads a Lever posting in Dublin with its lists, and skips one in New York", () => {
+    const j = fromLever(
+      { text: "Graduate Data Analyst", categories: { location: "Dublin" }, country: "IE", createdAt: Date.UTC(2026, 9, 1), descriptionPlain: "Join us.", lists: [{ text: "You have", content: "<li>SQL</li>" }], hostedUrl: "https://jobs.lever.co/acme/1", applyUrl: "https://jobs.lever.co/acme/1/apply" },
+      "Acme",
+    );
+    expect(j).toMatchObject({ source: "lever", city: "Dublin", postedAt: "2026-10-01T00:00:00.000Z", url: "https://jobs.lever.co/acme/1" });
+    expect(j?.description).toContain("SQL");
+    expect(j?.seniority.level).toBe("early");
+    expect(fromLever({ text: "Analyst", categories: { location: "New York, United States" }, country: "US", hostedUrl: "https://jobs.lever.co/acme/2" }, "Acme")).toBeNull();
+  });
+
+  it("reads a SmartRecruiters posting, keeping a town the city list doesn't know", () => {
+    const raw = { id: "7", name: "Retail Assistant", releasedDate: "2026-10-14T00:00:00Z", location: { city: "Clonmel", country: "ie", fullLocation: "Clonmel, , Ireland" }, jobAd: { sections: { jobDescription: { title: "Job Description", text: "<p>Serve customers.</p>" } } }, postingUrl: "https://jobs.smartrecruiters.com/Acme/7-retail" };
+    const j = fromSmartRecruiters(raw, "Acme", "Acme");
+    expect(j).toMatchObject({ source: "smartrecruiters", city: "Clonmel", url: "https://jobs.smartrecruiters.com/Acme/7-retail" });
+    expect(fromSmartRecruiters({ ...raw, location: { city: "Dublin 1", country: "ie" } }, "Acme", "Acme")?.city).toBe("Dublin");
+    expect(fromSmartRecruiters({ ...raw, location: { city: "Belfast", country: "gb" } }, "Acme", "Acme")).toBeNull();
+  });
+});
+
+describe("graduate programmes aren't over-filtered (16 Oct feed)", () => {
+  it("doesn't make a graduate programme a stretch over a duration or a driving licence", () => {
+    expect(classifySeniority("IT Graduate Development Program", "You'll experience rotations during your first two years in the programme.").level).toBe("early");
+    expect(classifySeniority("People and Culture Graduate Programme 2027", "Over two years, you'll complete three rotations.").level).toBe("early");
+    expect(classifySeniority("Trainee Pest Control Technician", "Full driving licence held for more than two years.").level).toBe("early");
+    expect(classifySeniority("Junior Software Engineer", "2+ years' relevant software development experience.").level).toBe("stretch");
+  });
+
+  it("treats a New Grad role as open to graduates", () => {
+    expect(studentOnly("Security Engineer, New Grad", "You are in the process of completing a bachelor's degree.")).toBe(false);
+    expect(studentOnly("Software Engineer, Intern", "You are in the process of completing a bachelor's degree.")).toBe(true);
   });
 });

@@ -14,6 +14,8 @@ import { postedAgo } from "../JobCard";
 const SOURCE: Record<DeckEntry["job"]["source"], string> = {
   greenhouse: "The company's own job board",
   ashby: "The company's own job board",
+  lever: "The company's own job board",
+  smartrecruiters: "The company's own job board",
   google_jobs: "Google Jobs",
   pasted: "Pasted by you",
 };

@@ -6,7 +6,16 @@ import path from "node:path";
 
 // --build runs `next build` first with the window's Sentry DSN blanked, the same way on every
 // OS's shell. Next keeps a variable already set, even empty, over the one in .env.local.
-if (process.argv.includes("--build")) execSync("next build", { stdio: "inherit", env: { ...process.env, NEXT_PUBLIC_SENTRY_DSN: "" } });
+if (process.argv.includes("--build")) {
+  // Starter jobs for an offline first run (public/starter-jobs.json). Soft: offline, a build
+  // keeps the last snapshot (or ships none, and the deck says it needs a connection).
+  try {
+    execSync("npx tsx scripts/feed-snapshot.mts", { stdio: "inherit", timeout: 120_000 });
+  } catch {
+    console.warn(existsSync("public/starter-jobs.json") ? "Feed snapshot failed; keeping the last public/starter-jobs.json." : "Feed snapshot failed; building without starter jobs.");
+  }
+  execSync("next build", { stdio: "inherit", env: { ...process.env, NEXT_PUBLIC_SENTRY_DSN: "" } });
+}
 
 const out = ".next/standalone";
 if (!existsSync(`${out}/server.js`)) throw new Error("Run `next build` first (output: standalone).");

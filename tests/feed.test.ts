@@ -156,3 +156,51 @@ describe("hosted feed on the desktop", () => {
     expect(readFileSync("desktop/main.mjs", "utf8")).not.toContain("deis.onrender.com");
   });
 });
+
+describe("Google Jobs pages", () => {
+  const page = (n: number, token?: string) => ({
+    jobs_results: Array.from({ length: 3 }, (_, i) => ({ title: `Graduate Analyst ${n}-${i}`, company_name: "Acme", location: "Dublin, Ireland", apply_options: [{ title: "Acme", link: `https://acme.ie/${n}-${i}` }] })),
+    ...(token ? { serpapi_pagination: { next_page_token: token } } : {}),
+  });
+
+  it("follows next_page_token up to the search's pages and merges them", async () => {
+    vi.stubEnv("SERPAPI_KEY", "test-serpapi-key");
+    const urls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (url.includes("account.json")) return Response.json({ total_searches_left: 200 });
+        urls.push(url);
+        const n = urls.length;
+        return Response.json(page(n, `t${n}`));
+      }),
+    );
+    const { runSearch } = await import("@/lib/server/feed");
+    const r = await runSearch({ id: "t", query: "graduate", location: "Ireland", pages: 3 });
+    expect(r.from).toBe("serpapi");
+    expect(r.jobs).toHaveLength(9);
+    expect(urls).toHaveLength(3);
+    expect(urls[0]).not.toContain("next_page_token");
+    expect(urls[2]).toContain("next_page_token=t2");
+  });
+
+  it("keeps the pages read when a later page fails, and reads only page one when the month is 80% spent", async () => {
+    vi.stubEnv("SERPAPI_KEY", "test-serpapi-key");
+    vi.stubEnv("SERPAPI_MONTHLY_BUDGET", "2");
+    let searches = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (url.includes("account.json")) return Response.json({ total_searches_left: 200 });
+        searches++;
+        return Response.json(page(searches, "more"));
+      }),
+    );
+    const { runSearch } = await import("@/lib/server/feed");
+    // Hit 1 of 2 reads page one; hit 2 is over 80% of the month, so page two isn't read.
+    const r = await runSearch({ id: "t", query: "graduate", location: "Ireland", pages: 5 });
+    expect(r.jobs).toHaveLength(3);
+    expect(searches).toBe(1);
+  });
+});
+

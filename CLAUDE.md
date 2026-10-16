@@ -8,7 +8,7 @@ Entry for the **DEV Hacktoberfest Open-Source AI Challenge, Week 2: Side Hustle*
 
 - **Deadline:** Sun 18 Oct 2026 23:59 PDT = **Mon 19 Oct 07:59 Irish time** (MLH's copy shows a day earlier; aim for Sunday evening).
 - **Plan / PRD:** `docs/PRD.md`.
-- **Prize categories in view:** Gemma, Render (featured), SerpApi, Sentry Agent Tracing, Mastra. One win per challenge. Decided against: Tinker (no fine-tune, can't tune Gemma), TabPFN (Python runtime), MongoDB/Tiger/Backboard (break local-first), ElevenLabs. DigitalOcean only if it becomes the demo's second Gemma host and a guide ships.
+- **Prize categories in view:** Gemma, Render (featured), SerpApi, Sentry Agent Tracing, Mastra. One win per challenge. Decided against: Tinker (no fine-tune, can't tune Gemma), TabPFN (Python runtime), MongoDB/Tiger/Backboard (break local-first), ElevenLabs, DigitalOcean (dropped 16 Oct: OpenRouter is the demo's second Gemma host).
 - **The author is the first user.** Private context (their own CVs, tailoring brief) is in `CLAUDE.local.md`, which is gitignored. Never commit personal data.
 
 ## Working rules
@@ -57,20 +57,24 @@ Local Gemma: `ollama pull gemma4:e4b` (6.6 GB). `.env.local` points the demo's f
 - Gemma 26B wrote "currently undertaking an MSc" about a 2025 degree and "eligible to work in Ireland without sponsorship" for a Stamp 1G persona. Both are now code-checked.
 - A `useEffect(() => register(fly))` arrow returned the function, React treated it as cleanup and flew a card every render. Effects that call registration functions need a block body.
 
-## Progress (13 Oct)
+## Progress (16 Oct)
 
-- Repo public: github.com/MuhammadMurtuzaHussain/deis (AGPL-3.0), pushed to `main` as we go.
+- Repo public: github.com/MuhammadMurtuzaHussain/deis (AGPL-3.0), pushed to `main` as we go. CI (`ci.yml`) runs tests, lint and types on every push.
 - Hosted demo: https://deis-bu83.onrender.com (Render gave `deis-bu83`; `deis.onrender.com` belongs to someone else). The desktop app reads its job feed from it, so installers built before 13 Oct 17:15 point at the wrong host.
 - Whole app works locally and in the packaged macOS app: check-in, profile import (CV, LinkedIn PDF, LinkedIn export ZIP), deck over real Irish jobs, Quick and Careful lanes, kit with sources and Checks tab, Word/PDF, tracker, settings, licence (off until Polar is set).
-- Evals in `eval/RESULTS.md`: seniority 98.1% on a blind held-out set (first run), 0 jobs wrongly hidden after the fix; guard on Gemma 4 E4B removes about 7% of sentences on 16 Oct (8 of 15 real over-claims or posting copy, 2 empty headings, 5 true or harmless lines), 0 untraceable left.
+- Audit fixes done: per-route and demo-wide rate limits on the demo key (`limits.ts`, counts in Key Value), CI, model chain v2 (AI Studio, then `FALLBACK_*` = OpenRouter Gemma 4 26B, then optional `FALLBACK_2_*`; no retries, a failing host goes to the back for 2 minutes).
+- Offline mode done: `DEIS_OFFLINE`, egress guard, File/Settings > Work offline, saved jobs in Dexie, paste-a-job (`AddJob.tsx`) that works with no network.
+- Guard improvements and the graduate CV order (profile, education, experience, projects, skills, certifications, languages); see `eval/RESULTS.md`.
+- v3 "Highlighter" UI: lime highlighter, physical deck with spotlight and fly-to-tab, the kit that writes itself, trace connectors, rolling numbers, magnetic buttons, company marks (`docs/DESIGN.md`).
+- Evals in `eval/RESULTS.md`: seniority 98.1% on a blind held-out set (first run), 0 jobs wrongly hidden after the fix; guard re-run on the current code 16 Oct (see the table), 0 untraceable left.
 - Installers for macOS, Windows and Linux build in GitHub Actions (`Desktop installers`, run by hand). Only the macOS one has been run on a real machine.
-- DEV post draft: `../deis-dev-post.md` (outside the repo), with TODOs for the author's own lines, first users, demo link and video.
+- DEV post draft: `../deis-dev-post.md` (outside the repo). Remaining TODOs are author-only: own words, tester quotes, video link, screenshots.
 
 ## Open items
 
-- [ ] Render blueprint (author's account). Key Value is on the paid `256mb` plan ($10/month from the $50 hackathon credit): a workspace gets one free Key Value and Return Route's cache has it. Secrets to set in the dashboard: AI Studio key, SerpApi key, Sentry auth token; DigitalOcean key and model later.
-- [ ] Second Gemma host for the demo (AI Studio alone failed ~80% of calls on 13 Oct): OpenRouter first (`FALLBACK_BASE_URL=https://openrouter.ai/api/v1`, `FALLBACK_MODEL=google/gemma-4-26b-a4b-it`, key with a credit limit), all three set in Render's dashboard. DigitalOcean serverless inference later; confirm its model id with `GET https://inference.do-ai.run/v1/models`.
-- [ ] Sentry project `deis` (org `tfc-research-and-innovation-li`, DSN in `render.yaml`, traces and guard issues verified 13 Oct): screenshots of a kit trace and guard issues for the post.
-- [ ] Polar: €9 product with a licence-key benefit; put the organisation id and checkout link in `desktop/config.json`.
-- [ ] First users (the author, Cybersecurity Society), video, screenshots, DevRelay session, publish the post.
+- [ ] Render blueprint applied and secrets set in the dashboard (author): AI Studio key, SerpApi key, Sentry auth token, OpenRouter `FALLBACK_API_KEY` (key with a credit limit). Key Value is on the paid `256mb` plan ($10/month from the $50 hackathon credit); web service Starter $7/month.
+- [ ] Sentry screenshots of a kit trace and guard issues for the post (project `deis`, org `tfc-research-and-innovation-li`).
+- [ ] Polar (author): €9 product with a licence-key benefit; put the organisation id and checkout link in `desktop/config.json`.
+- [ ] Testers (author): the author's own job search, Cybersecurity Society; quotes for the post. Then video, screenshots, DevRelay session, publish.
+- [ ] Job feed expansion to about 250 jobs (another agent); put the real count in README and the post.
 - [ ] Windows and Linux installers tested on real machines; code signing before a real launch.

@@ -1,22 +1,12 @@
 // Scratch check: pull every registry board plus a saved Google Jobs response and print what the filters decide.
 import { readFileSync } from "node:fs";
 import { BOARDS } from "../src/lib/jobs/registry";
-import { fromAshby, fromGoogleJobs, fromGreenhouse, mergeJobs } from "../src/lib/jobs/normalise";
+import { fromGoogleJobs, mergeJobs } from "../src/lib/jobs/normalise";
+import { boardJobs } from "../src/lib/server/feed";
 import type { ScoredJob } from "../src/lib/jobs/types";
 
-const jobs: ScoredJob[] = [];
-await Promise.all(
-  BOARDS.map(async (b) => {
-    const url = b.ats === "greenhouse" ? `https://boards-api.greenhouse.io/v1/boards/${b.slug}/jobs?content=true` : `https://api.ashbyhq.com/posting-api/job-board/${b.slug}?includeCompensation=true`;
-    const r = await fetch(url).catch(() => null);
-    if (!r?.ok) return console.log("FAIL", b.slug);
-    const d = await r.json();
-    for (const raw of d.jobs ?? []) {
-      const j = b.ats === "greenhouse" ? fromGreenhouse(raw, b.name) : fromAshby(raw, b.name);
-      if (j) jobs.push(j);
-    }
-  }),
-);
+// Every board kind (Greenhouse, Ashby, Lever, SmartRecruiters) through the feed's own readers.
+const jobs: ScoredJob[] = (await Promise.all(BOARDS.map((b) => boardJobs(b).catch(() => (console.log("FAIL", b.slug), []))))).flat();
 const gj = JSON.parse(readFileSync(process.argv[2], "utf8"));
 for (const raw of gj.jobs_results ?? []) { const j = fromGoogleJobs(raw); if (j) jobs.push(j); }
 const merged = mergeJobs(jobs);

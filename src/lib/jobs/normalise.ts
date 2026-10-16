@@ -153,6 +153,91 @@ export function fromAshby(raw: AshbyJob, company: string): ScoredJob | null {
   );
 }
 
+// ---- Lever: api.lever.co/v0/postings/<slug>?mode=json (one call, descriptions included)
+
+export type LeverJob = {
+  text: string;
+  categories?: { location?: string; allLocations?: string[] };
+  country?: string;
+  workplaceType?: string;
+  createdAt?: number;
+  description?: string;
+  descriptionPlain?: string;
+  lists?: { text?: string; content?: string }[];
+  additional?: string;
+  hostedUrl: string;
+  applyUrl?: string;
+};
+
+export function fromLever(raw: LeverJob, company: string): ScoredJob | null {
+  const locations = [raw.categories?.location ?? "", ...(raw.categories?.allLocations ?? [])];
+  // Lever's "Dublin" has country IE beside it; a bare town elsewhere doesn't.
+  const place = locations.map((l) => irishCity(raw.country === "IE" && !/ireland/i.test(l) ? `${l}, Ireland` : l)).find(Boolean);
+  if (!place || NOT_A_JOB.test(raw.text)) return null;
+  const html = [raw.description ?? raw.descriptionPlain ?? "", ...(raw.lists ?? []).map((l) => `<h3>${l.text ?? ""}</h3><ul>${l.content ?? ""}</ul>`), raw.additional ?? ""].join("\n");
+  const { text, injections } = sanitisePosting(html);
+  return score(
+    {
+      id: jobId(company, raw.text, place.city),
+      source: "lever",
+      title: raw.text.trim(),
+      company,
+      location: [...new Set(locations.filter(Boolean))].join(" · "),
+      city: place.city,
+      remote: place.remote || raw.workplaceType === "remote",
+      postedAt: raw.createdAt ? new Date(raw.createdAt).toISOString() : null,
+      description: text,
+      salary: null,
+      apply: [{ label: company, url: raw.applyUrl ?? raw.hostedUrl }],
+      url: raw.hostedUrl,
+    },
+    injections,
+  );
+}
+
+// ---- SmartRecruiters: api.smartrecruiters.com/v1/companies/<id>/postings?country=ie, then each posting
+
+export type SmartRecruitersJob = {
+  id: string;
+  name: string;
+  releasedDate?: string;
+  location?: { city?: string; country?: string; remote?: boolean; fullLocation?: string };
+  jobAd?: { sections?: Record<string, { title?: string; text?: string } | undefined> };
+  postingUrl?: string;
+  applyUrl?: string;
+};
+
+export function fromSmartRecruiters(raw: SmartRecruitersJob, company: string, slug: string): ScoredJob | null {
+  const loc = raw.location ?? {};
+  if (loc.country && loc.country.toLowerCase() !== "ie") return null;
+  const full = loc.fullLocation ?? [loc.city, "Ireland"].filter(Boolean).join(", ");
+  const place = irishCity(/ireland/i.test(full) ? full : `${full}, Ireland`);
+  if (!place || NOT_A_JOB.test(raw.name)) return null;
+  // A town the city list doesn't know (Clonmel, Westport) keeps its own name rather than "Ireland",
+  // so a Dublin-only user isn't shown a shop job in Navan as "somewhere in Ireland".
+  const city = place.city === "Ireland" && loc.city?.trim() ? loc.city.trim() : place.city;
+  const sections = Object.values(raw.jobAd?.sections ?? {}).filter((s): s is { title?: string; text?: string } => Boolean(s?.text));
+  const { text, injections } = sanitisePosting(sections.map((s) => `<h3>${s.title ?? ""}</h3>${s.text}`).join("\n"));
+  const url = raw.postingUrl ?? `https://jobs.smartrecruiters.com/${slug}/${raw.id}`;
+  return score(
+    {
+      id: jobId(company, raw.name, city),
+      source: "smartrecruiters",
+      title: raw.name.trim(),
+      company,
+      location: full.replace(/,\s*,/g, ","),
+      city,
+      remote: place.remote || Boolean(loc.remote),
+      postedAt: raw.releasedDate ?? null,
+      description: text,
+      salary: null,
+      apply: [{ label: company, url: raw.applyUrl ?? url }],
+      url,
+    },
+    injections,
+  );
+}
+
 // ---- Google Jobs via SerpApi: engine=google_jobs, location only (gl=ie is rejected)
 
 export type GoogleJob = {

@@ -287,7 +287,7 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
           setChoice={setPicked}
           icon={<HardDrives size={20} />}
           title="Another server you run or rent"
-          sub="LM Studio, llama.cpp, vLLM, DigitalOcean, OpenRouter: anything that speaks the OpenAI API."
+          sub="LM Studio, llama.cpp, vLLM, OpenRouter, Groq: anything that speaks the OpenAI API."
           model={modelOf("openai")}
           inUse={inUse("openai")}
         >

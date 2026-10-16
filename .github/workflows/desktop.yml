@@ -46,10 +46,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Starter jobs for an offline first run, from the employer boards only. A flaky board
-      # shouldn't stop a release: the app works without the list.
-      - run: npx tsx scripts/feed-snapshot.mts
-        continue-on-error: true
+      # desktop:build also writes the starter jobs for an offline first run (soft-fails).
       # The window never reports to Sentry; desktop-prepare fails the build if a DSN got inlined.
       - run: pnpm desktop:build
         env:

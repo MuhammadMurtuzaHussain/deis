@@ -5,7 +5,7 @@ import type { Language } from "./languages";
 // these fields by code (seniority, right to work, location); Gemma only adds the
 // three "why" lines on the card and never decides whether a job is shown.
 
-export const sourceSchema = z.enum(["greenhouse", "ashby", "google_jobs", "pasted"]);
+export const sourceSchema = z.enum(["greenhouse", "ashby", "lever", "smartrecruiters", "google_jobs", "pasted"]);
 export type Source = z.infer<typeof sourceSchema>;
 
 export const applyLinkSchema = z.object({ label: z.string(), url: z.string().url() });

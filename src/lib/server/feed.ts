@@ -1,19 +1,25 @@
 import { z } from "zod";
 import { BOARDS, type Board } from "../jobs/registry";
-import { fromAshby, fromGoogleJobs, fromGreenhouse, hashId, irishCity, mergeJobs, NOT_A_JOB, type GreenhouseJob } from "../jobs/normalise";
-import { categoryById } from "../jobs/categories";
+import { fromAshby, fromGoogleJobs, fromGreenhouse, fromLever, fromSmartRecruiters, hashId, irishCity, mergeJobs, NOT_A_JOB, type GreenhouseJob, type LeverJob, type SmartRecruitersJob } from "../jobs/normalise";
+import { categoryById, familySearch, POOL, type Search } from "../jobs/categories";
 import { LANGUAGES } from "../jobs/languages";
 import { sanitisePosting } from "../jobs/sanitize";
+import { classifySeniority } from "../jobs/seniority";
 import { jobSchema, LEVELS, type ScoredJob } from "../jobs/types";
 import { kvGet, kvHit, kvSet, kvSetNx } from "./kv";
 import { netFetch } from "./net";
 import { reportBoardFailures } from "./telemetry";
 
 // The Irish job feed. Two kinds of source, both cached so the cost doesn't grow with users:
-//   - public ATS boards (Greenhouse, Ashby): free, no key, full descriptions; fresh for 6 h
-//   - Google Jobs through SerpApi: one search per role family for all of Ireland,
-//     shared by every user and fresh for 48 h, with a monthly budget and a floor of
-//     searches left, because the key is shared with other projects
+//   - public ATS boards (Greenhouse, Ashby, Lever, SmartRecruiters): free, no key, full
+//     descriptions; fresh for 6 h
+//   - Google Jobs through SerpApi: an early-career pool for everyone (POOL: "graduate",
+//     "junior", "trainee", "internship", and graduate searches per city) plus one search per
+//     role family the user picked, each read up to a few pages deep (next_page_token).
+//     Shared by every user, fresh for about a week (spread so they don't all fall due
+//     together), kept 30 days, with daily and monthly budgets and a floor of searches
+//     left, because the key is shared with other projects. A page past the first is
+//     only read while the month's budget is under 80% spent.
 // Stale-while-revalidate: a saved copy is served at once and refreshed in the
 // background, one refresh at a time across instances. A failed refresh never
 // overwrites the saved copy, and an empty list is saved only when a board is gone (404).
@@ -21,7 +27,9 @@ import { reportBoardFailures } from "./telemetry";
 // (languages, right to work, cities) happens on the user's device.
 
 const BOARD = { ttlSec: 7 * 86400, freshMs: 6 * 3600_000 };
-const SEARCH = { ttlSec: 14 * 86400, freshMs: 48 * 3600_000 };
+const SEARCH = { ttlSec: 30 * 86400, freshMs: 7 * 86400_000 };
+/** Searches fall due between 6 and 8 days, by a hash of the key, so a week's refreshes are spread out. */
+const searchLife = (key: string) => ({ ttlSec: SEARCH.ttlSec, freshMs: Math.round(SEARCH.freshMs * (0.85 + 0.3 * ((parseInt(hashId(key), 36) % 1000) / 1000))) });
 const LOCK_SEC = 120;
 const BOARD_TIMEOUT = 30_000;
 /** Under the route's maxDuration: boards still loading by then are left out of this answer. */
@@ -129,6 +137,37 @@ async function ashby(b: Board, signal: AbortSignal): Promise<ScoredJob[]> {
   return (d.jobs ?? []).map((j) => fromAshby(j as never, b.name)).filter((j): j is ScoredJob => Boolean(j));
 }
 
+async function lever(b: Board, signal: AbortSignal): Promise<ScoredJob[]> {
+  const list = (await getJson(`https://api.lever.co/v0/postings/${b.slug}?mode=json`, signal)) as LeverJob[];
+  return (Array.isArray(list) ? list : []).map((j) => fromLever(j, b.name)).filter((j): j is ScoredJob => Boolean(j));
+}
+
+async function smartRecruiters(b: Board, signal: AbortSignal): Promise<ScoredJob[]> {
+  const base = `https://api.smartrecruiters.com/v1/companies/${b.slug}/postings`;
+  const list: SmartRecruitersJob[] = [];
+  // Ireland only, 100 a page; the list has no descriptions, so each Irish posting is read once.
+  for (let offset = 0; offset < 500; offset += 100) {
+    const d = (await getJson(`${base}?country=ie&limit=100&offset=${offset}`, signal)) as { content?: SmartRecruitersJob[]; totalFound?: number };
+    list.push(...(d.content ?? []));
+    if (!d.content?.length || list.length >= (d.totalFound ?? 0)) break;
+  }
+  const jobs = await pool(
+    list.filter((j) => !NOT_A_JOB.test(j.name)),
+    4,
+    async (j) => {
+      try {
+        return fromSmartRecruiters((await getJson(`${base}/${j.id}`, signal)) as SmartRecruitersJob, b.name, b.slug);
+      } catch (e) {
+        if (e instanceof NotFound) return null;
+        throw e;
+      }
+    },
+  );
+  return jobs.filter((j): j is ScoredJob => Boolean(j));
+}
+
+const READERS: Record<Board["ats"], (b: Board, signal: AbortSignal) => Promise<ScoredJob[]>> = { greenhouse, ashby, lever, smartrecruiters: smartRecruiters };
+
 /** Boards whose last refresh failed, reported once per failing streak. */
 const failing = new Set<string>();
 
@@ -137,7 +176,7 @@ export function boardFeed(b: Board, o: { cacheOnly?: boolean; signal?: AbortSign
     boardSlot(async () => {
       const signal = outer ? AbortSignal.any([outer, AbortSignal.timeout(BOARD_TIMEOUT)]) : AbortSignal.timeout(BOARD_TIMEOUT);
       try {
-        const jobs = await (b.ats === "greenhouse" ? greenhouse(b, signal) : ashby(b, signal));
+        const jobs = await READERS[b.ats](b, signal);
         failing.delete(b.slug);
         return jobs.map(trim);
       } catch (e) {
@@ -182,43 +221,72 @@ async function searchesLeft(key: string): Promise<number | null> {
 
 class OverBudget extends Error {}
 
-/** One Google Jobs search, shared by everyone who picked this role family. */
-export async function searchJobs(
-  categoryId: string,
-  o: { cacheOnly?: boolean } = {},
-): Promise<{ jobs: ScoredJob[]; from: "cache" | "serpapi" | "off" | "budget" | "error" | "offline"; at?: number; stale?: boolean }> {
-  const cat = categoryById(categoryId);
+type SearchAnswer = { jobs: ScoredJob[]; from: "cache" | "serpapi" | "off" | "budget" | "error" | "offline"; at?: number; stale?: boolean };
+
+/** May one more SerpApi search be spent? Deeper pages only while the month is under 80% spent. */
+async function spend(key: string, page: number): Promise<void> {
+  // The key is shared with return-route and pizhu: leave them a floor of searches.
+  const left = await searchesLeft(key);
+  if (left !== null && left <= (Number(process.env.SERPAPI_FLOOR) || 40)) throw new OverBudget();
+  // A daily cap too, so one bad day (or a flood of new role families) can't spend the month.
+  if ((await kvHit(`serp-day:${new Date().toISOString().slice(0, 10)}`, 2 * 86400)) > (Number(process.env.SERPAPI_DAILY_BUDGET) || 30)) throw new OverBudget();
+  const monthly = Number(process.env.SERPAPI_MONTHLY_BUDGET) || 130;
+  const used = await kvHit(`serp:${month()}`, 32 * 86400);
+  if (used > monthly || (page > 0 && used > 0.8 * monthly)) throw new OverBudget();
+}
+
+/**
+ * One Google Jobs search, up to s.pages pages deep, shared by everyone. A page that can't be
+ * read (budget, error) ends the search with the pages already read, if any.
+ */
+export async function runSearch(s: Search, o: { cacheOnly?: boolean } = {}): Promise<SearchAnswer> {
   const key = process.env.SERPAPI_KEY;
-  if (!cat || !key) return { jobs: [], from: "off" };
+  if (!key) return { jobs: [], from: "off" };
   let overBudget = false;
+  const cacheKey = `gj:v3:${hashId(`${s.query}|${s.location}|${s.pages}`)}`;
   const got = await swr(
-    `gj:v2:${hashId(cat.query)}`,
-    SEARCH,
+    cacheKey,
+    searchLife(cacheKey),
     async () => {
-      try {
-        // The key is shared with return-route and pizhu: leave them a floor of searches.
-        const left = await searchesLeft(key);
-        if (left !== null && left <= (Number(process.env.SERPAPI_FLOOR) || 40)) throw new OverBudget();
-        // A daily cap too, so one bad day (or a flood of new role families) can't spend the month.
-        if ((await kvHit(`serp-day:${new Date().toISOString().slice(0, 10)}`, 2 * 86400)) > (Number(process.env.SERPAPI_DAILY_BUDGET) || 20)) throw new OverBudget();
-        if ((await kvHit(`serp:${month()}`, 32 * 86400)) > (Number(process.env.SERPAPI_MONTHLY_BUDGET) || 150)) throw new OverBudget();
-        // gl=ie is rejected by the Google Jobs engine; the location alone keeps results in Ireland.
-        const url = `https://serpapi.com/search.json?engine=google_jobs&q=${encodeURIComponent(cat.query)}&location=${encodeURIComponent("Ireland")}&hl=en&api_key=${key}`;
-        const d = (await getJson(url, AbortSignal.timeout(25_000))) as { jobs_results?: unknown[]; error?: string };
-        // "No results" is a real answer; any other error (bad key, out of searches) isn't.
-        if (d.error && !/hasn't returned any results/i.test(d.error)) throw new Error(d.error);
-        return (d.jobs_results ?? []).map((j) => fromGoogleJobs(j as never)).filter((j): j is ScoredJob => Boolean(j)).map(trim);
-      } catch (e) {
-        if (e instanceof OverBudget) overBudget = true;
-        else console.warn("[feed] google jobs", cat.id, e instanceof Error ? e.message.replace(key, "[key]") : e);
-        throw e;
+      const raw: unknown[] = [];
+      let token: string | undefined;
+      for (let page = 0; page < s.pages; page++) {
+        try {
+          await spend(key, page);
+          // gl=ie is rejected by the Google Jobs engine; the location alone keeps results in Ireland.
+          const url = `https://serpapi.com/search.json?engine=google_jobs&q=${encodeURIComponent(s.query)}&location=${encodeURIComponent(s.location)}&hl=en${token ? `&next_page_token=${encodeURIComponent(token)}` : ""}&api_key=${key}`;
+          const d = (await getJson(url, AbortSignal.timeout(25_000))) as { jobs_results?: unknown[]; error?: string; serpapi_pagination?: { next_page_token?: string } };
+          // "No results" is a real answer (and the end of the pages); any other error (bad key, out of searches) isn't.
+          if (d.error && !/hasn't returned any results/i.test(d.error)) throw new Error(d.error);
+          raw.push(...(d.jobs_results ?? []));
+          token = d.serpapi_pagination?.next_page_token;
+          if (!token || !d.jobs_results?.length) break;
+        } catch (e) {
+          if (e instanceof OverBudget) overBudget = true;
+          else console.warn("[feed] google jobs", s.id, e instanceof Error ? e.message.replace(key, "[key]") : e);
+          if (page === 0) throw e;
+          break; // keep the pages already read
+        }
       }
+      const now = new Date();
+      return mergeJobs(raw.map((j) => fromGoogleJobs(j as never, now)).filter((j): j is ScoredJob => Boolean(j))).map(trim);
     },
     o,
   );
   if (got.jobs) return { jobs: got.jobs, from: got.how === "loaded" ? "serpapi" : "cache", at: got.at, stale: got.stale };
   return { jobs: [], from: o.cacheOnly ? "offline" : overBudget ? "budget" : "error" };
 }
+
+/** A role family's own search, shared by everyone who picked it. */
+export async function searchJobs(categoryId: string, o: { cacheOnly?: boolean } = {}): Promise<SearchAnswer> {
+  const cat = categoryById(categoryId);
+  if (!cat) return { jobs: [], from: "off" };
+  return runSearch(familySearch(cat), o);
+}
+
+/** A first search with nothing saved can take a while; past the deadline this answer goes without it (it still saves). */
+const inTime = (p: Promise<SearchAnswer>, signal: AbortSignal): Promise<SearchAnswer> =>
+  signal.aborted ? Promise.resolve({ jobs: [], from: "error" }) : Promise.race([p, new Promise<SearchAnswer>((r) => signal.addEventListener("abort", () => r({ jobs: [], from: "error" }), { once: true }))]);
 
 // ---- The whole feed
 
@@ -238,14 +306,20 @@ export type FeedResult = { jobs: ScoredJob[]; sources: FeedSources; stale: boole
 
 export async function buildFeed(categories: string[], opts: { includeSenior?: boolean; cacheOnly?: boolean } = {}): Promise<FeedResult> {
   const signal = AbortSignal.timeout(FEED_DEADLINE);
+  const searchDeadline = AbortSignal.timeout(FEED_DEADLINE - 5000);
   const [boards, searches] = await Promise.all([
     Promise.all(BOARDS.map((b) => boardFeed(b, { cacheOnly: opts.cacheOnly, signal }))),
-    Promise.all(categories.slice(0, 5).map(async (c) => [c, await searchJobs(c, { cacheOnly: opts.cacheOnly })] as const)),
+    Promise.all([
+      ...categories.slice(0, 5).map(async (c) => [c, await inTime(searchJobs(c, { cacheOnly: opts.cacheOnly }), searchDeadline)] as const),
+      ...POOL.map(async (s) => [`pool:${s.id}`, await inTime(runSearch(s, { cacheOnly: opts.cacheOnly }), searchDeadline)] as const),
+    ]),
   ]);
   const fromBoards = boards.flatMap((g) => g.jobs ?? []);
   const fromSearch = searches.flatMap(([, r]) => r.jobs);
   // Search results first so that, on a tie, the board's own copy (with the full description) wins in mergeJobs.
-  const merged = mergeJobs([...fromSearch, ...fromBoards]);
+  // Seniority is read again here, not trusted from the cache: a search is kept for up to 30 days,
+  // and a classifier fix should reach the deck at once, not when the copy expires. It's regexes only.
+  const merged = mergeJobs([...fromSearch, ...fromBoards]).map((j) => ({ ...j, seniority: classifySeniority(j.title, j.description) }));
   const jobs = opts.includeSenior ? merged : merged.filter((j) => j.seniority.level !== "senior");
   const times = [...boards.map((g) => g.at), ...searches.map(([, r]) => r.at)].filter((t): t is number => t !== undefined);
   return {

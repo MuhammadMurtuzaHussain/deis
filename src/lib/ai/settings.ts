@@ -24,7 +24,7 @@ export const aiSettingsSchema = z.discriminatedUnion("provider", [
     model: z.string().max(80).default(DEFAULTS.ollama),
     kitModel: z.string().max(80).optional(),
   }),
-  /** Any OpenAI-compatible server: LM Studio, llama.cpp, vLLM, OpenRouter, DigitalOcean. */
+  /** Any OpenAI-compatible server: LM Studio, llama.cpp, vLLM, OpenRouter. */
   z.object({
     provider: z.literal("openai"),
     baseUrl: z.string().url(),

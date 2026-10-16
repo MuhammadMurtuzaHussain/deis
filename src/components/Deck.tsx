@@ -39,7 +39,7 @@ const SKIP_REASONS = ["Too senior", "Wrong place", "Not my field", "Pay too low"
 
 /** The first visit: no saved jobs yet, so say what Deis is doing while the boards are read. */
 function DeckLoading({ categories }: { categories: string[] }) {
-  const lines = ["Reading the job boards of 30 employers in Ireland", ...categories.map((c) => `Searching Google Jobs for ${categoryById(c)?.label.toLowerCase() ?? c} roles`), "Hiding senior roles and ones that rule you out", "Ranking what's left by your profile"];
+  const lines = ["Reading the job boards of 54 employers in Ireland", ...categories.map((c) => `Searching Google Jobs for ${categoryById(c)?.label.toLowerCase() ?? c} roles`), "Hiding senior roles and ones that rule you out", "Ranking what's left by your profile"];
   const [i, setI] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setI((x) => Math.min(x + 1, lines.length - 1)), 1400);
