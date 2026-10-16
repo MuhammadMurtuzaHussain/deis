@@ -20,6 +20,7 @@ import { TraceConnectors } from "./application/TraceConnectors";
 import { numberFacts, tracedLines, usage } from "./application/trace";
 import { useRewrite } from "./application/useRewrite";
 import { TraceProvider, useTrace } from "./application/useTrace";
+import { progressLine } from "@/lib/kit-progress";
 import { useKitQueue } from "./KitQueue";
 import { Button, CompanyMark, Elapsed, LinkButton, Notice, PageHeader, PageSkeleton, Pill, selectClass, Skeleton, type PillTone } from "./ui";
 
@@ -194,7 +195,7 @@ export function ApplicationScreen({ id }: { id: string }) {
     left = (
       <div className="grid gap-4">
         <Notice>
-          {working ? "Writing your CV, letter and answers." : "Your kit is waiting its turn."} {working ? <Elapsed since={queue.since!} /> : null}
+          {working ? (queue.progress ? progressLine(queue.progress) : "Writing your CV, letter and answers.") : "Your kit is waiting its turn."} {working ? <Elapsed since={queue.since!} /> : null}
         </Notice>
         <PaperPlaceholder />
       </div>

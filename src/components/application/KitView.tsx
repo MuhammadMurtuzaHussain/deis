@@ -48,7 +48,7 @@ export function KitView({
   tab: KitTab;
   onTab: (t: KitTab) => void;
   stale: boolean;
-  rewrite: { busy: { since: number } | null; error: string | null; run: (recheck: boolean) => void };
+  rewrite: { busy: { since: number; line: string | null } | null; error: string | null; run: (recheck: boolean) => void };
   canRewrite: boolean;
   reveal: ReturnType<typeof useKitReveal>;
 }) {
@@ -141,7 +141,7 @@ export function KitView({
     <div className="grid min-w-0 gap-4">
       {rewrite.busy && (
         <Notice>
-          Writing it again. This kit stays until the new one is ready. <Elapsed since={rewrite.busy.since} />
+          {rewrite.busy.line ?? "Writing it again."} This kit stays until the new one is ready. <Elapsed since={rewrite.busy.since} />
         </Notice>
       )}
       {rewrite.error && <Notice tone="error">{rewrite.error}</Notice>}

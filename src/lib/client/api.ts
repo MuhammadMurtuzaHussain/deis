@@ -1,6 +1,7 @@
 "use client";
 
 import { AI_HEADER, aiSettingsSchema, encodeSettings, tierOf, type AiSettings, type Tier } from "../ai/settings";
+import { KIT_STREAM } from "../kit-progress";
 
 // The user's model choice lives in this browser (or the desktop app) and rides along
 // with each AI request in one header. The hosted demo never stores it.
@@ -138,40 +139,84 @@ const NO_NETWORK = "You're offline. Deis will carry on when you're back online."
 const UNREACHABLE = "Couldn't reach Deis's server. If you're on the web demo, it may be waking up: try again in a minute.";
 const TOO_LONG = "That took too long, so Deis stopped waiting. Try again; on a laptop, a smaller model is faster.";
 
-/**
- * Call a Deis API route. GET without a body, POST with one. Throws ApiError (with a kind)
- * for every failure except a caller's own abort, which rethrows the AbortError.
- * opts.timeoutMs overrides the per-route deadline; 0 turns it off.
- */
-export async function api<T>(path: string, body?: unknown, opts: { signal?: AbortSignal; ai?: AiSettings; timeoutMs?: number; headers?: Record<string, string> } = {}): Promise<T> {
+type ApiOptions = { signal?: AbortSignal; ai?: AiSettings; timeoutMs?: number; headers?: Record<string, string> };
+
+/** The request, with the deadline it runs under and the one way to turn a failure into an ApiError. */
+async function send(path: string, body: unknown, opts: ApiOptions) {
   const ai = opts.ai ?? settings();
   const ms = opts.timeoutMs ?? deadlineFor(path, tierOf(ai));
   const { signal, deadline } = ms > 0 ? withDeadline(opts.signal, ms) : { signal: opts.signal, deadline: null };
-  let res: Response;
+  /** A deadline becomes "timeout", the caller's own abort is rethrown, anything else is a network failure. */
+  const lost = (e: unknown): never => {
+    if (deadline?.aborted && !opts.signal?.aborted) throw new ApiError(TOO_LONG, "timeout", 0, "timeout");
+    if ((e as Error).name === "AbortError") throw e;
+    const offline = typeof navigator !== "undefined" && navigator.onLine === false;
+    throw offline ? new ApiError(NO_NETWORK, "offline", 0, "offline") : new ApiError(UNREACHABLE, "network", 0, "network");
+  };
   try {
-    res = await fetch(path, {
+    const res = await fetch(path, {
       method: body === undefined ? "GET" : "POST",
       headers: { ...opts.headers, "content-type": "application/json", [AI_HEADER]: encodeSettings(ai) },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal,
     });
+    return { res, deadline, lost };
   } catch (e) {
-    if (deadline?.aborted && !opts.signal?.aborted) throw new ApiError(TOO_LONG, "timeout", 0, "timeout");
-    if ((e as Error).name === "AbortError") throw e;
-    const offline = typeof navigator !== "undefined" && navigator.onLine === false;
-    throw offline ? new ApiError(NO_NETWORK, "offline", 0, "offline") : new ApiError(UNREACHABLE, "network", 0, "network");
+    return lost(e);
   }
+}
+
+/** A failed response as an ApiError, with the server's message when it sent one. */
+function refused(res: Response, data: { message?: string; error?: string } | null): ApiError {
+  const retry = Number(res.headers.get("retry-after"));
+  return new ApiError(data?.message ?? `Something went wrong (${res.status}).`, data?.error ?? "error", res.status, undefined, Number.isFinite(retry) && retry > 0 ? retry : undefined);
+}
+
+/**
+ * Call a Deis API route. GET without a body, POST with one. Throws ApiError (with a kind)
+ * for every failure except a caller's own abort, which rethrows the AbortError.
+ * opts.timeoutMs overrides the per-route deadline; 0 turns it off.
+ */
+export async function api<T>(path: string, body?: unknown, opts: ApiOptions = {}): Promise<T> {
+  const { res, deadline, lost } = await send(path, body, opts);
   let data: { message?: string; error?: string } | null;
   try {
     data = await res.json();
   } catch (e) {
-    if (deadline?.aborted && !opts.signal?.aborted) throw new ApiError(TOO_LONG, "timeout", 0, "timeout");
+    if (deadline?.aborted && !opts.signal?.aborted) lost(e);
     if ((e as Error).name === "AbortError") throw e;
     data = null;
   }
-  if (!res.ok) {
-    const retry = Number(res.headers.get("retry-after"));
-    throw new ApiError(data?.message ?? `Something went wrong (${res.status}).`, data?.error ?? "error", res.status, undefined, Number.isFinite(retry) && retry > 0 ? retry : undefined);
-  }
+  if (!res.ok) throw refused(res, data);
   return data as T;
+}
+
+/**
+ * The same call to a route that streams its progress (KIT_STREAM): each line but the last
+ * goes to onLine, and the last is the answer or the error. Same deadline, same errors.
+ */
+export async function apiStream<T, L>(path: string, body: unknown, onLine: (line: L) => void, opts: ApiOptions = {}): Promise<T> {
+  const { res, lost } = await send(path, body, { ...opts, headers: { ...opts.headers, accept: KIT_STREAM } });
+  if (!res.ok || !res.body || !res.headers.get("content-type")?.includes(KIT_STREAM)) {
+    if (!res.ok) throw refused(res, await res.json().catch(() => null));
+    // A route that answered with plain JSON after all.
+    return (await res.json().catch(lost)) as T;
+  }
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = "";
+  for (;;) {
+    const { done, value } = await reader.read().catch(lost);
+    buffer += value ?? "";
+    const lines = buffer.split("\n");
+    buffer = done ? "" : lines.pop()!;
+    for (const raw of lines) {
+      if (!raw.trim()) continue;
+      const line = JSON.parse(raw) as { type: string; data?: unknown; status?: number; error?: string; message?: string };
+      if (line.type === "result") return line.data as T;
+      if (line.type === "error") throw new ApiError(line.message ?? `Something went wrong (${line.status}).`, line.error ?? "error", line.status ?? 502);
+      onLine(line as L);
+    }
+    // The connection closed before the answer: the server went away mid-kit.
+    if (done) throw new ApiError(UNREACHABLE, "network", 0, "network");
+  }
 }

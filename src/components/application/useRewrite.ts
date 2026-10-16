@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ApiError } from "@/lib/client/api";
 import { loadProfile, type Application } from "@/lib/client/db";
 import { runFit, runKit, updateApplication } from "@/lib/client/kit";
+import { progressLine, progressStart, withEvent } from "@/lib/kit-progress";
 import { toast } from "../ui";
 import { mergeRewrite, withFitEvents } from "./trace";
 
@@ -13,17 +14,21 @@ import { mergeRewrite, withFitEvents } from "./trace";
 // tab stops listing removals today's rules wouldn't make.
 
 export function useRewrite(app: Application | null | undefined) {
-  const [busy, setBusy] = useState<{ since: number } | null>(null);
+  const [busy, setBusy] = useState<{ since: number; line: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const run = async (recheck: boolean) => {
     if (!app?.fit || busy) return;
-    setBusy({ since: Date.now() });
+    setBusy({ since: Date.now(), line: null });
     setError(null);
     try {
       const profile = await loadProfile();
       const fresh = recheck ? await runFit(app.job, profile) : null;
-      let next = await runKit(app.job, profile, fresh?.fit ?? app.fit);
+      let progress = progressStart(fresh ? "done" : null);
+      let next = await runKit(app.job, profile, fresh?.fit ?? app.fit, (e) => {
+        progress = withEvent(progress, e);
+        setBusy((b) => b && { ...b, line: progressLine(progress) });
+      });
       if (fresh) next = withFitEvents(next, app.fitEvents, fresh.events);
       if (app.kit) next = mergeRewrite(app.kit, next);
       await updateApplication(app.id, { ...(fresh ? { fit: fresh.fit, fitEvents: fresh.events } : {}), kit: next, kitError: null });

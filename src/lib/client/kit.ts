@@ -4,7 +4,8 @@ import type { CvLength, Fit } from "../cv/schema";
 import type { GuardEvent } from "../cv/guard";
 import type { ScoredJob } from "../jobs/types";
 import type { Profile } from "../profile/types";
-import { api } from "./api";
+import type { KitStepEvent } from "../kit-progress";
+import { api, apiStream } from "./api";
 import { db, getMeta, type Application, type Kit } from "./db";
 
 // The two AI steps after a swipe right, shared by the background queue (Quick lane)
@@ -21,10 +22,13 @@ export async function runFit(job: ScoredJob, p: Profile): Promise<{ fit: Fit; ev
   return api("/api/fit", { job, facts, neverClaim });
 }
 
-/** Both callers save the fit (and its guard events) first, so the lane and those events are read back here. */
-export async function runKit(job: ScoredJob, p: Profile, fit: Fit): Promise<Kit> {
+/**
+ * Both callers save the fit (and its guard events) first, so the lane and those events are read back here.
+ * onStep hears each workflow step start and finish (src/lib/kit-progress.ts) while the kit is written.
+ */
+export async function runKit(job: ScoredJob, p: Profile, fit: Fit, onStep: (e: KitStepEvent) => void = () => {}): Promise<Kit> {
   const [include, length, app] = await Promise.all([kitParts(), cvLength(), db.applications.get(job.id)]);
-  const out = await api<Omit<Kit, "at">>("/api/kit", { job, profile: usable(p), fit, include, lane: app?.lane ?? "quick", length });
+  const out = await apiStream<Omit<Kit, "at">, KitStepEvent>("/api/kit", { job, profile: usable(p), fit, include, lane: app?.lane ?? "quick", length }, onStep);
   // The Checks tab lists everything the guard stepped in on, the fit check included.
   return { ...out, events: [...(app?.fitEvents ?? []), ...out.events], at: Date.now() };
 }

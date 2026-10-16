@@ -5,6 +5,7 @@ import type { GapQuestions, Proposals } from "@/lib/cv/schema";
 import { api, ApiError } from "@/lib/client/api";
 import { db, getMeta, loadProfile, setMeta, type Application } from "@/lib/client/db";
 import { runFit, runKit, updateApplication } from "@/lib/client/kit";
+import { progressLine, progressStart, withEvent } from "@/lib/kit-progress";
 import { newFactId } from "@/lib/profile/types";
 import { Button, Elapsed, Field, Notice, Skeleton, textareaClass, toast } from "../ui";
 import { mergeRewrite } from "./trace";
@@ -58,7 +59,7 @@ export function Coach({ app, onBuilt, onCancel }: { app: Application; onBuilt: (
 
   const suggest = async () => {
     if (!questions) return;
-    setBusy({ what: "Turning your answers into facts", since: Date.now() });
+    setBusy({ what: "Turning your answers into facts.", since: Date.now() });
     setError(null);
     try {
       const profile = await loadProfile();
@@ -82,15 +83,23 @@ export function Coach({ app, onBuilt, onCancel }: { app: Application; onBuilt: (
   };
 
   const build = async () => {
-    setBusy({ what: rebuilding ? "Checking the fit again and writing a new kit" : "Checking the fit again and writing your kit", since: Date.now() });
+    setBusy({ what: rebuilding ? "Checking the fit again and writing a new kit." : "Checking the fit again and writing your kit.", since: Date.now() });
     setError(null);
     try {
       const profile = await loadProfile();
       const added = proposals.some((p) => p.state === "added");
       if (app.lane !== "careful") await updateApplication(app.id, { lane: "careful" });
-      const { fit, events } = added || !app.fit ? await runFit(app.job, profile) : { fit: app.fit, events: app.fitEvents };
+      const refit = added || !app.fit;
+      const { fit, events } = refit ? await runFit(app.job, profile) : { fit: app.fit!, events: app.fitEvents };
       await updateApplication(app.id, { fit, fitEvents: events });
-      const next = await runKit(app.job, profile, fit);
+      // The workflow's steps, as they happen: what's written and what the guard removed.
+      let progress = progressStart(refit ? "done" : null);
+      const show = () => setBusy((b) => b && { ...b, what: progressLine(progress) });
+      show();
+      const next = await runKit(app.job, profile, fit, (e) => {
+        progress = withEvent(progress, e);
+        show();
+      });
       await updateApplication(app.id, { kit: app.kit ? mergeRewrite(app.kit, next) : next, kitError: null });
       await db.meta.delete(draftKey(app.id));
       toast(rebuilding ? "Your new kit is ready." : "Your kit is ready.");
@@ -165,7 +174,7 @@ export function Coach({ app, onBuilt, onCancel }: { app: Application; onBuilt: (
       {error && <Notice tone="error">{error}</Notice>}
       {busy && (
         <Notice>
-          {busy.what}. <Elapsed since={busy.since} />
+          {busy.what} <Elapsed since={busy.since} />
         </Notice>
       )}
       <div className="flex flex-wrap gap-2">

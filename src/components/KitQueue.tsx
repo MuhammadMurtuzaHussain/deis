@@ -6,6 +6,7 @@ import { ApiError, isPausable } from "@/lib/client/api";
 import { db, loadProfile } from "@/lib/client/db";
 import { runFit, runKit, updateApplication } from "@/lib/client/kit";
 import { useStore } from "@/lib/client/store";
+import { progressStart, withEvent, type KitProgress } from "@/lib/kit-progress";
 
 // Quick lane: swipe right and keep swiping. Each kit (fit check, CV, letter, answers)
 // is built in the background, one at a time, so a laptop's single Gemma isn't asked
@@ -24,8 +25,10 @@ type Queue = {
   waiting: number;
   /** Why the queue is waiting for the network, or null. */
   paused: QueuePause | null;
+  /** How far the kit being built has got: the fit, then each step of the workflow. */
+  progress: KitProgress | null;
 };
-const Ctx = createContext<Queue>({ working: null, since: null, waiting: 0, paused: null });
+const Ctx = createContext<Queue>({ working: null, since: null, waiting: 0, paused: null, progress: null });
 export const useKitQueue = () => useContext(Ctx);
 
 /** A failed network kit is tried again after this long even if no "online" event comes (a server that was waking up). */
@@ -41,6 +44,7 @@ export function KitQueue({ children }: { children: ReactNode }) {
   const pending = useLiveQuery(() => db.applications.filter((a) => a.lane === "quick" && !a.kit && !a.kitError && a.status === "ready").sortBy("createdAt"), [], []);
   const [working, setWorking] = useState<{ id: string; since: number } | null>(null);
   const [failure, setFailure] = useState<QueuePause | null>(null);
+  const [progress, setProgress] = useState<KitProgress | null>(null);
   const busy = useRef(false);
   const { locked, isOffline, effectiveModel, offline } = useStore();
 
@@ -80,11 +84,13 @@ export function KitQueue({ children }: { children: ReactNode }) {
         const profile = await loadProfile();
         let fit = app.fit;
         if (!fit) {
+          setProgress(progressStart("running"));
           const out = await runFit(app.job, profile);
           fit = out.fit;
           await updateApplication(app.id, { fit, fitEvents: out.events });
         }
-        const kit = await runKit(app.job, profile, fit);
+        setProgress(progressStart("done"));
+        const kit = await runKit(app.job, profile, fit, (e) => setProgress((p) => p && withEvent(p, e)));
         await updateApplication(app.id, { kit, kitError: null });
       } catch (e) {
         // No network isn't the kit's fault: wait and try again rather than record a failure.
@@ -94,9 +100,10 @@ export function KitQueue({ children }: { children: ReactNode }) {
     }).finally(() => {
       busy.current = false;
       setWorking(null);
+      setProgress(null);
     });
   }, [pending, locked, paused]);
 
-  const value = useMemo<Queue>(() => ({ working: working?.id ?? null, since: working?.since ?? null, waiting: pending.length, paused }), [working, pending.length, paused]);
+  const value = useMemo<Queue>(() => ({ working: working?.id ?? null, since: working?.since ?? null, waiting: pending.length, paused, progress }), [working, pending.length, paused, progress]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

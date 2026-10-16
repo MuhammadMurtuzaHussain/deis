@@ -3,6 +3,7 @@
 import { Hammer, PauseCircle } from "@phosphor-icons/react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/client/db";
+import { progressLine } from "@/lib/kit-progress";
 import { useKitQueue } from "../KitQueue";
 import { BarList, Button, Dialog, Elapsed } from "../ui";
 import type { HiddenBar } from "./logic";
@@ -13,7 +14,7 @@ import type { HiddenBar } from "./logic";
 
 /** One line under the actions: what the Quick lane is building, or what swiping right will do. */
 export function QueueLine({ lane }: { lane: "quick" | "careful" | null }) {
-  const { working, since, waiting, paused } = useKitQueue();
+  const { working, since, waiting, paused, progress } = useKitQueue();
   const app = useLiveQuery(() => (working ? db.applications.get(working) : undefined), [working]);
   const cls = "mx-auto mt-5 flex max-w-[460px] items-start justify-center gap-2 text-center text-caption";
   if (paused && waiting > 0)
@@ -37,7 +38,8 @@ export function QueueLine({ lane }: { lane: "quick" | "careful" | null }) {
               <Elapsed since={since} />
             </span>
           )}
-          .{waiting > 1 && ` ${waiting - 1} more after this one.`}
+          .{progress && ` ${progressLine(progress)}`}
+          {waiting > 1 && ` ${waiting - 1} more after this one.`}
         </span>
       </p>
     );
