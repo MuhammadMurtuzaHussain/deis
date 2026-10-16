@@ -40,6 +40,8 @@ export type Seniority = {
   yearsMin: number | null;
   /** Short quote from the posting that decided the level, shown on the card. */
   evidence: string | null;
+  /** Needs current enrolment (an internship, placement or co-op). Missing on jobs scored before 16 Oct 2026. */
+  studentOnly?: boolean;
 };
 
 export type WorkStance = "sponsors" | "no_sponsorship" | "eu_only" | "right_to_work" | "unknown";

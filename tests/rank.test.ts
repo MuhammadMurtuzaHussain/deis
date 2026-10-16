@@ -50,3 +50,33 @@ describe("buildDeck", () => {
     expect(terms.has("kubernetes")).toBe(false);
   });
 });
+
+import { HIDDEN_COPY } from "@/lib/jobs/rank";
+
+describe("stage and stretch (PRD-X1, PRD-X2)", () => {
+  const intern = job("Software Engineering Intern 2027 (Dublin)", "This position requires current enrollment in a school. Python, React, TypeScript.");
+  const grad = job("Graduate Software Engineer", "Python, React, TypeScript, SQL. Recent graduates welcome.");
+  const twoYears = job("Software Engineer", "At least two years' experience in a similar role. Python.");
+
+  it("hides student-only internships from a graduate, with its own reason", () => {
+    const deck = buildDeck([intern, grad], aoife.preferences, aoife.facts, new Set());
+    expect(deck.entries.map((e) => e.job.title)).toEqual(["Graduate Software Engineer"]);
+    expect(deck.hidden.student).toBe(1);
+  });
+  it("puts them first for someone still studying", () => {
+    const deck = buildDeck([grad, intern], { ...aoife.preferences, stage: "student" }, aoife.facts, new Set());
+    expect(deck.entries[0].job.title).toBe("Software Engineering Intern 2027 (Dublin)");
+    expect(deck.hidden.student).toBe(0);
+  });
+  it("reads the flag again for jobs cached before it existed", () => {
+    const old = { ...intern, seniority: { ...intern.seniority, studentOnly: undefined } };
+    expect(buildDeck([old], aoife.preferences, aoife.facts, new Set()).hidden.student).toBe(1);
+  });
+  it("counts 2-year roles apart from senior ones, and says so plainly", () => {
+    const deck = buildDeck([twoYears, grad], aoife.preferences, aoife.facts, new Set());
+    expect(deck.hidden.stretch).toBe(1);
+    expect(deck.hidden.level).toBe(0);
+    expect(HIDDEN_COPY.stretch(1)).not.toMatch(/3\+/);
+    expect(HIDDEN_COPY.stretch(1)).toMatch(/about 2 years/);
+  });
+});

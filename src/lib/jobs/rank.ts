@@ -2,13 +2,13 @@ import type { Fact, Preferences } from "../profile/types";
 import { categoriesForTitle } from "./categories";
 import { speaksEnough } from "./languages";
 import { workFit, type WorkFit } from "./rightToWork";
-import { visibleByDefault } from "./seniority";
+import { studentOnly, visibleByDefault } from "./seniority";
 import type { ScoredJob } from "./types";
 
 // Which cards you see, and in what order. All code, no model: the deck has to be
 // instant and free. Gemma only writes the "why" lines on the cards about to show.
 
-export type HiddenReason = "level" | "language" | "permit" | "city" | "role" | "seen";
+export type HiddenReason = "level" | "stretch" | "student" | "language" | "permit" | "city" | "role" | "seen";
 export type DeckEntry = { job: ScoredJob; rank: number; work: WorkFit; matched: string[] };
 export type Deck = { entries: DeckEntry[]; hidden: Record<HiddenReason, number> };
 
@@ -44,7 +44,8 @@ function freshness(postedAt: string | null, now: number): number {
 }
 
 export function buildDeck(jobs: ScoredJob[], prefs: Preferences, facts: Fact[], seen: Set<string>, now = Date.now()): Deck {
-  const hidden: Record<HiddenReason, number> = { level: 0, language: 0, permit: 0, city: 0, role: 0, seen: 0 };
+  const hidden: Record<HiddenReason, number> = { level: 0, stretch: 0, student: 0, language: 0, permit: 0, city: 0, role: 0, seen: 0 };
+  const graduated = prefs.stage === "graduate" || prefs.stage === "early";
   const terms = profileTerms(facts);
   const entries: DeckEntry[] = [];
   for (const job of jobs) {
@@ -53,7 +54,13 @@ export function buildDeck(jobs: ScoredJob[], prefs: Preferences, facts: Fact[], 
       continue;
     }
     if (!visibleByDefault(job.seniority.level, prefs.showStretch)) {
-      hidden.level++;
+      hidden[job.seniority.level === "stretch" ? "stretch" : "level"]++;
+      continue;
+    }
+    // Jobs cached before the flag existed are read again here; it's one regex.
+    const forStudents = job.seniority.studentOnly ?? studentOnly(job.title, job.description);
+    if (forStudents && graduated) {
+      hidden.student++;
       continue;
     }
     if (!speaksEnough(job.languages, prefs.languages)) {
@@ -79,7 +86,9 @@ export function buildDeck(jobs: ScoredJob[], prefs: Preferences, facts: Fact[], 
       continue;
     }
     const { score, matched } = overlap(job, terms);
-    const rank = score + LEVEL_BONUS[job.seniority.level] + (roleMatch && cats.length ? 0.3 : 0) + freshness(job.postedAt, now) + (work === "check" ? -0.1 : 0) + (job.injections.length ? -0.05 : 0);
+    // Someone still studying sees the internships made for them first.
+    const studentFirst = forStudents && prefs.stage === "student" ? 2 : 0;
+    const rank = score + LEVEL_BONUS[job.seniority.level] + (roleMatch && cats.length ? 0.3 : 0) + freshness(job.postedAt, now) + (work === "check" ? -0.1 : 0) + (job.injections.length ? -0.05 : 0) + studentFirst;
     entries.push({ job, rank, work, matched: matched.slice(0, 8) });
   }
   entries.sort((a, b) => b.rank - a.rank);
@@ -88,6 +97,8 @@ export function buildDeck(jobs: ScoredJob[], prefs: Preferences, facts: Fact[], 
 
 export const HIDDEN_COPY: Record<HiddenReason, (n: number) => string> = {
   level: (n) => `${n} asking for 3+ years or a senior title`,
+  stretch: (n) => `${n} asking for about 2 years (turn on stretch roles to see them)`,
+  student: (n) => `${n} open only to current students`,
   language: (n) => `${n} needing a language you didn't list`,
   permit: (n) => `${n} that rule out your right-to-work status`,
   city: (n) => `${n} in other places`,

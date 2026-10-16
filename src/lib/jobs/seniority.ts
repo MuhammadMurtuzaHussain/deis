@@ -51,15 +51,46 @@ const toNumber = (s: string) => WORD_NUMBERS[s.toLowerCase()] ?? Number.parseInt
 
 type YearsMention = { years: number; soft: boolean; quote: string };
 
-function quoteAround(text: string, index: number, length: number): string {
-  // The clause around the match, trimmed to something that fits on a card.
-  const start = Math.max(text.lastIndexOf("\n", index), text.lastIndexOf(". ", index) + 1, index - 70, 0);
-  const endBreaks = [text.indexOf("\n", index + length), text.indexOf(". ", index + length)].filter((i) => i >= 0);
-  const end = Math.min(endBreaks.length ? Math.min(...endBreaks) : text.length, index + length + 70);
-  return text
-    .slice(start, end)
-    .replace(/^[\s•\-–*]+/, "")
-    .trim();
+/** Where list items were glued together ("…sponsorshipProficiency with…"); product names like TensorFlow aren't. */
+const GLUED = /(?<=[a-z]{6})(?=[A-Z][a-z]{4,}\b)/g;
+const CAMEL_NAMES = /^(?:TensorFlow|SuccessFactors|ElasticSearch|BeyondTrust|CloudFormation|ActiveDirectory|PeopleSoft|SolarWinds)$/;
+function gluePoints(text: string, from: number, to: number): number[] {
+  const out: number[] = [];
+  // Start a little early: the glue point needs the six letters before it.
+  const base = Math.max(0, from - 6);
+  for (const m of text.slice(base, to).matchAll(GLUED)) {
+    const at = base + (m.index ?? 0);
+    if (at < from) continue;
+    const word = /[A-Za-z]+$/.exec(text.slice(Math.max(0, at - 20), at))?.[0] + (/^[A-Za-z]+/.exec(text.slice(at))?.[0] ?? "");
+    if (!CAMEL_NAMES.test(word)) out.push(at);
+  }
+  return out;
+}
+
+/**
+ * The sentence or list item around a match, for quoting on a card. Long ones are cut on a word
+ * boundary with "…", never mid-word.
+ */
+export function quoteAround(text: string, index: number, length: number, reach = 70): string {
+  const after = index + length;
+  const dot = text.lastIndexOf(". ", index);
+  let start = Math.max(text.lastIndexOf("\n", index) + 1, dot >= 0 ? dot + 2 : 0, ...gluePoints(text, Math.max(0, index - reach * 2), index));
+  const ends = [text.indexOf("\n", after), text.indexOf(". ", after) + 1, ...gluePoints(text, after, after + reach * 2)].filter((i) => i > 0 && i >= after);
+  let end = ends.length ? Math.min(...ends) : text.length;
+  let lead = "";
+  let tail = "";
+  if (index - start > reach) {
+    const space = text.indexOf(" ", index - reach);
+    start = space >= 0 && space < index ? space + 1 : index;
+    lead = "…";
+  }
+  if (end - after > reach) {
+    const space = text.lastIndexOf(" ", after + reach);
+    end = space > after ? space : after + reach;
+    tail = "…";
+  }
+  const quote = text.slice(start, end).replace(/^[\s•\-–*]+/, "").trim();
+  return `${lead}${tail ? quote.replace(/[\s,;:–-]+$/, "") : quote}${tail}`;
 }
 
 export function yearsMentions(text: string): YearsMention[] {
@@ -87,9 +118,26 @@ export function yearsMentions(text: string): YearsMention[] {
   return out;
 }
 
-const verdict = (level: Level, yearsMin: number | null, evidence: string | null): Seniority => ({ level, yearsMin, evidence });
+// Internships and placements mostly need you to be enrolled: "a minimum of one semester remaining",
+// "returning to full-time studies". A graduate can't take them, so their deck hides them.
+const STUDENT_TITLE =
+  /\b(?:intern(?:ship)?s?|(?:industrial |work |student )?placement(?! (?:consultant|coordinator|officer|manager|specialist))|co-?op|summer (?:analyst|associate|student|intern|engineer)s?|year in industry|working student|werkstudent)\b/i;
+const STUDENT_TEXT =
+  /\b(?:currently enrolled|current(?:ly)? enrol(?:l)?ment|returning to (?:your )?(?:full[- ]time )?(?:studies|university|college|school|education)|return to (?:your )?(?:full[- ]time )?(?:studies|university|college)|must be (?:a |an )?(?:current |full[- ]time |registered |enrolled )?(?:student|undergraduate|enrolled)|(?:semester|term|year)s? remaining (?:in|of|at) (?:your )?(?:university|college|studies|degree)|in the process of (?:receiving|completing|obtaining) (?:a|an|your) (?:bachelor|master|degree))/i;
+const OPEN_TO_GRADUATES = /\b(?:recent(?:ly)? graduat(?:es?|ed)|new grads?|graduated (?:in|within)|graduates (?:are )?(?:welcome|eligible)|open to graduates)\b/i;
+
+/** Only for people still studying: an intern, placement or co-op title, or text that asks for current enrolment. */
+export function studentOnly(title: string, description: string): boolean {
+  // "Graduate Intern" schemes take graduates.
+  if (/\bgraduate\b/i.test(title)) return false;
+  const asksEnrolment = STUDENT_TEXT.test(description);
+  if (!asksEnrolment && OPEN_TO_GRADUATES.test(description)) return false;
+  return asksEnrolment || STUDENT_TITLE.test(title);
+}
 
 export function classifySeniority(title: string, description: string): Seniority {
+  const student = studentOnly(title, description);
+  const verdict = (level: Level, yearsMin: number | null, evidence: string | null): Seniority => ({ level, yearsMin, evidence, studentOnly: student });
   const mentions = yearsMentions(description);
   const hard = mentions.filter((m) => !m.soft);
   const top = hard.length ? hard.reduce((a, b) => (b.years > a.years ? b : a)) : null;

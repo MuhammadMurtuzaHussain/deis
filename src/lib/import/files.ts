@@ -1,6 +1,6 @@
 "use client";
 
-import { fromLinkedInExport, type LinkedInImport } from "./linkedin";
+import { fromLinkedInExport, LINKEDIN_FILES, type LinkedInImport } from "./linkedin";
 
 // Reading a CV happens on the user's device. A PDF or Word file is turned into text
 // here and never uploaded; only that text goes to the user's chosen model to be split
@@ -28,17 +28,25 @@ async function docxText(file: File): Promise<string> {
   return value;
 }
 
+const MB = 1024 * 1024;
+/** A LinkedIn export is a few MB. Anything far bigger isn't one, or is built to fill memory when unpacked. */
+export const ZIP_LIMITS = { archive: 50 * MB, entry: 5 * MB };
+
 async function zipFiles(file: File): Promise<Record<string, string>> {
+  if (file.size > ZIP_LIMITS.archive) throw new Error("That ZIP is over 50 MB, which is too big for a LinkedIn data export.");
   const { default: JSZip } = await import("jszip");
   const zip = await JSZip.loadAsync(await file.arrayBuffer());
   const out: Record<string, string> = {};
-  await Promise.all(
-    Object.values(zip.files)
-      .filter((f) => !f.dir && f.name.toLowerCase().endsWith(".csv"))
-      .map(async (f) => {
-        out[f.name.split("/").pop()!.toLowerCase()] = await f.async("string");
-      }),
-  );
+  // Only the profile files: the export also holds private messages and contacts, and those are never opened.
+  const wanted = Object.values(zip.files).filter((f) => !f.dir && LINKEDIN_FILES.includes(f.name.split("/").pop()!.toLowerCase()));
+  for (const f of wanted) {
+    // The size the archive declares, checked before unpacking; then the real size, in case it lied.
+    const declared = (f as unknown as { _data?: { uncompressedSize?: number } })._data?.uncompressedSize ?? 0;
+    if (declared > ZIP_LIMITS.entry) continue;
+    const text = await f.async("string");
+    if (text.length > ZIP_LIMITS.entry) continue;
+    out[f.name.split("/").pop()!.toLowerCase()] = text;
+  }
   return out;
 }
 

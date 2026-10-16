@@ -1,3 +1,4 @@
+import { quoteAround } from "./seniority";
 import type { RightToWork, WorkStance } from "./types";
 
 // What a posting says about permission to work in Ireland, found by code and quoted
@@ -33,17 +34,10 @@ const RULES: { stance: WorkStance; re: RegExp }[] = [
   },
 ];
 
-function quote(text: string, index: number, length: number): string {
-  const start = Math.max(text.lastIndexOf(". ", index) + 1, text.lastIndexOf("\n", index) + 1, index - 80, 0);
-  const ends = [text.indexOf(". ", index + length), text.indexOf("\n", index + length)].filter((i) => i >= 0);
-  const end = Math.min(ends.length ? Math.min(...ends) + 1 : text.length, index + length + 80);
-  return text.slice(start, end).replace(/^[\s•\-–*]+/, "").trim();
-}
-
 export function readRightToWork(description: string): RightToWork {
   for (const { stance, re } of RULES) {
     const m = re.exec(description);
-    if (m) return { stance, evidence: quote(description, m.index, m[0].length) };
+    if (m) return { stance, evidence: quoteAround(description, m.index, m[0].length, 80) };
   }
   return { stance: "unknown", evidence: null };
 }

@@ -218,3 +218,42 @@ describe("seniority lessons from the eval", () => {
     expect(classifySeniority("Associate Enablement Manager", "• 5+ years of enablement experience in software, ideally supporting customer success").level).toBe("senior");
   });
 });
+
+import { quoteAround, studentOnly } from "@/lib/jobs/seniority";
+
+describe("internships for current students (PRD-X1)", () => {
+  it("flags intern, placement and co-op titles, and text that asks for enrolment", () => {
+    expect(studentOnly("2027 - Software Engineer Intern, Dublin - 6 Month Internship", "")).toBe(true);
+    expect(studentOnly("Software Engineer", "Have a minimum of one semester remaining in university studies after the internship concludes.")).toBe(true);
+    expect(studentOnly("Engineer", "This position requires current enrollment in a school or education program.")).toBe(true);
+    expect(studentOnly("Analyst", "You must be returning to full-time studies in September.")).toBe(true);
+    expect(classifySeniority("Software Engineering Intern 2027 (Dublin)", "").studentOnly).toBe(true);
+  });
+  it("leaves graduate internships, graduate-friendly ones and look-alike titles open", () => {
+    expect(studentOnly("Graduate Intern, Finance", "")).toBe(false);
+    expect(studentOnly("Data Intern", "Open to final-year students and recent graduates.")).toBe(false);
+    expect(studentOnly("Internal Auditor", "")).toBe(false);
+    expect(studentOnly("Placement Consultant", "")).toBe(false);
+    expect(classifySeniority("Graduate Software Engineer", "Join our team.").studentOnly).toBe(false);
+  });
+});
+
+describe("quotes on the card (PRD-X3, UX-12)", () => {
+  it("cuts long quotes on a word boundary with an ellipsis", () => {
+    const text =
+      "We are looking for someone who brings 3+ years of experience in data engineering, including building and maintaining production pipelines for analytics across many regions and teams";
+    const s = classifySeniority("Data Engineer", text);
+    expect(s.evidence).toMatch(/…$/);
+    const words = s.evidence!.replace(/…/g, "").trim().split(" ");
+    for (const w of words) expect(text.split(" ")).toContain(w);
+  });
+  it("starts a quote with an ellipsis when it cuts the front", () => {
+    const text = `${"Our customers in retail, logistics, energy and the public sector rely on our platform every day, and ".repeat(2)}you will need 3+ years of experience.`;
+    expect(quoteAround(text, text.indexOf("3+"), 8)).toMatch(/^…\S/);
+  });
+  it("stops at the next list item when the board glued them together", () => {
+    const r = readRightToWork("Eligible to work in Ireland without the need for current or future visa sponsorshipProficiency with Excel and SQL");
+    expect(r.stance).toBe("no_sponsorship");
+    expect(r.evidence).toBe("Eligible to work in Ireland without the need for current or future visa sponsorship");
+  });
+});

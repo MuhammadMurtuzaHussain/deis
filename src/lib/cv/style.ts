@@ -1,6 +1,10 @@
 // House style for everything Deis writes, enforced in code: plain words, Irish and
 // British spelling, no em dashes. Gemma is asked nicely in the prompt; this makes sure.
 
+const BUZZ = String.raw`(?:highly\s+)?(?:passionate|results[- ]driven|dynamic|motivated|hard[- ]working|detail[- ]oriented)`;
+/** Words for the person a CV describes: "motivated graduate", "detail-oriented data analyst". */
+const SELF_NOUN = String.raw`(?:graduate|student|professional|individual|person|candidate|team player|team member|learner|self[- ]starter|communicator|problem[- ]solver|leader|worker|engineer|developer|analyst|scientist|specialist|consultant|accountant|designer|programmer|researcher|marketer|manager|coordinator|administrator|technician|assistant|intern|trainee|apprentice|officer|associate|executive|contributor|collaborator|thinker|achiever)`;
+
 /** Words recruiters skim past. Replaced where there's a plain equivalent, removed where there isn't. */
 const PLAIN: [RegExp, string][] = [
   [/\bspearheading\b/gi, "leading"],
@@ -11,8 +15,11 @@ const PLAIN: [RegExp, string][] = [
   [/\b(?:leverag|utili[sz])e\b/gi, "use"],
   [/\bsynerg(y|ies)\b/gi, "collaboration"],
   [/\b(proven track record of|proven track record in)\s+/gi, ""],
-  [/\b(highly )?(passionate|results[- ]driven|dynamic|motivated|hard[- ]working|detail[- ]oriented|go[- ]getter|self[- ]starter)\s+/gi, ""],
-  [/\b(world[- ]class|cutting[- ]edge|best[- ]in[- ]class|state[- ]of[- ]the[- ]art)\s+/gi, ""],
+  [/\b(?:highly |deeply |very )?passionate about\b/gi, "interested in"],
+  // Only when they describe the person: "a motivated graduate", never "dynamic programming"
+  // or "Motivated 4 new staff" (a verb, followed by who was motivated).
+  [new RegExp(String.raw`\b${BUZZ}(?:\s*(?:,|and)\s+${BUZZ})*\s+(?!(?:a|an|the|my|our|his|her|their|its|this|that|these|those|\d)\b)(?=(?:(?!(?:and|or)\b)[\w-]+\s+){0,3}${SELF_NOUN}s?\b)`, "gi"), ""],
+  [/\b(world[- ]class|cutting-edge|best-in-class|state-of-the-art)\s+/gi, ""],
   [/\bI am (excited|thrilled|delighted) to\b/gi, "I would like to"],
   [/\bI am writing to (apply|express my interest)[^.]*\.\s*/gi, ""],
 ];
@@ -57,9 +64,18 @@ export function houseStyle(input: string): string {
     .replace(/!+/g, ".")
     .replace(/\s{2,}/g, " ")
     .replace(/\s+([,.;:])/g, "$1")
-    .replace(/^([a-z])/, (c) => c.toUpperCase())
+    .replace(/^([a-z][\w.+#-]*)/, (w) => (keepsLowercase(w) ? w : w[0].toUpperCase() + w.slice(1)))
     .trim();
 }
 
-/** CV lines are written without "I" or "my". */
-export const FIRST_PERSON = /\b(I|I'm|I've|I'd|my|me|myself)\b/;
+/** Tools written in lower case on purpose: a skill line starting "pandas" stays "pandas". */
+const LOWERCASE_TOOLS = new Set(
+  "pandas numpy scipy scikit-learn sklearn matplotlib seaborn plotly dplyr ggplot2 tidyverse nltk spacy pytest jest npm pnpm yarn pip conda webpack vite dbt git kubectl bash zsh vim curl ffmpeg xgboost lightgbm openpyxl regex".split(" "),
+);
+const keepsLowercase = (w: string) => LOWERCASE_TOOLS.has(w.toLowerCase()) || /[A-Z]|\d|[.+#]\w/.test(w.slice(1));
+
+/** Courses and grades use the Roman numeral I: "Calculus I", "Grade I", "Accounting I and II". */
+const ROMAN_BEFORE = String.raw`(?<!\b(?:Grade|Level|Part|Stage|Phase|Year|Paper|Unit|Module|Class|Type|Tier|Book|Volume|Chapter|Section|Series|Semester|Term)\s)`;
+const ROMAN_AFTER = String.raw`(?![ \t]*(?:[,.;:()/&–-]|$)|\s+(?:and|or|&|to|II|III)\b)`;
+/** CV lines are written without "I" or "my". A lone capital I after a course name and before punctuation is a numeral. */
+export const FIRST_PERSON = new RegExp(String.raw`${ROMAN_BEFORE}\bI['’](?:m|ve|d|ll)\b|${ROMAN_BEFORE}(?:(?<![A-Z][\w-]*\s)\bI\b|\bI\b${ROMAN_AFTER})|\b(?:[Mm]y|[Mm]e|[Mm]yself)\b`);

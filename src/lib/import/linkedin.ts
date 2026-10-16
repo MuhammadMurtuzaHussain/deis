@@ -1,3 +1,5 @@
+import { LANGUAGES } from "../jobs/languages";
+import { parseFactDate } from "../profile/dates";
 import { newFactId, type Fact, type Header } from "../profile/types";
 
 // LinkedIn won't let apps read your profile, but it will give you your own data:
@@ -47,15 +49,17 @@ export function parseCsv(text: string): Record<string, string>[] {
     .map((r) => Object.fromEntries(header.map((h, i) => [h, (r[i] ?? "").trim()])));
 }
 
-const MONTHS: Record<string, string> = { jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06", jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12" };
-
-/** "Jun 2023" → "2023-06"; "2023" → "2023"; "" → null. */
-export function linkedinDate(s: string | undefined): string | null {
-  if (!s?.trim()) return null;
-  const m = /^([A-Za-z]{3})[a-z]*\s+(\d{4})$/.exec(s.trim());
-  if (m) return `${m[2]}-${MONTHS[m[1].toLowerCase()] ?? "01"}`;
-  const y = /(\d{4})/.exec(s);
-  return y ? y[1] : null;
+/**
+ * "Jun 2023", "Sept 2021", "September 2021" or "09/2021" → "2023-06"; "2023" → "2023";
+ * "Present" → "present"; "" → null. Facts store dates this way so roles sort by date.
+ */
+export function linkedinDate(s: string | null | undefined): string | null {
+  const t = s?.trim();
+  if (!t) return null;
+  if (/^(?:present|current|now|ongoing|to date|today)$/i.test(t)) return "present";
+  const d = parseFactDate(t);
+  if (!d) return null;
+  return d.month ? `${d.year}-${String(d.month).padStart(2, "0")}` : String(d.year);
 }
 
 /** Split a position's description into separate achievements: bullets, lines or sentences. */
@@ -83,6 +87,9 @@ const fact = (kind: Fact["kind"], text: string, extra: Partial<Fact> = {}): Fact
 });
 
 export type LinkedInImport = { header: Partial<Header>; facts: Fact[]; files: string[] };
+
+/** The only files read from a LinkedIn export. Messages, connections and the rest stay inside the ZIP. */
+export const LINKEDIN_FILES = ["profile.csv", "positions.csv", "education.csv", "skills.csv", "projects.csv", "certifications.csv", "languages.csv", "honors.csv"];
 
 /** `files` maps lower-cased file names (without folders) to their text. */
 export function fromLinkedInExport(files: Record<string, string>): LinkedInImport {
@@ -125,4 +132,49 @@ export function fromLinkedInExport(files: Record<string, string>): LinkedInImpor
   for (let i = 0; i < skills.length; i += 10) facts.push(fact("skill", skills.slice(i, i + 10).join(", ")));
 
   return { header, facts, files: Object.keys(files) };
+}
+
+// ---- Facts the model read from a CV (POST /api/import)
+
+const EXTRA_LANGUAGES = ["English", "Malayalam", "Tamil", "Telugu", "Urdu", "Bengali", "Punjabi", "Gujarati", "Marathi", "Vietnamese", "Thai", "Indonesian", "Malay", "Tagalog", "Lithuanian", "Latvian", "Estonian", "Slovak", "Slovenian", "Croatian", "Serbian", "Bulgarian", "Catalan", "Welsh", "Persian", "Farsi", "Swahili", "Yoruba", "Igbo", "Afrikaans", "Mandarin", "Cantonese", "Gaeilge"];
+const LANGUAGE_NAME = new RegExp(`\\b(${[...LANGUAGES, ...EXTRA_LANGUAGES].join("|")})\\b`, "g");
+const LEVEL = /\b(native|mother tongue|bilingual|fluent|fluency|proficient|advanced|upper[- ]intermediate|intermediate|conversational|working|professional|basic|beginner|elementary|limited|[ABC][12])\b/i;
+
+/** "Irish is fluent", "Fluent in Irish" or "Spanish is at a B2 level" → "Irish (fluent)", "Spanish (B2)", as a CV writes them. */
+export function languageLine(text: string): string {
+  const names = [...new Set([...text.matchAll(LANGUAGE_NAME)].map((m) => m[1]))];
+  // Lists ("English (native), Irish (fluent)") and lines already in that shape stay as written.
+  if (names.length !== 1 || /^[A-Z][\w ]+ \([^)]+\)$/.test(text.trim())) return text;
+  const level = LEVEL.exec(text)?.[1];
+  if (!level) return names[0];
+  const word = /^[ABC][12]$/i.test(level) ? level.toUpperCase() : level.toLowerCase().replace("fluency", "fluent").replace("mother tongue", "native");
+  return `${names[0]} (${word})`;
+}
+
+/** Qualifiers models add to skills: "Proficient in Excel" from a CV that just says "Excel". */
+const QUALIFIER = /^(?:highly\s+)?(proficient|experienced|skilled|expert|advanced|competent|familiar|knowledgeable|strong|solid|good|excellent)\s+(?:in|with|at|user of|knowledge of|understanding of|skills in|command of|grasp of)\s+/i;
+
+/** Spaced ("2021 – 2025", "2021 to 2025") or not ("2021-2025", "Sep 2021-May 2024"); "2021-09" is one date. */
+const RANGE = /^(.+?)\s+(?:–|-|—|to)\s+(.+)$|^(.*?\d{4})\s*[-–—]\s*((?:[A-Za-z]{3,}\.?\s+)?\d{4}|present|current|now)$/i;
+
+type Extracted = { kind: Fact["kind"]; text: string; start?: string | null; end?: string | null; where?: string | null };
+
+/**
+ * Model-read CV facts in the shape facts are stored in: dates as "2025-06", "2025" or
+ * "present" (so roles sort and "latest degree" is right), languages as "Irish (fluent)",
+ * and skills without qualifiers the CV itself didn't use. `source` is the CV text.
+ */
+export function tidyImported<T extends Extracted>(f: T, source = ""): T {
+  // A range in one field ("Sept 2021 – May 2025", "2021-2025") splits into start and end.
+  const m = !f.end && f.start ? RANGE.exec(f.start.trim()) : null;
+  const range = m ? [m[1] ?? m[3], m[2] ?? m[4]] : null;
+  const start = linkedinDate(range ? range[0] : f.start) ?? f.start ?? null;
+  const end = linkedinDate(range ? range[1] : f.end) ?? f.end ?? null;
+  let text = f.text.trim();
+  if (f.kind === "language") text = languageLine(text);
+  if (f.kind === "skill" && source) {
+    const q = QUALIFIER.exec(text);
+    if (q && !new RegExp(`\\b${q[1]}\\b`, "i").test(source)) text = text.slice(q[0].length).replace(/^./, (c) => c.toUpperCase());
+  }
+  return { ...f, text, start, end, where: f.where?.trim() || null };
 }
