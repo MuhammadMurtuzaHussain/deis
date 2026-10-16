@@ -6,7 +6,8 @@ import { db, getMeta, loadProfile, saveProfile, setMeta } from "./db";
 
 // The guided demo loads a fictional graduate's profile so anyone can try Deis in a
 // minute. Whatever the user had is set aside first and put back on exit, and
-// anything made during the demo (swipes, applications) is cleared.
+// anything made during the demo (swipes, applications) is cleared. Gemma's cached "why"
+// lines are cleared both ways too: they were written about someone else's facts (CH-X1).
 
 type DemoState = { persona: PersonaId; startedAt: number; before: Profile };
 
@@ -15,17 +16,21 @@ export async function enterDemo(persona: PersonaId) {
   const before = current?.before ?? (await loadProfile());
   const p = PERSONAS[persona];
   await saveProfile({ ...p, facts: p.facts.map((f) => ({ ...f })) });
+  await db.cards.clear();
   await setMeta("demo", { persona, startedAt: current?.startedAt ?? Date.now(), before } satisfies DemoState);
 }
+
+export const isPersona = (id: string): id is PersonaId => Object.hasOwn(PERSONAS, id);
 
 export async function exitDemo() {
   const state = await getMeta<DemoState | null>("demo", null);
   if (!state) return;
   await saveProfile(state.before);
-  await db.transaction("rw", db.swipes, db.applications, db.proposals, db.meta, async () => {
+  await db.transaction("rw", [db.swipes, db.applications, db.proposals, db.cards, db.meta], async () => {
     await db.swipes.where("at").aboveOrEqual(state.startedAt).delete();
     await db.applications.filter((a) => a.createdAt >= state.startedAt).delete();
     await db.proposals.filter((p) => p.at >= state.startedAt).delete();
+    await db.cards.clear();
     await db.meta.delete("demo");
   });
 }

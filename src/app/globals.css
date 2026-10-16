@@ -1,72 +1,94 @@
 @import "tailwindcss";
 
-/* Deis design tokens.
-   Calm and plain on purpose: people use this while job hunting, which is stressful
-   enough. Cool off-white and ink, one accent (estuary green: "go", swipe right),
-   amber only for gaps and stretch roles, brick only for blocked and errors.
+/* Deis design tokens: "Estuary paper". Documented in docs/DESIGN.md.
+   Warm paper, ink and one green that only ever means "go". Calm on purpose: people
+   use this while job hunting, which is stressful enough.
+   Every text pair is 5:1 or better; --control-border is 3:1 or better (WCAG 1.4.11).
+   One meaning per colour: accent = go, trace = where a line came from,
+   ochre = gap, stretch or follow-up, brick = blocked or error.
    Shapes: controls 10px, surfaces 16px, the job card 20px. Nothing else. */
 
 :root {
-  --bg: #f3f5f4;
-  --surface: #fbfcfb;
-  --surface-2: #e9ecea;
-  --ink: #131816;
-  --ink-2: #47514d;
-  --ink-3: #5c6661;
-  --line: #d5dad7;
-  --accent: #17694f;
+  --bg: #f4f1ea;
+  --surface: #fffdf8;
+  --raised: #ffffff;
+  /* Hover fills, skeletons and quiet wells. Not a surface. */
+  --wash: #ebe6db;
+  --ink: #1a1e1c;
+  --ink-2: #4a524e;
+  --ink-3: #5e6661;
+  --line: #ddd6c8;
+  --control-border: #878c86;
+  --accent: #0f5c45;
   --accent-ink: #ffffff;
-  --accent-soft: #d9eee5;
-  --accent-text: #11553f;
-  --amber: #8a5a00;
-  --amber-soft: #fbefd4;
-  --brick: #9b2f2f;
-  --brick-soft: #f8e1df;
+  --accent-soft: #dcebe3;
+  --accent-text: #0c4a37;
+  --trace: #2d5b8a;
+  --trace-soft: #e3ecf5;
+  --ochre: #8a5a00;
+  --ochre-soft: #f7ebcf;
+  --brick: #a23b2a;
+  --brick-soft: #f6e0da;
   --focus: #1b6fd1;
-  --shadow: 0 1px 2px rgb(19 24 22 / 0.06), 0 12px 32px -12px rgb(19 24 22 / 0.18);
+  --scrim: rgb(26 30 28 / 0.5);
+  --elev-card: 0 1px 0 rgb(0 0 0 / 0.04), 0 8px 24px -8px rgb(26 30 28 / 0.18);
+  --elev-lift: 0 24px 48px -16px rgb(26 30 28 / 0.35);
   color-scheme: light;
 }
 
+/* Dark: a lighter surface plus a hairline instead of a heavy shadow. */
 :root[data-theme="dark"] {
-  --bg: #0e1110;
-  --surface: #151a18;
-  --surface-2: #1d2321;
-  --ink: #e8ece9;
-  --ink-2: #aab4af;
-  --ink-3: #8a948f;
-  --line: #2b3330;
-  --accent: #4fbf94;
-  --accent-ink: #062016;
-  --accent-soft: #143428;
-  --accent-text: #7fd8b2;
-  --amber: #e9b75c;
-  --amber-soft: #2c2311;
-  --brick: #f08e86;
-  --brick-soft: #33191a;
+  --bg: #121614;
+  --surface: #1a1f1c;
+  --raised: #202622;
+  --wash: #262d29;
+  --ink: #ece8df;
+  --ink-2: #b8b4aa;
+  --ink-3: #959a93;
+  --line: #323a35;
+  --control-border: #6e766f;
+  --accent: #6ccfa6;
+  --accent-ink: #08241a;
+  --accent-soft: #18382b;
+  --accent-text: #8fe0be;
+  --trace: #8db4e2;
+  --trace-soft: #1c2836;
+  --ochre: #e8b55a;
+  --ochre-soft: #2e2412;
+  --brick: #f2917f;
+  --brick-soft: #351c17;
   --focus: #7ab4ff;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 40px -16px rgb(0 0 0 / 0.7);
+  --scrim: rgb(0 0 0 / 0.6);
+  --elev-card: 0 0 0 1px var(--line);
+  --elev-lift: 0 0 0 1px var(--line), 0 24px 48px -16px rgb(0 0 0 / 0.6);
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0e1110;
-    --surface: #151a18;
-    --surface-2: #1d2321;
-    --ink: #e8ece9;
-    --ink-2: #aab4af;
-    --ink-3: #8a948f;
-    --line: #2b3330;
-    --accent: #4fbf94;
-    --accent-ink: #062016;
-    --accent-soft: #143428;
-    --accent-text: #7fd8b2;
-    --amber: #e9b75c;
-    --amber-soft: #2c2311;
-    --brick: #f08e86;
-    --brick-soft: #33191a;
+    --bg: #121614;
+    --surface: #1a1f1c;
+    --raised: #202622;
+    --wash: #262d29;
+    --ink: #ece8df;
+    --ink-2: #b8b4aa;
+    --ink-3: #959a93;
+    --line: #323a35;
+    --control-border: #6e766f;
+    --accent: #6ccfa6;
+    --accent-ink: #08241a;
+    --accent-soft: #18382b;
+    --accent-text: #8fe0be;
+    --trace: #8db4e2;
+    --trace-soft: #1c2836;
+    --ochre: #e8b55a;
+    --ochre-soft: #2e2412;
+    --brick: #f2917f;
+    --brick-soft: #351c17;
     --focus: #7ab4ff;
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 40px -16px rgb(0 0 0 / 0.7);
+    --scrim: rgb(0 0 0 / 0.6);
+    --elev-card: 0 0 0 1px var(--line);
+    --elev-lift: 0 0 0 1px var(--line), 0 24px 48px -16px rgb(0 0 0 / 0.6);
     color-scheme: dark;
   }
 }
@@ -74,25 +96,70 @@
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
+  --color-raised: var(--raised);
+  --color-wash: var(--wash);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
   --color-line: var(--line);
+  --color-control-border: var(--control-border);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
   --color-accent-text: var(--accent-text);
-  --color-amber: var(--amber);
-  --color-amber-soft: var(--amber-soft);
+  --color-trace: var(--trace);
+  --color-trace-soft: var(--trace-soft);
+  --color-ochre: var(--ochre);
+  --color-ochre-soft: var(--ochre-soft);
   --color-brick: var(--brick);
   --color-brick-soft: var(--brick-soft);
+  --color-focus: var(--focus);
+  --color-scrim: var(--scrim);
+
+  /* Deprecated names from before the redesign, kept so unconverted screens still render.
+     Don't use them in new code: surface-2 is wash, amber is ochre. */
+  --color-surface-2: var(--wash);
+  --color-amber: var(--ochre);
+  --color-amber-soft: var(--ochre-soft);
+
+  --font-display: var(--font-newsreader), "Iowan Old Style", Georgia, serif;
   --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-atkinson-mono), ui-monospace, monospace;
+  /* The CV sheet only, so the preview matches the Word file. */
+  --font-paper: Arial, "Helvetica Neue", Helvetica, sans-serif;
+
   --radius-control: 10px;
   --radius-surface: 16px;
   --radius-card: 20px;
-  --shadow-lift: var(--shadow);
+
+  --shadow-card: var(--elev-card);
+  --shadow-lift: var(--elev-lift);
+
+  /* The type scale: 13 / 15 / 18 / 24 / 32 / 44. text-caption … text-hero. */
+  --text-caption: 13px;
+  --text-caption--line-height: 1.45;
+  --text-body: 15px;
+  --text-body--line-height: 1.55;
+  --text-lead: 18px;
+  --text-lead--line-height: 1.5;
+  --text-title: 24px;
+  --text-title--line-height: 1.2;
+  --text-page: 32px;
+  --text-page--line-height: 1.12;
+  --text-hero: 44px;
+  --text-hero--line-height: 1.05;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Space the phone's bottom nav takes. Sticky bars on phones sit at bottom: var(--mobile-nav). */
+:root {
+  --mobile-nav: calc(4rem + env(safe-area-inset-bottom));
+}
+@media (min-width: 64rem) {
+  :root {
+    --mobile-nav: 0px;
+  }
 }
 
 html {
@@ -104,6 +171,7 @@ html {
 
 body {
   min-height: 100dvh;
+  background: var(--bg);
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.5;
@@ -116,10 +184,54 @@ body {
   border-radius: 6px;
 }
 
-/* The Irish road-sign convention: the Irish word in italics, the English beside it. */
-.ga {
+/* The page h1 takes focus on a route change so screen readers start there. It isn't a
+   control, so it shows no ring (WCAG 2.4.7 covers operable components). */
+[data-page-title]:focus,
+h1[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* Links: ink, underlined. Never green. */
+.link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.link:hover {
+  text-decoration-thickness: 2px;
+}
+
+@utility display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 560;
+  letter-spacing: -0.012em;
+  font-variant-numeric: lining-nums;
+}
+
+/* The Irish word over an English title: small italic Atkinson, never in the accessible name. */
+@utility eyebrow {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.3;
   font-style: italic;
+  color: var(--ink-3);
+}
+
+/* Company names on the index card and the wordmark's "OPPORTUNITY". */
+@utility smallcaps {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   font-weight: 700;
+}
+
+/* The Irish road-sign convention: the Irish word in italics. */
+.ga {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 560;
   letter-spacing: -0.01em;
 }
 
@@ -130,7 +242,7 @@ body {
 
 /* Skeleton shimmer for loading states; still under reduced motion. */
 .skeleton {
-  background: linear-gradient(90deg, var(--surface-2) 0%, color-mix(in oklab, var(--surface-2) 60%, var(--surface)) 50%, var(--surface-2) 100%);
+  background: linear-gradient(90deg, var(--wash) 0%, color-mix(in oklab, var(--wash) 55%, var(--surface)) 50%, var(--wash) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.6s ease-in-out infinite;
   border-radius: 6px;
@@ -145,6 +257,19 @@ body {
   }
 }
 
+/* Routes fade in over 160 ms. */
+.route-fade {
+  animation: route-fade 160ms var(--ease-out-soft);
+}
+@keyframes route-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton {
     animation: none;
@@ -154,6 +279,7 @@ body {
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -166,7 +292,8 @@ body {
   white-space: nowrap;
 }
 
-/* The CV preview prints as the CV alone: "Save as PDF" from the print dialog. */
+/* The CV sheet prints as the CV alone: "Save as PDF" from the print dialog.
+   Trace markers and footnotes ([data-trace]) never print. */
 @media print {
   body * {
     visibility: hidden;
@@ -174,6 +301,10 @@ body {
   #cv-print,
   #cv-print * {
     visibility: visible;
+  }
+  #cv-print [data-trace],
+  #cv-print [data-print-hidden] {
+    display: none !important;
   }
   #cv-print {
     position: absolute;

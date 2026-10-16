@@ -53,3 +53,7 @@ CLAUDE.local.md
 
 # Desktop builds
 /release
+
+# Offline: the generated starter job list and the server's local state (offline.json)
+/public/starter-jobs.json
+/.deis-state/

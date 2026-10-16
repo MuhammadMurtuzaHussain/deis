@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible_Mono, Atkinson_Hyperlegible_Next } from "next/font/google";
+import { Atkinson_Hyperlegible_Mono, Atkinson_Hyperlegible_Next, Newsreader } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
@@ -8,6 +8,9 @@ import "./globals.css";
 // forty job ads in a row.
 const atkinson = Atkinson_Hyperlegible_Next({ variable: "--font-atkinson", subsets: ["latin", "latin-ext"], weight: ["400", "500", "700"], style: ["normal", "italic"], adjustFontFallback: false });
 const atkinsonMono = Atkinson_Hyperlegible_Mono({ variable: "--font-atkinson-mono", subsets: ["latin"], weight: ["400", "500"], adjustFontFallback: false });
+// Newsreader is the display face only: page titles, the card title, the fit verdict, money
+// and counts, and the italic wordmark. Variable, with the optical-size axis.
+const newsreader = Newsreader({ variable: "--font-newsreader", subsets: ["latin", "latin-ext"], style: ["normal", "italic"], axes: ["opsz"] });
 
 const description = "Swipe through early-career jobs in Ireland. Your CV, tailored by open-weight Gemma on your own terms, with every line traced to something you told it.";
 
@@ -24,14 +27,14 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f5f4" },
-    { media: "(prefers-color-scheme: dark)", color: "#0e1110" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f1ea" },
+    { media: "(prefers-color-scheme: dark)", color: "#121614" },
   ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-IE" className={`${atkinson.variable} ${atkinsonMono.variable} h-full`} suppressHydrationWarning>
+    <html lang="en-IE" className={`${atkinson.variable} ${atkinsonMono.variable} ${newsreader.variable} h-full`} suppressHydrationWarning>
       <body className="min-h-full bg-bg text-ink antialiased">
         {/* The saved light or dark choice, applied before first paint so there's no flash. */}
         <Script id="theme" strategy="beforeInteractive">{`try{var t=localStorage.getItem("deis.theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`}</Script>
