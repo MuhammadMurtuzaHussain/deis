@@ -1,6 +1,6 @@
 {
   "name": "deis-android",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "license": "AGPL-3.0-only",
   "description": "Deis for Android: a Capacitor shell around the hosted app at deiscareers.tech",
