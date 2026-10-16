@@ -39,9 +39,9 @@ services:
       # FALLBACK_* is OpenRouter (https://openrouter.ai/api/v1, model google/gemma-4-26b-a4b-it,
       # on a key with a credit limit). FALLBACK_2_* is optional: any third OpenAI-compatible host.
       - key: FALLBACK_BASE_URL
-        sync: false
+        value: https://openrouter.ai/api/v1
       - key: FALLBACK_MODEL
-        sync: false
+        value: google/gemma-4-26b-a4b-it
       - key: FALLBACK_API_KEY
         sync: false
       - key: FALLBACK_2_BASE_URL
