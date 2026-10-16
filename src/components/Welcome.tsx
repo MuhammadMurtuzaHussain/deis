@@ -150,7 +150,7 @@ export function Welcome() {
             Price
           </h2>
           <p className="max-w-[40ch] text-lead text-ink-2">
-            <span className="display mr-2 text-[40px] leading-none text-ink">€9 once</span>
+            <span className="display mr-2 text-[40px] leading-none text-ink">€9.99 once</span>
             for the signed desktop app, after a 14-day trial. The code is free under AGPL-3.0.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">

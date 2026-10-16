@@ -5,7 +5,7 @@ import { Wordmark } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Download Deis for Mac, Windows or Linux",
-  description: "The Deis desktop app: your profile, the job deck and, with Ollama, Gemma itself, all on your own computer. Free for 14 days, then €9 once.",
+  description: "The Deis desktop app: your profile, the job deck and, with Ollama, Gemma itself, all on your own computer. Free for 14 days, then €9.99 once.",
 };
 
 const REPO = "https://github.com/MuhammadMurtuzaHussain/deis";
@@ -43,7 +43,7 @@ export default function DownloadPage() {
           <div className="grid max-w-[60ch] gap-3">
             <h1 className="display text-[36px] leading-[1.05] text-ink text-balance sm:text-[48px]">Deis on your own computer</h1>
             <p className="text-lead text-ink-2">
-              Your profile, the job deck and, with Ollama, Gemma itself stay on your computer. It works offline once the jobs are saved. Free for 14 days with everything included, then €9 once.
+              Your profile, the job deck and, with Ollama, Gemma itself stay on your computer. It works offline once the jobs are saved. Free for 14 days with everything included, then €9.99 once.
             </p>
           </div>
           <DownloadPicker />

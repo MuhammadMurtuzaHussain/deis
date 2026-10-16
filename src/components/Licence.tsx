@@ -58,7 +58,7 @@ export function LicenceForm({ licence, onChange }: { licence: LicenceInfo; onCha
       {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
       {licence.buyUrl && (
         <div className="flex flex-wrap items-center gap-3">
-          <LinkButton href={licence.buyUrl}>Get a key, €9 once</LinkButton>
+          <LinkButton href={licence.buyUrl}>Get a key, €9.99 once</LinkButton>
           <span className="text-caption text-ink-2">Or build Deis yourself from the open source code, free.</span>
         </div>
       )}
@@ -88,7 +88,7 @@ export function LicenceScreen({ licence, onChange }: { licence: LicenceInfo; onC
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-10">
         <Surface raised className="grid content-start gap-6 p-5 sm:p-7">
           <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className="display text-[44px] leading-none text-ink">€9 once</span>
+            <span className="display text-[44px] leading-none text-ink">€9.99 once</span>
             <span className="text-body text-ink-2">No subscription.</span>
           </p>
           <LicenceForm licence={licence} onChange={onChange} />
@@ -96,7 +96,7 @@ export function LicenceScreen({ licence, onChange }: { licence: LicenceInfo; onC
 
         <div className="grid content-start gap-4">
           <div>
-            <h2 className="text-body font-semibold text-ink">What the €9 pays for</h2>
+            <h2 className="text-body font-semibold text-ink">What the €9.99 pays for</h2>
             <ul className="mt-3 grid gap-3">
               {PAYS_FOR.map((t) => (
                 <li key={t} className="grid grid-cols-[24px_1fr] items-start gap-2.5 text-body text-ink-2">

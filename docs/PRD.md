@@ -1,6 +1,6 @@
 # Deis: PRD, honest feedback and build approach
 
-*Deis* (said "desh") is Irish for "opportunity". A swipe-to-apply job app for early-career people in Ireland: €9 once, your own AI model, your data stays on your machine.
+*Deis* (said "desh") is Irish for "opportunity". A swipe-to-apply job app for early-career people in Ireland: €9.99 once, your own AI model, your data stays on your machine.
 
 ## Context
 
@@ -24,10 +24,10 @@
 2. **Auto-apply is out, and that's a selling point.** Applying usually means account walls and CAPTCHAs. LinkedIn's User Agreement bans bots, so accounts get banned. Ireland's hiring market is small and recruiters talk. Pitch it as *fewer, better applications, each costing nothing*. An assisted autofill that fills the form but never submits can come in v2.
 3. **There's no "Connect LinkedIn" for profile data.** Sign In with LinkedIn only returns name, email and photo, and scraping breaks their terms. Import instead from the profile's "Save to PDF" and from LinkedIn's **data export** (Settings > Data privacy > Get a copy of your data). The export has structured CSVs: Positions, Education, Skills, Projects. CV upload and paste also work.
 4. **Bring-your-own-model is the biggest drop-off risk.** A stressed graduate won't read docs. Getting a Google AI Studio key has to be a guided 60-second flow with screenshots. Local models need about 8 GB of RAM and a download of several GB. Small local models will write weaker CVs, so measure that and say so per tier.
-5. **Piracy: sell convenience, not secrecy.** Anyone can build the AGPL code and remove the licence check, by design. The €9 buys signed one-click installers, updates and the daily Irish job feed. Code signing costs money: Apple Developer is $99/yr, and Windows signing is extra. This week, ship unsigned builds with clear "Open anyway" steps, and budget for signing before a real launch.
+5. **Piracy: sell convenience, not secrecy.** Anyone can build the AGPL code and remove the licence check, by design. The €9.99 buys signed one-click installers, updates and the daily Irish job feed. Code signing costs money: Apple Developer is $99/yr, and Windows signing is extra. This week, ship unsigned builds with clear "Open anyway" steps, and budget for signing before a real launch.
 6. **EU VAT applies from the first sale.** Use a merchant of record (Polar or Lemon Squeezy) so VAT OSS is handled for you.
 7. **GDPR gets much simpler when data stays local.** You never hold anyone's CV. Sentry must be opt-in, with prompts and outputs never recorded on desktop.
-8. **DEV already has several "job autopilot that refuses to lie" posts.** Honesty alone won't carry the creativity score. The fresh angle is Ireland plus early career plus Stamp 1G, swipe UX, bring-your-own model, and "€9 once vs ~€250".
+8. **DEV already has several "job autopilot that refuses to lie" posts.** Honesty alone won't carry the creativity score. The fresh angle is Ireland plus early career plus Stamp 1G, swipe UX, bring-your-own model, and "€9.99 once vs ~€250".
 9. **Scope versus a Sunday deadline.** Writing quality is weighted most. A smaller app with a great post and real users beats a bigger app with a rushed post. Must-haves first; everything else is a stretch.
 10. **Cost discipline is a design rule, not a setting.** The model never reads a job you haven't nearly seen: code filters first, Gemma only on the cards about to show, and full tailoring only after a swipe right.
 
@@ -38,7 +38,7 @@
 - (b) International master's graduates on **Stamp 1G**. Many postings exclude them, and the search cost is brutal.
 - (c) The author.
 
-**Positioning:** "Fewer, better applications. €9 once. Your model, your laptop."
+**Positioning:** "Fewer, better applications. €9.99 once. Your model, your laptop."
 
 **Core flow**
 1. **90-second check-in** (the Droichead pattern: tap-first, skippable). Where in Ireland (Dublin, Cork, Galway, Limerick, Waterford, remote). Stage (student, graduate, 0 to 2 years). Right to work (EU/EEA, Stamp 1G, Stamp 4, needs a permit). Role categories. Deal-breakers.
@@ -100,7 +100,7 @@
 - Every guard override becomes a Sentry issue tagged with tier and model (the return-route pattern).
 
 **Licence and sales.**
-- **Polar** (merchant of record) sells the €9 product, with a licence-key benefit and the installer files as downloads.
+- **Polar** (merchant of record) sells the €9.99 product, with a licence-key benefit and the installer files as downloads.
 - The app activates once online, then stores an Ed25519-signed token and works offline.
 - The web demo needs no key. Judges get the web demo plus a free key.
 

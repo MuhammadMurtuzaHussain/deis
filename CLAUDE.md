@@ -2,7 +2,7 @@
 
 # Deis
 
-*Deis* (said "desh") is Irish for "opportunity". A swipe-to-apply job app for early-career people in Ireland: jobs filtered for your level, languages and right to work, and a CV tailored by open-weight Gemma for each one you swipe right on. Every CV line points to a fact you confirmed. Your model, your laptop, about €0 an application. €9 once for the signed app; the code is AGPL-3.0.
+*Deis* (said "desh") is Irish for "opportunity". A swipe-to-apply job app for early-career people in Ireland: jobs filtered for your level, languages and right to work, and a CV tailored by open-weight Gemma for each one you swipe right on. Every CV line points to a fact you confirmed. Your model, your laptop, about €0 an application. €9.99 once for the signed app; the code is AGPL-3.0.
 
 Entry for the **DEV Hacktoberfest Open-Source AI Challenge, Week 2: Side Hustle** (DEV event 80, tag `#hf26challenge`): build something with open AI that someone would pay for. Solo build by Muhammad Murtuza Hussain. Same family as the author's earlier entries Pīzhù, Return Route and Droichead, but a new project: patterns reused, not code.
 
@@ -74,7 +74,7 @@ Local Gemma: `ollama pull gemma4:e4b` (6.6 GB). `.env.local` points the demo's f
 
 - [ ] Render blueprint applied and secrets set in the dashboard (author): AI Studio key, SerpApi key, Sentry auth token, OpenRouter `FALLBACK_API_KEY` (key with a credit limit). Key Value is on the paid `256mb` plan ($10/month from the $50 hackathon credit); web service Starter $7/month.
 - [ ] Sentry screenshots of a kit trace and guard issues for the post (project `deis`, org `tfc-research-and-innovation-li`).
-- [ ] Polar (author): €9 product with a licence-key benefit; put the organisation id and checkout link in `desktop/config.json`.
+- [ ] Polar (author): €9.99 product with a licence-key benefit; put the organisation id and checkout link in `desktop/config.json`.
 - [ ] Testers (author): the author's own job search, Cybersecurity Society; quotes for the post. Then video, screenshots, DevRelay session, publish.
 - [ ] Job feed expansion to about 250 jobs (another agent); put the real count in README and the post.
 - [ ] Windows and Linux installers tested on real machines; code signing before a real launch.

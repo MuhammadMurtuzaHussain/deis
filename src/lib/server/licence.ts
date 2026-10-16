@@ -3,7 +3,7 @@ import path from "node:path";
 import { isOfflineMode, netFetch } from "./net";
 
 // The paid desktop app's licence. Deis is AGPL: anyone can build it from source and
-// switch this off, and that's fine. The €9 buys the signed app, updates and the job
+// switch this off, and that's fine. The €9.99 buys the signed app, updates and the job
 // feed. So the check is gentle: 14 days to try everything, then a Polar licence key,
 // checked online once and then trusted offline (re-checked monthly when online).
 // Only active in the desktop app (DEIS_DESKTOP=1) with a Polar organisation configured.
