@@ -13,6 +13,7 @@ const cv: CvDocument = {
     { text: "Built a dashboard.", facts: ["p1"] },
   ],
   educationFirst: true,
+  length: "short",
   education: [{ text: "BSc Data Science, University of Galway", dates: "2021 – 2025", facts: ["ed1"], lines: [{ text: "First class honours", facts: ["g1"] }] }],
   experience: [{ title: "Barista", org: "Coffee Co", where: null, dates: "2023 – 2024", bullets: [{ text: "Served 200 customers a day", facts: ["r1", "a1"] }] }],
   projects: [{ text: "Dashboard for bus delays", facts: ["p1"] }],

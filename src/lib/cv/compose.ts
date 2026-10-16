@@ -7,9 +7,10 @@ import type { Cited, CvBody, CvLength, Fit } from "./schema";
 // checks against your LinkedIn (name, employers, job titles, dates, degrees, certificates,
 // languages, achievements) is copied from the facts by code and never rewritten. The layout
 // is a hand-tailored Irish CV's: professional summary, core competencies, experience,
-// projects and leadership, education, skills, achievements. A graduate's education moves up
-// under the summary. cvSections() is the one order the Word file, the preview and "Copy as
-// text" all render.
+// projects and leadership, education, skills, achievements. On the one-page CV a recent
+// graduate's education moves up under the summary, as gradireland and Prospects advise; the
+// two-page CV has room to lead with experience, so education stays after it. cvSections() is
+// the one order the Word file, the preview and "Copy as text" all render.
 
 export type CvRole = { title: string; org: string; where: string | null; dates: string; bullets: Cited[] };
 export type CvEducation = { text: string; dates: string; facts: string[]; /** Grade, dissertation, modules: the user's own lines. */ lines?: Cited[] };
@@ -17,8 +18,10 @@ export type CvDocument = {
   header: Header;
   /** The professional summary, ending with the career objective. Kits built before 16 Oct 2026 have an objective and a summary instead. */
   profile?: Cited[];
-  /** Graduates and students: education straight after the profile. */
+  /** One-page CV for graduates and students: education straight after the profile. */
   educationFirst?: boolean;
+  /** Kits saved before 17 Oct 2026 have none and lay out as "detailed". */
+  length?: CvLength;
   education: CvEducation[];
   experience: CvRole[];
   projects: Cited[];
@@ -160,7 +163,7 @@ export function composeCv(profile: Pick<Profile, "header" | "facts">, body: CvBo
   const underDegree = facts.filter((f) => (f.kind === "achievement" || f.kind === "other" || (f.kind === "education" && !degrees.includes(f))) && degreeFor(f));
 
   const latestDegree = degrees.find((d) => d.end) ?? degrees[0];
-  const educationFirst = Boolean(latestDegree) && (!roles.length || !isFinished(latestDegree, now) || yearOf(latestDegree.end) >= now.getFullYear() - 2);
+  const educationFirst = short && Boolean(latestDegree) && (!roles.length || !isFinished(latestDegree, now) || yearOf(latestDegree.end) >= now.getFullYear() - 2);
 
   // A bare title ("Timetable app for Dublin Bus") says less than the fact it came from.
   const written = clean(body.projects).map((p) => {
@@ -221,6 +224,7 @@ export function composeCv(profile: Pick<Profile, "header" | "facts">, body: CvBo
     header: profile.header,
     profile: profileLines.length ? profileLines : templatedProfile(latestDegree, roles.slice().sort(newestFirst)[0], now),
     educationFirst,
+    length,
     education,
     experience,
     projects,
@@ -261,7 +265,8 @@ export function cvSections(cv: CvDocument, header: Header = cv.header): CvSectio
     { id: "certifications", title: "Certifications", bullets: cv.certifications ?? [] },
     { id: "languages", title: "Languages", lists: cv.languages?.length ? [{ label: "", items: cv.languages }] : [] },
   ];
-  const order: CvSectionId[] = cv.educationFirst
+  // Kits saved before 17 Oct 2026 set educationFirst for both lengths; only the one-page CV keeps it.
+  const order: CvSectionId[] = cv.educationFirst && cv.length === "short"
     ? ["profile", "education", "competencies", "experience", "projects", "skills", "achievements", "certifications", "languages"]
     : ["profile", "competencies", "experience", "projects", "education", "skills", "achievements", "certifications", "languages"];
   const filled = (s: CvSection) => s.id === "header" || Boolean(s.paragraph?.length || s.entries?.length || s.bullets?.length || s.lists?.length);

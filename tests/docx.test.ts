@@ -80,15 +80,22 @@ describe("CV for a posting", () => {
     expect(cv.languages).toEqual(["Irish (conversational)"]);
   });
 
-  it("writes the graduate layout into the Word file, in the same order as the text", async () => {
+  it("writes the two-page layout into the Word file, experience before education, in the same order as the text", async () => {
     const text = await wordText(cv);
-    const order = ["PROFESSIONAL SUMMARY", "EDUCATION", "WORK EXPERIENCE", "SELECTED PROJECTS AND LEADERSHIP", "SKILLS", "LANGUAGES"].map((h) => text.indexOf(h));
+    const order = ["PROFESSIONAL SUMMARY", "WORK EXPERIENCE", "SELECTED PROJECTS AND LEADERSHIP", "EDUCATION", "SKILLS", "LANGUAGES"].map((h) => text.indexOf(h));
     expect(order.every((i) => i >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     expect(text).toContain("Key skills: Unit testing");
     expect(text).toContain("Irish (conversational)");
     const plain = cvText(cv);
-    expect(plain.indexOf("EDUCATION")).toBeLessThan(plain.indexOf("WORK EXPERIENCE"));
+    expect(plain.indexOf("WORK EXPERIENCE")).toBeLessThan(plain.indexOf("EDUCATION"));
     expect(plain).toContain("References available on request.");
+  });
+
+  it("keeps a graduate's education above experience in the one-page Word file", async () => {
+    const short = { ...cv, educationFirst: true, length: "short" as const };
+    const text = await wordText(short);
+    expect(text.indexOf("EDUCATION")).toBeLessThan(text.indexOf("WORK EXPERIENCE"));
+    expect(cvText(short).indexOf("EDUCATION")).toBeLessThan(cvText(short).indexOf("WORK EXPERIENCE"));
   });
 });

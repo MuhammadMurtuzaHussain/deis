@@ -54,11 +54,23 @@ describe("composeCv: the graduate layout", () => {
     expect(cv.experience.find((r) => r.org === "Corrib Grocers")?.bullets.map((b) => b.facts)).toEqual([["rm9"]]);
   });
 
-  it("puts education with its grade straight after the profile for a 2026 graduate", () => {
-    const cv = composeCv(aoife, body({ summary: [{ text: "Computer science graduate.", facts: ["ab1"] }] }), fit, NOW);
+  it("puts education with its grade straight after the profile on a 2026 graduate's one-page CV", () => {
+    const cv = composeCv(aoife, body({ summary: [{ text: "Computer science graduate.", facts: ["ab1"] }] }), fit, NOW, "short");
     expect(cv.educationFirst).toBe(true);
     expect(cv.education[0].lines?.map((l) => l.text)).toEqual(["Final-year project graded first class"]);
     expect(cvSections(cv).map((s) => s.id)).toEqual(["header", "profile", "education", "experience", "projects", "skills", "languages"]);
+  });
+
+  it("leads the two-page CV with experience and puts education after projects, even for a graduate", () => {
+    const cv = composeCv(aoife, body({ summary: [{ text: "Computer science graduate.", facts: ["ab1"] }] }), fit, NOW);
+    expect(cv.educationFirst).toBe(false);
+    expect(cv.education[0].lines?.map((l) => l.text)).toEqual(["Final-year project graded first class"]);
+    expect(cvSections(cv).map((s) => s.id)).toEqual(["header", "profile", "experience", "projects", "education", "skills", "languages"]);
+  });
+
+  it("moves education below experience on two-page kits saved before 17 Oct 2026", () => {
+    const cv = { ...composeCv(aoife, body({}), fit, NOW), educationFirst: true, length: undefined };
+    expect(cvSections(cv).map((s) => s.id).slice(1, 4)).toEqual(["profile", "experience", "projects"]);
   });
 
   it("keeps part-time in the job title", () => {
@@ -147,7 +159,7 @@ describe("the full-length CV (17 Oct 2026)", () => {
   it("shows achievements that belong to no job or degree when Gemma picks none, and lays out a graduate's CV", () => {
     const cv = composeCv(withWin, bodyFromDraft({ ...draft, achievements: [] }, withWin.facts), undefined, NOW);
     expect(cv.achievements?.map((a) => a.facts)).toEqual([["ab20"]]);
-    expect(cvSections(cv).map((s) => s.id)).toEqual(["header", "profile", "education", "competencies", "experience", "projects", "skills", "achievements", "languages"]);
+    expect(cvSections(cv).map((s) => s.id)).toEqual(["header", "profile", "competencies", "experience", "projects", "education", "skills", "achievements", "languages"]);
     expect(cvText(cv)).toContain("- Software testing: Added unit tests");
   });
 
