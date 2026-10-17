@@ -1,11 +1,11 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { CATEGORIES, categoryById } from "@/lib/jobs/categories";
+import { useId, useState, type ReactNode } from "react";
+import { CATEGORIES, categoryById, searchCategories } from "@/lib/jobs/categories";
 import { LANGUAGES, type Language } from "@/lib/jobs/languages";
 import { WORK_STATUS_LABEL, WORK_STATUSES } from "@/lib/jobs/rightToWork";
 import { STAGE_LABEL, STAGES, type Preferences } from "@/lib/profile/types";
-import { Chip } from "../ui";
+import { Chip, inputClass } from "../ui";
 
 // The check-in's questions. Each one is a filter on the deck and says why it's asked;
 // summary() is the same answers in words for the last step and the Profile screen.
@@ -30,6 +30,32 @@ function Choices({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div role="group" aria-label={label} className="flex flex-wrap gap-2">
       {children}
+    </div>
+  );
+}
+
+/** The kinds of work, with a search over them. What you've picked stays on screen whatever you type. */
+function RolePicker({ p, set }: { p: Preferences; set: (p: Preferences) => void }) {
+  const [query, setQuery] = useState("");
+  const id = useId();
+  const found = searchCategories(query);
+  const shown = query.trim() ? [...CATEGORIES.filter((c) => p.roles.includes(c.id) && !found.includes(c)), ...found] : CATEGORIES;
+  return (
+    <div className="grid gap-4">
+      <label htmlFor={id} className="sr-only">
+        Search kinds of work
+      </label>
+      <input id={id} type="search" className={inputClass} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search: tax, audit, management, nursing…" autoComplete="off" spellCheck={false} />
+      <Choices label="Kinds of work">
+        {shown.map((c) => (
+          <Chip key={c.id} on={p.roles.includes(c.id)} disabled={!p.roles.includes(c.id) && p.roles.length >= 5} onClick={() => set({ ...p, roles: toggle(p.roles, c.id) })}>
+            {c.label}
+          </Chip>
+        ))}
+      </Choices>
+      <p aria-live="polite" className="min-h-6 text-body text-ink-2">
+        {query.trim() && !found.length ? `Nothing matches “${query.trim()}”. Try a broader word, like “finance” or “operations”.` : null}
+      </p>
     </div>
   );
 }
@@ -102,15 +128,7 @@ export const STEPS: Step[] = [
     short: "Kinds of work",
     why: "Up to five. Each one is a shared search across Ireland, so pick the ones you'd really apply for.",
     valid: (p) => p.roles.length > 0,
-    body: (p, set) => (
-      <Choices label="Kinds of work">
-        {CATEGORIES.map((c) => (
-          <Chip key={c.id} on={p.roles.includes(c.id)} disabled={!p.roles.includes(c.id) && p.roles.length >= 5} onClick={() => set({ ...p, roles: toggle(p.roles, c.id) })}>
-            {c.label}
-          </Chip>
-        ))}
-      </Choices>
-    ),
+    body: (p, set) => <RolePicker p={p} set={set} />,
   },
   {
     id: "languages",
