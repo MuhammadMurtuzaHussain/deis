@@ -111,8 +111,8 @@ export type HiddenBar = { key: HiddenReason | "senior"; label: string; value: nu
  * The hidden-for-you bars. senior: what the server hid before the jobs arrived (hiddenSenior)
  * plus any the deck hid itself. Stretch roles ask for about 2 years, not 3 (PRD-X2).
  */
-export function hiddenBars(hidden: Record<HiddenReason, number>, serverSenior = 0, experienced = false): HiddenBar[] {
-  const senior = experienced ? "Need more than 7 years, or an executive title" : "Need 3 or more years, or a senior title";
+export function hiddenBars(hidden: Record<HiddenReason, number>, serverSenior = 0, reach?: number): HiddenBar[] {
+  const senior = reach !== undefined ? `Need more than ${reach} years, or an executive title` : "Need 3 or more years, or a senior title";
   const bars: HiddenBar[] = [
     { key: "senior", label: senior, value: serverSenior + hidden.level, tone: "neutral" },
     { key: "stretch", label: "Ask for about 2 years", value: hidden.stretch, tone: "ochre" },

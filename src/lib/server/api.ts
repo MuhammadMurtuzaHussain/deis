@@ -82,13 +82,16 @@ export function modelFailure(e: unknown, ai: Ai): Response {
 // ---- Request bodies. The job and facts come from the user's own device, so these
 // limits are about cost and abuse on the hosted demo, not trust.
 
+/** Cut to n characters rather than refused: some boards list every office in one location string (600+ characters). */
+const clipped = (n: number) => z.string().transform((v) => v.slice(0, n));
+
 export const jobInputSchema = z
   .object({
     id: z.string().max(40),
-    title: z.string().max(300),
-    company: z.string().max(200),
-    location: z.string().max(300),
-    city: z.string().max(80),
+    title: clipped(300),
+    company: clipped(200),
+    location: clipped(300),
+    city: clipped(80),
     description: z.string().max(12000),
   })
   .passthrough();

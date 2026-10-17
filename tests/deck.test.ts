@@ -88,9 +88,10 @@ describe("hidden for you", () => {
     expect(bars[1].label).toBe("Ask for about 2 years");
     expect(bars.find((b) => b.key === "stretch")?.label).not.toMatch(/3/);
   });
-  it("says what's out of reach for someone with 5 to 7 years", () => {
-    const bars = hiddenBars({ level: 3, stretch: 0, student: 0, language: 0, permit: 0, city: 0, role: 0, seen: 0 }, 0, true);
-    expect(bars).toEqual([expect.objectContaining({ key: "senior", value: 3, label: "Need more than 7 years, or an executive title" })]);
+  it("says what's out of reach for someone with 3 years or more", () => {
+    const hidden = { level: 3, stretch: 0, student: 0, language: 0, permit: 0, city: 0, role: 0, seen: 0 };
+    expect(hiddenBars(hidden, 0, 7)).toEqual([expect.objectContaining({ key: "senior", value: 3, label: "Need more than 7 years, or an executive title" })]);
+    expect(hiddenBars(hidden, 0, 5)[0].label).toBe("Need more than 5 years, or an executive title");
   });
 });
 

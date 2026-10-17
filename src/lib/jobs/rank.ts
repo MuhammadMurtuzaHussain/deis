@@ -1,4 +1,4 @@
-import { EXPERIENCED_MAX_YEARS, type Fact, type Preferences } from "../profile/types";
+import { yearsReach, type Fact, type Preferences } from "../profile/types";
 import { categoriesForTitle } from "./categories";
 import { speaksEnough } from "./languages";
 import { workFit, type WorkFit } from "./rightToWork";
@@ -36,7 +36,7 @@ function overlap(job: ScoredJob, terms: Set<string>): { score: number; matched: 
 }
 
 const LEVEL_BONUS = { early: 0.35, open: 0.15, stretch: 0, senior: -1 };
-// With 5 to 7 years the order flips: roles at your level first, graduate schemes last.
+// From 3 years on the order flips: roles at your level first, graduate schemes last.
 const EXPERIENCED_BONUS = { early: -0.2, open: 0.2, stretch: 0.25, senior: 0.35 };
 
 function freshness(postedAt: string | null, now: number): number {
@@ -47,8 +47,9 @@ function freshness(postedAt: string | null, now: number): number {
 
 export function buildDeck(jobs: ScoredJob[], prefs: Preferences, facts: Fact[], seen: Set<string>, now = Date.now()): Deck {
   const hidden: Record<HiddenReason, number> = { level: 0, stretch: 0, student: 0, language: 0, permit: 0, city: 0, role: 0, seen: 0 };
-  const experienced = prefs.stage === "experienced";
-  const graduated = prefs.stage === "graduate" || prefs.stage === "early" || experienced;
+  const reach = yearsReach(prefs.stage);
+  const experienced = reach !== undefined;
+  const graduated = prefs.stage !== null && prefs.stage !== "student";
   const bonus = experienced ? EXPERIENCED_BONUS : LEVEL_BONUS;
   const terms = profileTerms(facts);
   const entries: DeckEntry[] = [];
@@ -57,7 +58,7 @@ export function buildDeck(jobs: ScoredJob[], prefs: Preferences, facts: Fact[], 
       hidden.seen++;
       continue;
     }
-    if (experienced ? !withinReach(job.title, job.seniority, EXPERIENCED_MAX_YEARS) : !visibleByDefault(job.seniority.level, prefs.showStretch)) {
+    if (reach !== undefined ? !withinReach(job.title, job.seniority, reach) : !visibleByDefault(job.seniority.level, prefs.showStretch)) {
       hidden[!experienced && job.seniority.level === "stretch" ? "stretch" : "level"]++;
       continue;
     }

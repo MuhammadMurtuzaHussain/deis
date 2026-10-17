@@ -4,7 +4,7 @@ import { useId, useState, type ReactNode } from "react";
 import { CATEGORIES, categoryById, searchCategories } from "@/lib/jobs/categories";
 import { LANGUAGES, type Language } from "@/lib/jobs/languages";
 import { WORK_STATUS_LABEL, WORK_STATUSES } from "@/lib/jobs/rightToWork";
-import { STAGE_LABEL, STAGES, type Preferences } from "@/lib/profile/types";
+import { STAGE_LABEL, STAGES, yearsReach, type Preferences } from "@/lib/profile/types";
 import { Chip, inputClass } from "../ui";
 
 // The check-in's questions. Each one is a filter on the deck and says why it's asked;
@@ -18,7 +18,9 @@ const STAGE_HELP: Record<(typeof STAGES)[number], string> = {
   student: "Internships and placements come first.",
   graduate: "Roles only open to current students are hidden.",
   early: "Roles only open to current students are hidden.",
+  mid: "Senior roles asking for up to 5 years come in too, and come first. Executive titles stay hidden.",
   experienced: "Senior roles asking for up to 7 years come in too, and come first. Executive titles stay hidden.",
+  seasoned: "Every level comes in, director and head of included. Roles at your level come first.",
 };
 
 export type Step = { id: string; title: string; short: string; why: string; valid: (p: Preferences) => boolean; body: (p: Preferences, set: (p: Preferences) => void) => ReactNode };
@@ -153,8 +155,8 @@ export const STEPS: Step[] = [
     why: "Plenty of graduates get these. Deis labels them as a stretch so you can decide card by card.",
     valid: () => true,
     body: (p, set) =>
-      p.stage === "experienced" ? (
-        <p className="text-body text-ink-2">With 5 to 7 years these are already in your deck, so there&apos;s nothing to choose here.</p>
+      p.stage && yearsReach(p.stage) !== undefined ? (
+        <p className="text-body text-ink-2">With {STAGE_LABEL[p.stage].toLowerCase()}, these are already in your deck, so there&apos;s nothing to choose here.</p>
       ) : (
         <Choices label="Stretch roles">
           <Chip on={p.showStretch} onClick={() => set({ ...p, showStretch: true })}>
@@ -176,6 +178,6 @@ export function summary(p: Preferences): Record<string, string> {
     work: p.workStatus ? WORK_STATUS_LABEL[p.workStatus] : "Not set",
     roles: p.roles.map((r) => categoryById(r)?.label ?? r).join(", ") || "Not set",
     languages: p.languages.join(", ") || "Just English",
-    stretch: p.stage === "experienced" ? "Shown, they're within your 5 to 7 years" : p.showStretch ? "Shown, labelled as a stretch" : "Hidden",
+    stretch: yearsReach(p.stage) !== undefined ? "Shown, they're within your experience" : p.showStretch ? "Shown, labelled as a stretch" : "Hidden",
   };
 }

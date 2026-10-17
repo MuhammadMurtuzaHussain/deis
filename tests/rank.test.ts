@@ -3,6 +3,7 @@ import { buildDeck, profileTerms } from "@/lib/jobs/rank";
 import { score } from "@/lib/jobs/normalise";
 import { aoife, rahul } from "@/lib/demo/personas";
 import type { Job } from "@/lib/jobs/types";
+import { STAGE_LABEL, STAGES, yearsReach } from "@/lib/profile/types";
 
 const job = (title: string, description: string, extra: Partial<Job> = {}) =>
   score(
@@ -110,5 +111,28 @@ describe("5 to 7 years working", () => {
   it("leaves the early-career deck as it was", () => {
     const deck = buildDeck([fiveYears, director, grad], aoife.preferences, aoife.facts, new Set());
     expect(deck.entries.map((e) => e.job.title)).toEqual(["Graduate Software Engineer"]);
+  });
+});
+
+describe("from studying to 7 or more years", () => {
+  const at = (stage: (typeof STAGES)[number]) => ({ ...aoife.preferences, stage, showStretch: false });
+  const grad = job("Graduate Software Engineer", "Python, React, TypeScript, SQL. Recent graduates welcome.");
+  const twoYears = job("Software Engineer", "At least two years' experience in a similar role. Python.");
+  const fourYears = job("Software Engineer II", "4+ years of experience with Python.");
+  const sixYears = job("Senior Software Engineer", "6+ years of experience with Python.");
+  const tenYears = job("Staff Software Engineer", "10+ years of experience building distributed systems in Python.");
+  const director = job("Director of Software Engineering", "Python. Lead the engineering organisation.");
+  const all = [grad, twoYears, fourYears, sixYears, tenYears, director];
+  const seen = (stage: (typeof STAGES)[number]) => buildDeck(all, at(stage), aoife.facts, new Set()).entries.map((e) => e.job.title).sort();
+
+  it("widens the deck stage by stage", () => {
+    expect(seen("graduate")).toEqual(["Graduate Software Engineer"]);
+    expect(seen("mid")).toEqual(["Graduate Software Engineer", "Software Engineer", "Software Engineer II"]);
+    expect(seen("experienced")).toEqual(["Graduate Software Engineer", "Senior Software Engineer", "Software Engineer", "Software Engineer II"]);
+    expect(seen("seasoned")).toHaveLength(all.length);
+  });
+  it("gives every stage a label and only the 3 years and up a reach", () => {
+    for (const s of STAGES) expect(STAGE_LABEL[s]).toBeTruthy();
+    expect(STAGES.map((s) => yearsReach(s))).toEqual([undefined, undefined, undefined, 5, 7, Infinity]);
   });
 });

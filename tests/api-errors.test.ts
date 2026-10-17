@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AiSettings } from "@/lib/ai/settings";
+import { jobInputSchema } from "@/lib/server/api";
 
 // modelFailure only reads the chain's tier and label; keep this test free of the real model chain.
 vi.mock("@/mastra/model", () => ({ SettingsRejected: class extends Error {}, modelChain: () => ({}) }));
@@ -59,5 +60,14 @@ describe("modelFailure", () => {
     vi.stubEnv("DEIS_HOSTED", "1");
     const data = (await modelFailure(cannotConnect("ENOTFOUND", "getaddrinfo ENOTFOUND api"), demo).json()) as { message: string };
     expect(data.message).toBe("Couldn't reach the AI host. Try again in a minute.");
+  });
+});
+
+describe("job input", () => {
+  it("cuts a very long location to 300 characters instead of refusing the job", () => {
+    const location = Array.from({ length: 60 }, (_, i) => `Office ${i}, Ireland`).join("; ");
+    const out = jobInputSchema.parse({ id: "j1", title: "Head of Pricing", company: "Example", location, city: "Dublin", description: "Pricing." });
+    expect(location.length).toBeGreaterThan(300);
+    expect(out.location).toHaveLength(300);
   });
 });

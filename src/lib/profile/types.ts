@@ -29,16 +29,22 @@ export const factSchema = z.object({
 });
 export type Fact = z.infer<typeof factSchema>;
 
-export const STAGES = ["student", "graduate", "early", "experienced"] as const;
+export const STAGES = ["student", "graduate", "early", "mid", "experienced", "seasoned"] as const;
 export type CareerStage = (typeof STAGES)[number];
 export const STAGE_LABEL: Record<CareerStage, string> = {
   student: "Still studying",
   graduate: "Just graduated",
   early: "Up to 2 years working",
+  mid: "3 to 5 years working",
   experienced: "5 to 7 years working",
+  seasoned: "7 or more years working",
 };
-/** The most years a posting can ask for and still reach the "5 to 7 years" deck. */
-export const EXPERIENCED_MAX_YEARS = 7;
+/**
+ * From 3 years on, the most years a posting can ask for and still reach your deck (src/lib/jobs/rank.ts).
+ * The earlier stages have no entry: they keep the early-career deck, with stretch roles as a choice.
+ */
+const STAGE_REACH: Partial<Record<CareerStage, number>> = { mid: 5, experienced: 7, seasoned: Infinity };
+export const yearsReach = (stage: CareerStage | null | undefined): number | undefined => (stage ? STAGE_REACH[stage] : undefined);
 
 export const preferencesSchema = z.object({
   cities: z.array(z.string()),
