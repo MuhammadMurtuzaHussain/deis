@@ -40,8 +40,8 @@ type WhyError = { message: string; retry: boolean };
 const SKIP_REASONS = ["Too senior", "Wrong place", "Not my field", "Pay too low", "Company"];
 
 /** The first visit: no saved jobs yet, so say what Deis is doing while the boards are read. */
-function DeckLoading({ categories }: { categories: string[] }) {
-  const lines = ["Reading the job boards of 54 employers in Ireland", ...categories.map((c) => `Searching Google Jobs for ${categoryById(c)?.label.toLowerCase() ?? c} roles`), "Hiding senior roles and ones that rule you out", "Ranking what's left by your profile"];
+function DeckLoading({ categories, experienced }: { categories: string[]; experienced: boolean }) {
+  const lines = ["Reading the job boards of 54 employers in Ireland", ...categories.map((c) => `Searching Google Jobs for ${categoryById(c)?.label.toLowerCase() ?? c} roles`), experienced ? "Hiding roles past 7 years and ones that rule you out" : "Hiding senior roles and ones that rule you out", "Ranking what's left by your profile"];
   const [i, setI] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setI((x) => Math.min(x + 1, lines.length - 1)), 1400);
@@ -79,7 +79,8 @@ export function Deck() {
   const { profile, go, setPreferences, isOffline, feedSavedAt, effectiveModel } = useStore();
   const prefs = profile?.preferences;
   const categories = useMemo(() => [...(prefs?.roles ?? [])].sort(), [prefs?.roles]);
-  const feed = useFeed(categories, isOffline);
+  const experienced = prefs?.stage === "experienced";
+  const feed = useFeed(categories, isOffline, experienced);
   const swipes = useLiveQuery(() => db.swipes.toArray(), [], null);
   // The shared Google Jobs budget is spent and there's no key of the user's own (Settings > Job search).
   const googlePaused = useLiveQuery(async () => (await getMeta<boolean>(PAUSED_META, false)) && !(await loadSerpKey()), [], false);
@@ -138,7 +139,7 @@ export function Deck() {
   const entries = useMemo(() => deck?.entries ?? [], [deck]);
   const current = entries[0] ?? null;
   const position = current ? { n: decided.length + 1, total: entries.length + decided.length } : null;
-  const bars = useMemo(() => (deck ? hiddenBars(deck.hidden, feed.hiddenSenior) : []), [deck, feed.hiddenSenior]);
+  const bars = useMemo(() => (deck ? hiddenBars(deck.hidden, feed.hiddenSenior, experienced) : []), [deck, feed.hiddenSenior, experienced]);
 
   const keys = useRef<(a: Dir | "undo") => void>(() => undefined);
   const onKey = useCallback((a: Dir | "undo") => keys.current(a), []);
@@ -280,7 +281,7 @@ export function Deck() {
   if (feed.jobs === null || !deck) {
     body = <CardSkeleton />;
   } else if (firstRun && feed.refreshing) {
-    body = <DeckLoading categories={categories} />;
+    body = <DeckLoading categories={categories} experienced={experienced} />;
   } else if (firstRun && feed.error) {
     body = (
       <div className="grid gap-4">

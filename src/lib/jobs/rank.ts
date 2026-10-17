@@ -1,8 +1,8 @@
-import type { Fact, Preferences } from "../profile/types";
+import { EXPERIENCED_MAX_YEARS, type Fact, type Preferences } from "../profile/types";
 import { categoriesForTitle } from "./categories";
 import { speaksEnough } from "./languages";
 import { workFit, type WorkFit } from "./rightToWork";
-import { studentOnly, visibleByDefault } from "./seniority";
+import { studentOnly, visibleByDefault, withinReach } from "./seniority";
 import type { ScoredJob } from "./types";
 
 // Which cards you see, and in what order. All code, no model: the deck has to be
@@ -36,6 +36,8 @@ function overlap(job: ScoredJob, terms: Set<string>): { score: number; matched: 
 }
 
 const LEVEL_BONUS = { early: 0.35, open: 0.15, stretch: 0, senior: -1 };
+// With 5 to 7 years the order flips: roles at your level first, graduate schemes last.
+const EXPERIENCED_BONUS = { early: -0.2, open: 0.2, stretch: 0.25, senior: 0.35 };
 
 function freshness(postedAt: string | null, now: number): number {
   if (!postedAt) return 0.05;
@@ -45,7 +47,9 @@ function freshness(postedAt: string | null, now: number): number {
 
 export function buildDeck(jobs: ScoredJob[], prefs: Preferences, facts: Fact[], seen: Set<string>, now = Date.now()): Deck {
   const hidden: Record<HiddenReason, number> = { level: 0, stretch: 0, student: 0, language: 0, permit: 0, city: 0, role: 0, seen: 0 };
-  const graduated = prefs.stage === "graduate" || prefs.stage === "early";
+  const experienced = prefs.stage === "experienced";
+  const graduated = prefs.stage === "graduate" || prefs.stage === "early" || experienced;
+  const bonus = experienced ? EXPERIENCED_BONUS : LEVEL_BONUS;
   const terms = profileTerms(facts);
   const entries: DeckEntry[] = [];
   for (const job of jobs) {
@@ -53,8 +57,8 @@ export function buildDeck(jobs: ScoredJob[], prefs: Preferences, facts: Fact[], 
       hidden.seen++;
       continue;
     }
-    if (!visibleByDefault(job.seniority.level, prefs.showStretch)) {
-      hidden[job.seniority.level === "stretch" ? "stretch" : "level"]++;
+    if (experienced ? !withinReach(job.title, job.seniority, EXPERIENCED_MAX_YEARS) : !visibleByDefault(job.seniority.level, prefs.showStretch)) {
+      hidden[!experienced && job.seniority.level === "stretch" ? "stretch" : "level"]++;
       continue;
     }
     // Jobs cached before the flag existed are read again here; it's one regex.
@@ -88,7 +92,7 @@ export function buildDeck(jobs: ScoredJob[], prefs: Preferences, facts: Fact[], 
     const { score, matched } = overlap(job, terms);
     // Someone still studying sees the internships made for them first.
     const studentFirst = forStudents && prefs.stage === "student" ? 2 : 0;
-    const rank = score + LEVEL_BONUS[job.seniority.level] + (roleMatch && cats.length ? 0.3 : 0) + freshness(job.postedAt, now) + (work === "check" ? -0.1 : 0) + (job.injections.length ? -0.05 : 0) + studentFirst;
+    const rank = score + bonus[job.seniority.level] + (roleMatch && cats.length ? 0.3 : 0) + freshness(job.postedAt, now) + (work === "check" ? -0.1 : 0) + (job.injections.length ? -0.05 : 0) + studentFirst;
     entries.push({ job, rank, work, matched: matched.slice(0, 8) });
   }
   entries.sort((a, b) => b.rank - a.rank);

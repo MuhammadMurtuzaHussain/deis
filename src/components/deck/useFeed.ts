@@ -31,8 +31,10 @@ export type Feed = {
   refresh: () => void;
 };
 
-export function useFeed(categories: string[], offline: boolean): Feed {
-  const key = categories.join(",");
+/** includeSenior: the server keeps senior roles (the "5 to 7 years" stage); the deck then hides the ones out of reach. */
+export function useFeed(categories: string[], offline: boolean, includeSenior = false): Feed {
+  // A different key asks again, so changing stage brings the senior roles in (or drops them).
+  const key = categories.join(",") + (includeSenior ? "+senior" : "");
   const rows = useLiveQuery(() => db.jobs.toArray(), [], null);
   const batch = useLiveQuery(() => getMeta<FeedBatch | null>("feedBatch", null), [], undefined);
   const [refreshing, setRefreshing] = useState(false);
@@ -62,7 +64,7 @@ export function useFeed(categories: string[], offline: boolean): Feed {
     setRefreshing(true);
     setError(null);
     try {
-      const out = await api<FeedAnswer>("/api/feed", { categories, includeSenior: false }, { signal: ctl.signal, headers: await serpHeaders() });
+      const out = await api<FeedAnswer>("/api/feed", { categories, includeSenior }, { signal: ctl.signal, headers: await serpHeaders() });
       await setMeta(PAUSED_META, pausedFrom(out.sources?.searches));
       const decision = feedUpdate(await feedSavedAt(), out);
       if (decision.save) {
@@ -81,7 +83,7 @@ export function useFeed(categories: string[], offline: boolean): Feed {
         setRefreshing(false);
       }
     }
-  }, [categories, key, loadStarter]);
+  }, [categories, includeSenior, key, loadStarter]);
 
   // Once the saved state is read: refresh in the background when online and due; offline with
   // nothing saved, try the starter list. Re-runs when the searches change or we come back online.

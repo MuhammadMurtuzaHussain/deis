@@ -80,3 +80,35 @@ describe("stage and stretch (PRD-X1, PRD-X2)", () => {
     expect(HIDDEN_COPY.stretch(1)).toMatch(/about 2 years/);
   });
 });
+
+describe("5 to 7 years working", () => {
+  const prefs = { ...aoife.preferences, stage: "experienced" as const, showStretch: false };
+  const fiveYears = job("Senior Software Engineer", "5+ years of experience with Python and React.");
+  const sevenYears = job("Software Engineer", "Minimum of 7 years' experience. Python.");
+  const tenYears = job("Software Engineer", "At least 10 years of experience building distributed systems.");
+  const twoYears = job("Software Engineer", "At least two years' experience in a similar role. Python.");
+  const director = job("Director of Engineering", "Python. Lead the engineering organisation.");
+  const grad = job("Graduate Software Engineer", "Python, React, TypeScript, SQL. Recent graduates welcome.");
+  const intern = job("Software Engineering Intern 2027 (Dublin)", "This position requires current enrollment in a school. Python, React, TypeScript.");
+
+  it("shows senior and stretch roles asking for up to 7 years, without the stretch switch", () => {
+    const deck = buildDeck([fiveYears, sevenYears, twoYears, grad], prefs, aoife.facts, new Set());
+    expect(deck.entries).toHaveLength(4);
+    expect(deck.hidden.level + deck.hidden.stretch).toBe(0);
+  });
+  it("hides roles asking for more than 7 years, and executive titles, as out of reach", () => {
+    const deck = buildDeck([tenYears, director, fiveYears], prefs, aoife.facts, new Set());
+    expect(deck.entries.map((e) => e.job.title)).toEqual(["Senior Software Engineer"]);
+    expect(deck.hidden.level).toBe(2);
+    expect(deck.hidden.stretch).toBe(0);
+  });
+  it("puts roles at their level ahead of graduate schemes, and hides student-only ones", () => {
+    const deck = buildDeck([grad, intern, fiveYears], prefs, aoife.facts, new Set());
+    expect(deck.entries.map((e) => e.job.title)).toEqual(["Senior Software Engineer", "Graduate Software Engineer"]);
+    expect(deck.hidden.student).toBe(1);
+  });
+  it("leaves the early-career deck as it was", () => {
+    const deck = buildDeck([fiveYears, director, grad], aoife.preferences, aoife.facts, new Set());
+    expect(deck.entries.map((e) => e.job.title)).toEqual(["Graduate Software Engineer"]);
+  });
+});

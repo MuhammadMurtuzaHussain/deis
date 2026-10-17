@@ -29,12 +29,16 @@ export const factSchema = z.object({
 });
 export type Fact = z.infer<typeof factSchema>;
 
-export const STAGES = ["student", "graduate", "early"] as const;
-export const STAGE_LABEL: Record<(typeof STAGES)[number], string> = {
+export const STAGES = ["student", "graduate", "early", "experienced"] as const;
+export type CareerStage = (typeof STAGES)[number];
+export const STAGE_LABEL: Record<CareerStage, string> = {
   student: "Still studying",
   graduate: "Just graduated",
   early: "Up to 2 years working",
+  experienced: "5 to 7 years working",
 };
+/** The most years a posting can ask for and still reach the "5 to 7 years" deck. */
+export const EXPERIENCED_MAX_YEARS = 7;
 
 export const preferencesSchema = z.object({
   cities: z.array(z.string()),

@@ -18,6 +18,7 @@ const STAGE_HELP: Record<(typeof STAGES)[number], string> = {
   student: "Internships and placements come first.",
   graduate: "Roles only open to current students are hidden.",
   early: "Roles only open to current students are hidden.",
+  experienced: "Senior roles asking for up to 7 years come in too, and come first. Executive titles stay hidden.",
 };
 
 export type Step = { id: string; title: string; short: string; why: string; valid: (p: Preferences) => boolean; body: (p: Preferences, set: (p: Preferences) => void) => ReactNode };
@@ -61,7 +62,7 @@ export const STEPS: Step[] = [
     id: "stage",
     title: "Where are you at?",
     short: "Stage",
-    why: "Deis hides jobs that ask for 3 or more years, and labels the ones that ask for about 2.",
+    why: "Deis hides jobs that ask for more years than you have, and labels the ones that are a stretch.",
     valid: (p) => Boolean(p.stage),
     body: (p, set) => (
       <div className="grid gap-4">
@@ -133,16 +134,19 @@ export const STEPS: Step[] = [
     short: "Stretch roles",
     why: "Plenty of graduates get these. Deis labels them as a stretch so you can decide card by card.",
     valid: () => true,
-    body: (p, set) => (
-      <Choices label="Stretch roles">
-        <Chip on={p.showStretch} onClick={() => set({ ...p, showStretch: true })}>
-          Yes, show me stretch roles
-        </Chip>
-        <Chip on={!p.showStretch} onClick={() => set({ ...p, showStretch: false })}>
-          No, early career only
-        </Chip>
-      </Choices>
-    ),
+    body: (p, set) =>
+      p.stage === "experienced" ? (
+        <p className="text-body text-ink-2">With 5 to 7 years these are already in your deck, so there&apos;s nothing to choose here.</p>
+      ) : (
+        <Choices label="Stretch roles">
+          <Chip on={p.showStretch} onClick={() => set({ ...p, showStretch: true })}>
+            Yes, show me stretch roles
+          </Chip>
+          <Chip on={!p.showStretch} onClick={() => set({ ...p, showStretch: false })}>
+            No, early career only
+          </Chip>
+        </Choices>
+      ),
   },
 ];
 
@@ -154,6 +158,6 @@ export function summary(p: Preferences): Record<string, string> {
     work: p.workStatus ? WORK_STATUS_LABEL[p.workStatus] : "Not set",
     roles: p.roles.map((r) => categoryById(r)?.label ?? r).join(", ") || "Not set",
     languages: p.languages.join(", ") || "Just English",
-    stretch: p.showStretch ? "Shown, labelled as a stretch" : "Hidden",
+    stretch: p.stage === "experienced" ? "Shown, they're within your 5 to 7 years" : p.showStretch ? "Shown, labelled as a stretch" : "Hidden",
   };
 }

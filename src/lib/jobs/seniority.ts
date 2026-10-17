@@ -177,3 +177,16 @@ export function visibleByDefault(level: Level, showStretch: boolean): boolean {
   if (level === "stretch") return showStretch;
   return true;
 }
+
+// Titles past a 5 to 7 year career, whatever the years line says. "Senior", "lead", "staff" and
+// "manager" stay in reach; running a function or a company doesn't.
+const EXECUTIVE_TITLE = /\b(principal|head|director|vp|vice president|chief|distinguished|fellow|partner)\b|\b(general|regional|country) manager\b|\b(l[89]|level [89])\b/i;
+
+/**
+ * For someone with 5 to 7 years: every level except roles asking for more years than they have,
+ * or an executive title. The posting's own years line decides, as everywhere else.
+ */
+export function withinReach(title: string, seniority: Pick<Seniority, "yearsMin">, maxYears: number): boolean {
+  if (seniority.yearsMin !== null && seniority.yearsMin > maxYears) return false;
+  return !EXECUTIVE_TITLE.test(title);
+}
