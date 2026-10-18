@@ -9,6 +9,7 @@ import { PERSONAS, type PersonaId } from "@/lib/demo/personas";
 import { AutoDeck } from "./onboarding/AutoDeck";
 import { StoryScroll } from "./onboarding/StoryScroll";
 import { Credit } from "./Credit";
+import { LaunchVideo } from "./LaunchVideo";
 import { OfferNote } from "./OfferNote";
 import { buttonClass, Button, CompanyMark, Dialog, MOTION, Pill, useMotion, Wordmark } from "./ui";
 
@@ -131,6 +132,15 @@ export function Welcome() {
             <AutoDeck />
           </motion.figure>
         </section>
+
+        {hosted && (
+          <section aria-labelledby="w-film" className="grid gap-8 border-t border-line py-16 lg:py-20">
+            <h2 id="w-film" className="display text-[32px] leading-[1.05] text-ink sm:text-page">
+              See it in a minute
+            </h2>
+            <LaunchVideo />
+          </section>
+        )}
 
         <section aria-labelledby="w-trace" className="border-t border-line">
           <StoryScroll headingId="w-trace" />
