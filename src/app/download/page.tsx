@@ -4,7 +4,8 @@ import { DownloadPicker } from "@/components/DownloadPicker";
 import { OllamaDownload } from "@/components/LocalGemma";
 import { Credit } from "@/components/Credit";
 import { OfferNote } from "@/components/OfferNote";
-import { buttonClass, Wordmark } from "@/components/ui";
+import { BuyLink } from "@/components/BuyLink";
+import { Wordmark } from "@/components/ui";
 import { BUY_HREF } from "@/lib/product";
 
 export const metadata: Metadata = {
@@ -74,9 +75,7 @@ export default function DownloadPage() {
             €9.99 once. Start with the 14-day free trial in the app, then buy a licence key when you&apos;re ready. Polar takes the payment and emails your key, and Deis never sees your card. The key is checked online once, then trusted offline and re-checked monthly.
           </p>
           <div className="grid gap-3">
-            <a href={BUY_HREF} className={`${buttonClass("primary", "lg")} w-fit`}>
-              Buy for €9.99
-            </a>
+            <BuyLink href={BUY_HREF}>Buy for €9.99</BuyLink>
             <OfferNote />
           </div>
         </section>
