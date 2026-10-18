@@ -7,9 +7,10 @@ export const runtime = "nodejs";
 // No success URL: Polar shows its own confirmation and emails the licence key.
 // In October the HACKTOBERFEST discount is applied for the buyer when Polar has it; if the
 // lookup fails, checkout still opens and the code can be typed in by hand.
+// Without a product (someone typing /checkout), send them to the buy section instead of a JSON error.
 export async function GET(request: Request): Promise<Response> {
   const products = new URL(request.url).searchParams.getAll("products");
-  if (products.length === 0) return Response.json({ error: "Missing products in query params" }, { status: 400 });
+  if (products.length === 0) return Response.redirect(new URL("/download#buy", request.url), 302);
   try {
     const discountId = offerOn() ? await offerDiscountId() : null;
     const result = await polar.checkouts.create({ products, ...(discountId ? { discount_id: discountId } : {}) });

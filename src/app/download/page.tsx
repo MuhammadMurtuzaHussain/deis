@@ -4,7 +4,8 @@ import { DownloadPicker } from "@/components/DownloadPicker";
 import { OllamaDownload } from "@/components/LocalGemma";
 import { Credit } from "@/components/Credit";
 import { OfferNote } from "@/components/OfferNote";
-import { Wordmark } from "@/components/ui";
+import { buttonClass, Wordmark } from "@/components/ui";
+import { BUY_HREF } from "@/lib/product";
 
 export const metadata: Metadata = {
   title: "Download Deis for Mac, Windows, Linux or Android",
@@ -63,6 +64,21 @@ export default function DownloadPage() {
             <OfferNote />
           </div>
           <DownloadPicker />
+        </section>
+
+        <section id="buy" aria-labelledby="buy-title" className="grid scroll-mt-6 gap-4 rounded-panel border border-line bg-surface p-5 sm:p-6">
+          <h2 id="buy-title" className="text-lead font-semibold text-ink">
+            Buy the desktop app
+          </h2>
+          <p className="max-w-[60ch] text-body text-ink-2">
+            €9.99 once. Start with the 14-day free trial in the app, then buy a licence key when you&apos;re ready. Polar takes the payment and emails your key, and Deis never sees your card. The key is checked online once, then trusted offline and re-checked monthly.
+          </p>
+          <div className="grid gap-3">
+            <a href={BUY_HREF} className={`${buttonClass("primary", "lg")} w-fit`}>
+              Buy for €9.99
+            </a>
+            <OfferNote />
+          </div>
         </section>
 
         <section id="gemma" aria-labelledby="gemma-title" className="grid scroll-mt-6 gap-5 rounded-panel border border-ink p-5 sm:p-6">

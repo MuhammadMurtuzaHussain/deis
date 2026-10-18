@@ -183,14 +183,19 @@ export function Welcome() {
                 Download for Mac, Windows or Linux
               </a>
             )}
+            {hosted && (
+              <a href="/download#buy" className="link inline-flex min-h-11 items-center gap-2 text-body font-medium">
+                Buy the app, €9.99 once
+              </a>
+            )}
             <a href={SOURCE_URL} target="_blank" rel="noreferrer noopener" className="link inline-flex min-h-11 items-center gap-2 text-body font-medium">
               <GithubLogo size={18} aria-hidden />
               Read the source code
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
             {hosted && (
-              <a href={routeHref({ name: "checkin" })} className="link inline-flex min-h-11 items-center text-body">
-                Use your own details instead
+              <a href="/download" className="link inline-flex min-h-11 items-center text-body">
+                Get the app to use your own details
               </a>
             )}
           </div>
