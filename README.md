@@ -11,6 +11,7 @@
   <a href="https://youtu.be/LXKSvYJGxeA">Watch the film (1 min)</a> ·
   <a href="https://dev.to/muhammadmurtuzahussain">DEV post</a> ·
   <a href="#download">Download</a> ·
+  <a href="mailto:hello@deiscareers.tech">hello@deiscareers.tech</a> ·
   Built for the <a href="https://dev.to/challenges/hacktoberfest-week2-2026-10-12">DEV Hacktoberfest Open-Source AI Challenge, Week 2: Side Hustle</a>
 </p>
 
@@ -92,6 +93,8 @@ The installers aren't signed with an Apple or Microsoft certificate yet, so the 
 - **Windows:** on the SmartScreen warning, *More info*, then *Run anyway*.
 - **Linux:** `chmod +x Deis-*.AppImage`, then run it.
 
+Questions before you buy, or a key that won't work? Email [hello@deiscareers.tech](mailto:hello@deiscareers.tech).
+
 Your own CV is read only by the desktop app. The web demo and the phone apps run two fictional graduates on real Irish jobs, so a real CV never reaches the server. Builds come from the [Desktop installers](.github/workflows/desktop.yml) and [Android app](.github/workflows/android.yml) workflows; each one is launched in CI before it's released.
 
 ## Run it locally
@@ -169,7 +172,7 @@ The details and scripts are in [eval/RESULTS.md](eval/RESULTS.md).
 
 ## First users
 
-The first person who used Deis properly wasn't who I built it for: an MBA student with ten years in tax, looking for accountancy roles. Their call shaped the app (career stages up to 7+ years, kinds of work beyond tech, postings that keep their lists), and they bought it on the call. The story is in the DEV post.
+The first person who used Deis properly wasn't who I built it for: an MBA student with ten years in tax, looking for accountancy roles. Their call shaped the app (career stages up to 7+ years, kinds of work beyond tech, postings that keep their lists), and they bought it on the call. The second sale came from someone I'd never met, by word of mouth. The story is in the DEV post.
 
 ## Privacy
 
