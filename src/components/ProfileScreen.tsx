@@ -53,6 +53,8 @@ export function ProfileScreen() {
   if (!profile) return <PageSkeleton />;
   const { facts, header, neverClaim, preferences } = profile;
   const unconfirmed = facts.filter((f) => !f.confirmed);
+  // The web demo shows its two fictional profiles and nothing else: your own CV and facts are for the app.
+  const locked = Boolean(status?.hosted);
   const needsModel = !ai && !(status?.hosted && status.demoModel) && !effectiveModel.standIn;
   const local = effectiveModel.privacy.where === "this computer";
 
@@ -108,7 +110,7 @@ export function ProfileScreen() {
 
   // Privacy copy from effectiveModel (PRD-4/SEC-3): no "never leaves your device" on the web demo.
   const privacyLine = `Files are read on this device. ${
-    local ? "The text is split into facts by Gemma on this computer." : `The text is sent to ${effectiveModel.label} to be split into facts.${status?.hosted ? " On this web demo, try a demo profile rather than your real CV." : ""}`
+    local ? "The text is split into facts by Gemma on this computer." : `The text is sent to ${effectiveModel.label} to be split into facts.`
   } A LinkedIn export ZIP is read without any AI.`;
 
   return (
@@ -126,9 +128,17 @@ export function ProfileScreen() {
       />
 
       <div className="grid gap-12">
-        <Section title="Add from a CV or LinkedIn">
-          <ImportPanel state={importState} onFile={(f) => void onFile(f)} onText={(t) => void extract(t, /linkedin\.com\/in\//i.test(t) ? "linkedin" : "cv")} privacyLine={privacyLine} primary={facts.length === 0} />
-        </Section>
+        {locked && (
+          <Notice tone="info" announce={false}>
+            This is a demo profile, shown read-only. To add your own CV or LinkedIn, <a href="/download" className="underline underline-offset-2">get the Deis app</a>: it reads your files on your own computer.
+          </Notice>
+        )}
+
+        {!locked && (
+          <Section title="Add from a CV or LinkedIn">
+            <ImportPanel state={importState} onFile={(f) => void onFile(f)} onText={(t) => void extract(t, /linkedin\.com\/in\//i.test(t) ? "linkedin" : "cv")} privacyLine={privacyLine} primary={facts.length === 0} />
+          </Section>
+        )}
 
         {proposals.length > 0 && (
           <Section title="New facts from your answers" description="You told Deis these while applying. Add the ones that are right.">
@@ -169,10 +179,12 @@ export function ProfileScreen() {
                   Confirm all {unconfirmed.length}
                 </Button>
               )}
-              <Button size="sm" onClick={() => setAddOpen(true)}>
-                <Plus size={16} aria-hidden />
-                Add a fact
-              </Button>
+              {!locked && (
+                <Button size="sm" onClick={() => setAddOpen(true)}>
+                  <Plus size={16} aria-hidden />
+                  Add a fact
+                </Button>
+              )}
             </>
           }
         >
@@ -182,33 +194,37 @@ export function ProfileScreen() {
             </Notice>
           )}
           {facts.length === 0 ? (
-            <EmptyState title="Nothing yet" action={<Button onClick={() => setAddOpen(true)}>Add a fact</Button>}>
-              Drop a CV or LinkedIn file above, or add facts one at a time.
+            <EmptyState title="Nothing yet" action={locked ? undefined : <Button onClick={() => setAddOpen(true)}>Add a fact</Button>}>
+              {locked ? "The demo profile has no facts yet." : "Drop a CV or LinkedIn file above, or add facts one at a time."}
             </EmptyState>
           ) : (
             <div className="gap-4 lg:columns-2">
               {roles.map((r, i) => (
-                <SlipGroup key={r.id} order={i} head={r} items={byOrg(r.org, r)} subtitle={[r.org, r.where, dateRange(r.start, r.end)].filter(Boolean).join(", ")} uses={uses} onSave={putFacts} onRemove={removeFact} />
+                <SlipGroup key={r.id} order={i} head={r} items={byOrg(r.org, r)} subtitle={[r.org, r.where, dateRange(r.start, r.end)].filter(Boolean).join(", ")} uses={uses} onSave={putFacts} onRemove={removeFact} readOnly={locked} />
               ))}
               {schools.map((s, i) => (
-                <SlipGroup key={s.id} order={roles.length + i} head={s} items={byOrg(s.org, s)} subtitle={dateRange(s.start, s.end)} uses={uses} onSave={putFacts} onRemove={removeFact} />
+                <SlipGroup key={s.id} order={roles.length + i} head={s} items={byOrg(s.org, s)} subtitle={dateRange(s.start, s.end)} uses={uses} onSave={putFacts} onRemove={removeFact} readOnly={locked} />
               ))}
-              {loose.length > 0 && <SlipGroup order={roles.length + schools.length} title="Skills, projects and more" items={loose} uses={uses} onSave={putFacts} onRemove={removeFact} />}
+              {loose.length > 0 && <SlipGroup order={roles.length + schools.length} title="Skills, projects and more" items={loose} uses={uses} onSave={putFacts} onRemove={removeFact} readOnly={locked} />}
             </div>
           )}
         </Section>
 
-        <div className="grid gap-12 lg:grid-cols-2 lg:gap-10">
-          <HeaderForm header={header} onSave={setHeader} />
-          <NeverClaim items={neverClaim} onSave={setNeverClaim} />
-        </div>
+        {!locked && (
+          <div className="grid gap-12 lg:grid-cols-2 lg:gap-10">
+            <HeaderForm header={header} onSave={setHeader} />
+            <NeverClaim items={neverClaim} onSave={setNeverClaim} />
+          </div>
+        )}
 
         <Section
           title="What you're looking for"
           actions={
-            <Button size="sm" onClick={() => go({ name: "checkin" })}>
-              Change<span className="sr-only"> what you&apos;re looking for</span>
-            </Button>
+            locked ? undefined : (
+              <Button size="sm" onClick={() => go({ name: "checkin" })}>
+                Change<span className="sr-only"> what you&apos;re looking for</span>
+              </Button>
+            )
           }
         >
           <dl className="grid gap-x-8 gap-y-4 rounded-panel border border-line bg-surface p-5 sm:grid-cols-2 lg:grid-cols-3">

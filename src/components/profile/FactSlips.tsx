@@ -28,7 +28,7 @@ type Remove = (id: string) => Promise<void>;
 
 const ICON_BTN = "grid size-9 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-sunken hover:text-ink pointer-coarse:size-11";
 
-function FactSlip({ fact, uses, onSave, onRemove, heading, subtitle, lead, showKind }: { fact: Fact; uses: number; onSave: Save; onRemove: Remove; heading?: boolean; subtitle?: string; lead?: ReactNode; showKind?: boolean }) {
+function FactSlip({ fact, uses, onSave, onRemove, heading, subtitle, lead, showKind, readOnly }: { fact: Fact; uses: number; onSave: Save; onRemove: Remove; heading?: boolean; subtitle?: string; lead?: ReactNode; showKind?: boolean; readOnly?: boolean }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(fact.text);
   return (
@@ -40,6 +40,7 @@ function FactSlip({ fact, uses, onSave, onRemove, heading, subtitle, lead, showK
       <input
         type="checkbox"
         checked={fact.confirmed}
+        disabled={readOnly}
         onChange={() => onSave([{ ...fact, confirmed: !fact.confirmed }])}
         aria-label={`${fact.confirmed ? "Confirmed" : "Confirm"}: ${fact.text}`}
         className={`size-5 shrink-0 cursor-pointer accent-[var(--ink)] ${heading ? "mt-2.5" : "mt-0.5"}`}
@@ -83,7 +84,7 @@ function FactSlip({ fact, uses, onSave, onRemove, heading, subtitle, lead, showK
           )}
         </div>
       )}
-      {!editing && (
+      {!editing && !readOnly && (
         <span className={`flex shrink-0 ${heading ? "mt-1.5" : "-mt-1.5"}`}>
           <button
             type="button"
@@ -116,6 +117,7 @@ export function SlipGroup({
   onSave,
   onRemove,
   order = 0,
+  readOnly,
 }: {
   /** Its place in the list, for the stagger as the groups arrive. */
   order?: number;
@@ -126,6 +128,8 @@ export function SlipGroup({
   uses: Map<string, number>;
   onSave: Save;
   onRemove: Remove;
+  /** The web demo's profiles: shown, not edited. */
+  readOnly?: boolean;
 }) {
   const org = head ? head.org || head.title || head.text : null;
   const { reduce, t } = useMotion();
@@ -140,13 +144,13 @@ export function SlipGroup({
       {title && <h3 className="px-4 pt-3 pb-1 text-body font-semibold text-ink">{title}</h3>}
       {head && (
         <ul>
-          <FactSlip fact={head} uses={uses.get(head.id) ?? 0} onSave={onSave} onRemove={onRemove} heading subtitle={subtitle} lead={org ? <CompanyMark name={org} size={40} className="shrink-0" /> : null} />
+          <FactSlip fact={head} uses={uses.get(head.id) ?? 0} onSave={onSave} onRemove={onRemove} heading subtitle={subtitle} readOnly={readOnly} lead={org ? <CompanyMark name={org} size={40} className="shrink-0" /> : null} />
         </ul>
       )}
       {items.length > 0 && (
         <ul className={`grid ${head ? "mt-1 border-t border-line pt-1" : ""}`}>
           {items.map((f) => (
-            <FactSlip key={f.id} fact={f} uses={uses.get(f.id) ?? 0} onSave={onSave} onRemove={onRemove} showKind={!head || f.kind !== "achievement"} />
+            <FactSlip key={f.id} fact={f} uses={uses.get(f.id) ?? 0} onSave={onSave} onRemove={onRemove} readOnly={readOnly} showKind={!head || f.kind !== "achievement"} />
           ))}
         </ul>
       )}

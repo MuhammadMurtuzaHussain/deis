@@ -109,7 +109,8 @@ function Shell() {
   const mainRef = useRef<HTMLElement>(null);
   const r: Route | null = profile ? (route ?? (isOnboarded(profile) ? { name: "deck" } : { name: "welcome" })) : null;
   // A locked licence is read-only (OFF-9): anything that leads to new kits shows the licence screen.
-  const shown: Route | null = r && locked && ["deck", "welcome", "checkin"].includes(r.name) ? { name: "licence" } : r;
+  // The web demo has no check-in: your own CV is read in the app only, so the check-in opens Welcome.
+  const shown: Route | null = r && status?.hosted && r.name === "checkin" ? { name: "welcome" } : r && locked && ["deck", "welcome", "checkin"].includes(r.name) ? { name: "licence" } : r;
   const key = shown ? routeHref(shown) : "loading";
   useRouteFocus(mainRef, key, shown ? TITLES[shown.name] : "Deis");
 

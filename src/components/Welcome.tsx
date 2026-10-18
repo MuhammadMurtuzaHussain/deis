@@ -81,13 +81,10 @@ export function Welcome() {
             <div className="mt-9 flex flex-wrap gap-3">
               {hosted ? (
                 <>
-                  <a href={routeHref({ name: "checkin" })} className={buttonClass("primary", "lg")}>
-                    Try it yourself
-                    <ArrowRight size={18} weight="bold" aria-hidden />
-                  </a>
-                  {IDS.map((id) => (
-                    <a key={id} href={routeHref({ name: "demo", persona: id })} className={buttonClass("secondary", "lg")}>
+                  {IDS.map((id, i) => (
+                    <a key={id} href={routeHref({ name: "demo", persona: id })} className={buttonClass(i === 0 ? "primary" : "secondary", "lg")}>
                       Try as {firstName(id)}
+                      {i === 0 && <ArrowRight size={18} weight="bold" aria-hidden />}
                       <span className="sr-only">, {personaLine(id)}</span>
                     </a>
                   ))}
