@@ -6,7 +6,9 @@ import { useMemo, useState } from "react";
 import type { Extracted } from "@/lib/ai/schema";
 import { api, ApiError } from "@/lib/client/api";
 import { db } from "@/lib/client/db";
+import { isPersona } from "@/lib/client/demo";
 import { useStore } from "@/lib/client/store";
+import { PERSONAS } from "@/lib/demo/personas";
 import { dateRange } from "@/lib/cv/compose";
 import { readProfileFile } from "@/lib/import/files";
 import { newFactId, type Fact, type Header } from "@/lib/profile/types";
@@ -43,7 +45,7 @@ const PREF_ROWS: [string, string][] = [
 ];
 
 export function ProfileScreen() {
-  const { profile, putFacts, removeFact, setHeader, setNeverClaim, go, ai, status, effectiveModel } = useStore();
+  const { profile, putFacts, removeFact, setHeader, setNeverClaim, go, ai, status, effectiveModel, demo } = useStore();
   const proposals = useLiveQuery(() => db.proposals.toArray(), [], []);
   const apps = useLiveQuery(() => db.applications.toArray(), [], []);
   const uses = useMemo(() => factUsage(apps), [apps]);
@@ -130,7 +132,16 @@ export function ProfileScreen() {
       <div className="grid gap-12">
         {locked && (
           <Notice tone="info" announce={false}>
-            This is a demo profile, shown read-only. To add your own CV or LinkedIn, <a href="/download" className="underline underline-offset-2">get the Deis app</a>: it reads your files on your own computer.
+            {demo && isPersona(demo) ? (
+              <>
+                This is {PERSONAS[demo].header.name}&apos;s demo profile, shown read-only. To use your own CV or LinkedIn, <a href="/download" className="underline underline-offset-2">get the Deis app</a>: it reads your files on your own computer.
+              </>
+            ) : (
+              <>
+                The web demo no longer takes your own details, so this profile is read-only. To carry on with it, download a backup in Settings, then restore it in the{" "}
+                <a href="/download" className="underline underline-offset-2">Deis app</a>.
+              </>
+            )}
           </Notice>
         )}
 

@@ -10,7 +10,8 @@ export const runtime = "nodejs";
 // Without a product (someone typing /checkout), send them to the buy section instead of a JSON error.
 export async function GET(request: Request): Promise<Response> {
   const products = new URL(request.url).searchParams.getAll("products");
-  if (products.length === 0) return Response.redirect(new URL("/download#buy", request.url), 302);
+  // A relative Location, so the redirect never depends on which host the proxy passed through.
+  if (products.length === 0) return new Response(null, { status: 302, headers: { location: "/download#buy" } });
   try {
     const discountId = offerOn() ? await offerDiscountId() : null;
     const result = await polar.checkouts.create({ products, ...(discountId ? { discount_id: discountId } : {}) });

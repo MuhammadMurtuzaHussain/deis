@@ -43,7 +43,7 @@ function FactSlip({ fact, uses, onSave, onRemove, heading, subtitle, lead, showK
         disabled={readOnly}
         onChange={() => onSave([{ ...fact, confirmed: !fact.confirmed }])}
         aria-label={`${fact.confirmed ? "Confirmed" : "Confirm"}: ${fact.text}`}
-        className={`size-5 shrink-0 cursor-pointer accent-[var(--ink)] ${heading ? "mt-2.5" : "mt-0.5"}`}
+        className={`size-5 shrink-0 cursor-pointer accent-[var(--ink)] disabled:cursor-default ${heading ? "mt-2.5" : "mt-0.5"}`}
       />
       {lead}
       {editing ? (

@@ -10,6 +10,6 @@ describe("GET /checkout", () => {
     const { GET } = await import("@/app/checkout/route");
     const res = await GET(new Request("https://deiscareers.tech/checkout"));
     expect(res.status).toBe(302);
-    expect(res.headers.get("location")).toBe("https://deiscareers.tech/download#buy");
+    expect(res.headers.get("location")).toBe("/download#buy");
   });
 });
