@@ -1,47 +1,141 @@
-# Deis
+<p align="center">
+  <a href="https://youtu.be/LXKSvYJGxeA"><img src="docs/post/youtube-thumbnail.jpg" alt="Deis: jobs you can actually get. Watch the one-minute film." width="100%" /></a>
+</p>
+
+<p align="center">
+  <b>Jobs you can actually get.</b> A swipe-to-apply job app for early-career people in Ireland, where open-weight <b>Gemma 4</b> tailors your CV and code removes anything it can't back up.
+</p>
+
+<p align="center">
+  <a href="https://deiscareers.tech"><b>Try the web demo</b></a> ·
+  <a href="https://youtu.be/LXKSvYJGxeA">Watch the film (1 min)</a> ·
+  <a href="https://dev.to/muhammadmurtuzahussain">DEV post</a> ·
+  <a href="#download">Download</a> ·
+  Built for the <a href="https://dev.to/challenges/hacktoberfest-week2-2026-10-12">DEV Hacktoberfest Open-Source AI Challenge, Week 2: Side Hustle</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/MuhammadMurtuzaHussain/deis/releases/latest/download/Deis-mac-arm64.dmg"><img src="https://img.shields.io/badge/macOS-Apple%20silicon-0B0B0C?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS, Apple silicon" /></a>
+  <a href="https://github.com/MuhammadMurtuzaHussain/deis/releases/latest/download/Deis-mac-x64.dmg"><img src="https://img.shields.io/badge/macOS-Intel-0B0B0C?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS, Intel" /></a>
+  <a href="https://github.com/MuhammadMurtuzaHussain/deis/releases/latest/download/Deis-windows-x64.exe"><img src="https://img.shields.io/badge/Windows-64--bit-0B0B0C?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows" /></a>
+  <a href="https://github.com/MuhammadMurtuzaHussain/deis/releases/latest/download/Deis-linux-x86_64.AppImage"><img src="https://img.shields.io/badge/Linux-AppImage-0B0B0C?style=for-the-badge&logo=linux&logoColor=white" alt="Download for Linux" /></a>
+  <a href="https://github.com/MuhammadMurtuzaHussain/deis/releases/latest/download/Deis-android.apk"><img src="https://img.shields.io/badge/Android-demo-0B0B0C?style=for-the-badge&logo=android&logoColor=white" alt="Download the Android demo" /></a>
+  <br />
+  <a href="https://deiscareers.tech/checkout?products=fb94fe7f-d0f8-49a0-8854-4bbe41f25496"><img src="https://img.shields.io/badge/Buy%20a%20key-%E2%82%AC9.99%20once-C8F03C?style=for-the-badge&labelColor=0E0F10" alt="Buy a licence key, 9.99 euro once" /></a>
+</p>
+
+<p align="center">
+  <img src="docs/post/gif-deck-swipe-hd.gif" alt="Swiping through real Irish jobs: every card is a job you can actually get" width="760" />
+</p>
 
 *Deis* (said "desh") is Irish for opportunity.
 
-**Jobs you can actually get.** Deis is a swipe-to-apply job app for early-career people in Ireland. It shows you jobs filtered for your level, your languages and your right to work. Swipe right and open-weight **Gemma** tailors your CV, a cover letter and form answers to the job, and every line traces back to something you told it.
+## Why
 
-It runs on your own model: Gemma on your laptop through Ollama, your own free Google AI Studio key, or any server you rent. With Gemma on your laptop it works with the Wi-Fi off.
+I tailored 83 CVs by hand this autumn: one per job, each rewritten to the job ad's own words and checked so it didn't claim anything I couldn't defend in an interview. Most early-career people I know do the same thing, alone, at night. The AI tools that do it for you charge per application and write things you'd never sign: "3 years of experience", "no sponsorship needed".
 
-**Try it:** [deiscareers.tech](https://deiscareers.tech). Choose *Try as Aoife* or *Try as Rahul* to use it as one of two fictional graduates. The jobs are real. The web demo takes no real CV: your own is read only by the desktop app, on your computer. That makes an application cost about nothing, where pay-per-application tools often charge 30 cents to a euro each.
-
-Built for the [DEV Hacktoberfest Open-Source AI Challenge, Week 2: Side Hustle](https://dev.to/challenges/hacktoberfest-week2-2026-10-12).
+Deis keeps your facts in one place, hides the Irish jobs you can't get before you see them, lets Gemma write the kit, and lets code decide what stays. It runs on your own model, so an application costs about €0.
 
 ## What it does
 
-1. **A 90-second check-in.** Where in Ireland you'd work, how far along you are, your right to work (EU, Stamp 4, Stamp 1G or needing a permit), the kinds of work you want, and any languages besides English.
-2. **A profile of small, true facts.** Upload a CV (PDF or Word, read on your device) and Gemma splits it into facts you confirm. LinkedIn's own data export becomes facts with no AI at all. Nothing is used until you tick it.
-3. **A deck of real Irish jobs.** About 300 live early-career jobs at a time (70 to 100 left in a typical deck after your filters), from 54 employers' public job boards (Greenhouse, Ashby, Lever, SmartRecruiters) plus shared Google Jobs searches. Code hides roles asking for 3+ years, roles that need a language you don't have, and postings that rule out your status. Each card quotes the posting's own words for its level and right-to-work line.
-4. **Swipe right, two ways.**
-   - **Quick:** the kit (fit check, CV, letter, draft answers) builds in the background while you keep swiping.
-   - **Careful:** Deis asks about your gaps first. Your answers become proposed facts, you approve them, and your profile gets stronger for every application after.
-5. **Paste a job you found elsewhere.** Paste the text of any posting and it goes through the same code as the boards (hidden text removed, level and right to work read) and lands on top of the deck. It works offline.
-6. **You apply.** Download the CV as Word or PDF, copy the answers, open the posting. Deis never submits for you.
-7. **A tracker**, with a nudge to follow up a week after you apply.
+| | |
+|---|---|
+| **A 90-second check-in** | Where in Ireland you'd work, how far along you are (studying to 7+ years), your right to work (EU, Stamp 4, Stamp 1G or a permit), the kinds of work you want (tech, tax, accounting, management and more, with search) and your languages. |
+| **A profile of true facts** | Upload a CV (read on your device) and Gemma splits it into facts you confirm. LinkedIn's data export becomes facts with no AI at all. Nothing is used until you tick it. |
+| **A deck of real Irish jobs** | About 300 live jobs at a time from 55 employers' public job boards (Greenhouse, Ashby, Lever, SmartRecruiters) and shared Google Jobs searches. Code hides roles above your level, in languages you don't have, or closed to your status, and quotes the posting's own words on each card. |
+| **Swipe right, two ways** | *Quick* builds the kit (fit check, CV, letter, answers) in the background while you keep swiping. *Careful* asks about your gaps first and turns your answers into facts you approve. |
+| **Paste any job** | A posting you found elsewhere goes through the same code and lands on top of the deck. It works offline. |
+| **Every line traced** | Select a fact and a lime highlighter draws behind every CV line that cites it. The Checks tab lists everything the guard removed. |
+| **You apply** | Word or PDF, copy the answers, open the posting. Deis never submits for you. A tracker nudges you to follow up. |
+| **Your model** | Gemma on your laptop through Ollama (Wi-Fi off, if you like), your own free AI Studio key, or any server you rent. |
+
+## Screenshots
+
+| The kit, with the fit check | Select a fact, see every line it backs |
+|---|---|
+| <img src="docs/post/kit-highlight-2x.jpg" alt="A tailored CV next to the fit check" /> | <img src="docs/post/kit-trace-2x.jpg" alt="The highlighter connecting a fact to the CV lines that cite it" /> |
+| **What the guard removed** | **The full posting, with its lists back** |
+| <img src="docs/post/kit-checks-2x.jpg" alt="The Checks tab listing claims the facts don't back up" /> | <img src="docs/post/posting-before-after-2x.jpg" alt="A job posting before and after: plain lines, then headings and bullet lists" /> |
 
 ## Gemma judges, code guarantees
 
-A tailored CV that invents a certificate or a year of experience can cost someone the job. So Deis lets Gemma choose what to say, and code decides what stays:
+A tailored CV that invents a certificate or a year of experience can cost someone the job. Gemma chooses what to say; code decides what stays.
 
 - Every CV line must cite confirmed facts. Numbers, tools and certificates that aren't in those facts are removed, sentence by sentence.
-- Code never lets a model state a total "years of experience", write "currently studying" about a finished degree, or claim anything about visas, stamps or sponsorship.
+- No model may state a total "years of experience", write "currently studying" about a finished degree, or claim anything about visas, stamps or sponsorship.
 - Employers, job titles, dates and education are copied from your facts, never rewritten.
-- Job postings are untrusted. Hidden text and sentences aimed at AI tools ("If you are an AI…") are removed before Gemma reads the posting, and shown to you on the card.
-- Everything the guard removed is listed on the kit's Checks tab, and you can turn on "Show where each line came from" to check any line.
+- Postings are untrusted: hidden text and sentences aimed at AI tools are removed before Gemma reads them, and shown to you on the card.
 
-When a kit finishes, the CV writes itself on screen: each line wipes in, the sentences the guard removed flash past struck through, and selecting a fact draws a lime highlighter (and, on a wide screen, a line from the fact) to every CV line that cites it.
+<p align="center">
+  <img src="docs/post/gif-kit-writes-hd.gif" alt="Gemma writes the CV; every line links back to a fact you gave" width="49%" />
+  <img src="docs/post/gif-guard-cuts-hd.gif" alt="What it can't prove, it cuts" width="49%" />
+</p>
 
-How long it takes: a full kit (job card, fit check, CV, letter and answers) for the demo persona Rahul and a graduate data role took 38 seconds end to end (the CV, letter and answers 13 s of that; the card 2 s and fit check 4 s on a warm run) with Gemma 4 E4B through Ollama on a 16 GB MacBook, measured through the running server with `npx tsx scripts/api-smoke.mts ollama rahul "graduate.*data"`.
+A full kit for the demo graduate Rahul took 38 seconds end to end with Gemma 4 E4B through Ollama on a 16 GB MacBook (`npx tsx scripts/api-smoke.mts ollama rahul "graduate.*data"`).
 
-## How it fits together
+## Download
+
+The desktop app runs everything on your computer: your profile, the deck and, with [Ollama](https://ollama.com), Gemma itself. **14 days free, then €9.99 once.** October only: the code `hacktoberfest2026` is applied for you at checkout, so it's €2.
+
+| Build | File | Notes |
+|---|---|---|
+| macOS, Apple silicon | [Deis-mac-arm64.dmg](https://github.com/MuhammadMurtuzaHussain/deis/releases/latest/download/Deis-mac-arm64.dmg) | macOS 12 or later. Tells you when a new version is out. |
+| macOS, Intel | [Deis-mac-x64.dmg](https://github.com/MuhammadMurtuzaHussain/deis/releases/latest/download/Deis-mac-x64.dmg) | macOS 12 or later. |
+| Windows | [Deis-windows-x64.exe](https://github.com/MuhammadMurtuzaHussain/deis/releases/latest/download/Deis-windows-x64.exe) | Windows 10 or 11, 64-bit. Updates itself. |
+| Linux | [Deis-linux-x86_64.AppImage](https://github.com/MuhammadMurtuzaHussain/deis/releases/latest/download/Deis-linux-x86_64.AppImage) | 64-bit. Updates itself. |
+| Android | [Deis-android.apk](https://github.com/MuhammadMurtuzaHussain/deis/releases/latest/download/Deis-android.apk) | Free. Runs the web demo (two sample graduates). |
+| iPhone | [deiscareers.tech](https://deiscareers.tech) | Free. Safari, Share, *Add to Home Screen*. Runs the web demo. |
+
+The installers aren't signed with an Apple or Microsoft certificate yet, so the first time you open Deis:
+
+- **macOS:** open it once, then System Settings, Privacy & Security, *Open Anyway*.
+- **Windows:** on the SmartScreen warning, *More info*, then *Run anyway*.
+- **Linux:** `chmod +x Deis-*.AppImage`, then run it.
+
+Your own CV is read only by the desktop app. The web demo and the phone apps run two fictional graduates on real Irish jobs, so a real CV never reaches the server. Builds come from the [Desktop installers](.github/workflows/desktop.yml) and [Android app](.github/workflows/android.yml) workflows; each one is launched in CI before it's released.
+
+## Run it locally
+
+Requires [Node 24](https://nodejs.org), [pnpm](https://pnpm.io) and, for private use, [Ollama](https://ollama.com).
+
+```bash
+ollama pull gemma4:e4b       # ~6.6 GB; then choose "On this computer" in Deis
+git clone https://github.com/MuhammadMurtuzaHussain/deis && cd deis
+pnpm install
+cp .env.example .env.local   # optional: a demo key and the job search key
+pnpm dev                     # http://localhost:3200
+```
+
+Your profile lives in your browser's IndexedDB; there are no accounts. The server can spend the keys in `.env.local`, so keep it to yourself: it listens on 127.0.0.1 and refuses requests whose Host or Origin isn't this computer. To serve other people, set `DEIS_HOSTED=1` and run `pnpm exec next start -H 0.0.0.0`, as the hosted demo does; that rate-limits the demo key, takes no real CVs and lets the server reach only well-known AI hosts.
+
+### Running offline
+
+<img src="docs/post/gif-runs-on-laptop-hd.gif" alt="Choosing Gemma on this computer, which works offline" width="420" align="right" />
+
+1. `ollama pull gemma4:e4b` and choose "On this computer".
+2. Open Jobs once while online, so the deck saves its jobs.
+3. File > Work offline in the desktop app, Settings > Work offline, or start with `--offline` (`DEIS_OFFLINE=1` for a server you run).
+
+The server then refuses every connection that isn't to this computer (an egress guard on every socket), the deck shows the jobs it saved, and you can still paste a job and build a kit. Settings shows a checklist of what's ready.
+
+<br clear="right" />
+
+## How it's built
+
+| Piece | Role |
+|---|---|
+| **Gemma 4** (open weights) | Every AI job: job cards, fit check, CV, letter, answers, gap questions. E4B or 12B on your laptop through Ollama; 26B on AI Studio or OpenRouter for the demo. |
+| **Mastra** | One agent per task, a per-request chain of models with fallbacks, and a kit workflow that writes the CV, letter and answers in parallel. Scorers with no model judge check every hosted kit (`src/mastra/scorers.ts`). |
+| **Code guard** | [`src/lib/cv/guard.ts`](src/lib/cv/guard.ts): every sentence checked against the facts it cites. Seniority, right to work, languages and Ireland-only filters in [`src/lib/jobs/`](src/lib/jobs). |
+| **SerpApi** | Google Jobs as one shared, cached search per role family for all of Ireland, plus public job board APIs. |
+| **Sentry** | Agent tracing (a span per workflow step and Gemma call) and one issue per guard rule. Never a CV, a prompt or a key. |
+| **Render** | The web service and Key Value for the demo, the shared job feed and the demo key's limits ([`render.yaml`](render.yaml)). |
+| **Next.js 16, Electron, Capacitor** | One app: the web demo, the desktop app around the same server on `127.0.0.1`, and the Android shell. Dexie for local data, Motion for the highlighter. |
 
 ```mermaid
 flowchart LR
   subgraph Sources
-    B[30 Greenhouse and Ashby boards]
+    B[55 employer job boards]
     G[SerpApi Google Jobs, one shared search per role family]
     P[A job you paste]
   end
@@ -62,75 +156,38 @@ flowchart LR
   PR[(Your profile in IndexedDB)] --> W
 ```
 
-Your profile never leaves the browser except as the facts sent with a request to the model you chose.
+## Evaluation
 
-## Get the app
+The details and scripts are in [eval/RESULTS.md](eval/RESULTS.md).
 
-The desktop app for macOS, Windows and Linux runs everything on your computer: your profile, the job deck and, with [Ollama](https://ollama.com), Gemma itself. It's €9.99 once, after a 14-day free trial with everything included. The money pays for the ready-built app, updates and the daily Irish job feed.
+| What | Result |
+|---|---|
+| Seniority filter, 52 hand-labelled postings it had never seen | 51 right on the first run; the miss is now fixed |
+| Guard, eight kits by Gemma 4 E4B on a laptop (16 Oct) | 196 sentences kept, 11 removed (5.3%), 0 untraceable claims left |
+| Of the removals, read by hand | About half real over-claims; the rest true lines it was too strict about |
+| Tests | `pnpm test` (360+), lint and types on every push in GitHub Actions |
 
-**October only:** 80% off with the code `hacktoberfest2026`, applied for you at checkout, so €2.
+## First users
 
-**[Download Deis](https://deiscareers.tech/download)** for a Mac (Apple silicon or Intel), Windows or Linux. Windows and Linux copies update themselves; on a Mac, Deis tells you when a new version is out.
+The first person who used Deis properly wasn't who I built it for: an MBA student with ten years in tax, looking for accountancy roles. Their call shaped the app (career stages up to 7+ years, kinds of work beyond tech, postings that keep their lists), and they bought it on the call. The story is in the DEV post.
 
-The installers aren't signed with an Apple or Microsoft certificate yet, so the first time you open Deis:
+## Privacy
 
-- **macOS:** open the app once, then go to System Settings, Privacy & Security, and choose *Open Anyway* next to Deis.
-- **Windows:** on the SmartScreen warning, choose *More info*, then *Run anyway*.
-- **Linux:** make the AppImage executable (`chmod +x Deis-*.AppImage`) and run it.
-
-Builds come from the [Desktop installers](.github/workflows/desktop.yml) workflow: each one is launched once in CI before it's kept, and a `v*` tag publishes them as a [GitHub Release](https://github.com/MuhammadMurtuzaHussain/deis/releases). To release an update, bump `version` in `desktop/package.json` and push a new tag.
-
-### On your phone
-
-Free on both, and the same demo as the website: two sample graduates on real Irish jobs, through [deiscareers.tech](https://deiscareers.tech). Your own CV is read only by the desktop app, so it never reaches the server; Deis can't run Gemma on a phone yet.
-
-- **Android:** download `Deis-android.apk` from the [download page](https://deiscareers.tech/download) or the [latest release](https://github.com/MuhammadMurtuzaHussain/deis/releases/latest), open it, and allow your browser to install unknown apps when Android asks. Sideloading needs no Google account; Google's developer verification for sideloaded apps covers Brazil, Indonesia, Singapore and Thailand from 30 September 2026 and the rest of the world in 2027, so it doesn't affect Ireland yet.
-- **iPhone:** open deiscareers.tech in Safari, tap Share, then *Add to Home Screen*. Deis is an installable web app (manifest, icons, full screen), so it needs no App Store. An App Store or TestFlight build would need a $99 a year Apple Developer account.
-
-The Android app is a [Capacitor](https://capacitorjs.com) shell in [`mobile/`](mobile) that opens the hosted site, so it updates when the website does. A small native layer covers what an Android WebView can't do alone: Word files and backups go to the share sheet (save to Files or Drive, or send), *Save as PDF* opens Android's print dialog, links to job postings open in your browser, and the back button walks back through the app. The [Android app](.github/workflows/android.yml) workflow builds and signs the APK, installs it on an emulator and opens it, and a `v*` tag attaches it to the GitHub Release. The signing key is kept only in repository secrets. Google Play ($25 once) and [F-Droid](https://f-droid.org) (free, and AGPL suits it, but its review takes weeks) are options for later.
-
-## Run it from source
-
-```bash
-pnpm install
-cp .env.example .env.local   # optional: a demo key and the job search key
-pnpm dev                     # http://localhost:3200
-```
-
-For fully private use, install [Ollama](https://ollama.com) and run `ollama pull gemma4:e4b`, then choose "On this computer" in Deis. Your profile lives in your browser's IndexedDB; there are no accounts.
-
-The server can spend the keys in `.env.local` and fetches whatever model address it's given, so keep it to yourself. `pnpm dev` and `pnpm start` listen on 127.0.0.1 only, and unless `DEIS_HOSTED=1` is set the server refuses requests whose Host or Origin isn't this computer. To serve other people, set `DEIS_HOSTED=1` and run `pnpm exec next start -H 0.0.0.0`, as the hosted demo does: `DEIS_HOSTED=1` rate-limits the demo key and lets the server connect only to well-known AI hosts.
-
-### Running offline
-
-With Gemma on this computer, Deis works with no network at all:
-
-1. Run `ollama pull gemma4:e4b` and choose "On this computer" in Deis.
-2. Open Jobs once while online, so the deck saves its jobs to this device.
-3. Choose File > Work offline in the desktop app, or Settings > Work offline, or start it with `--offline` (`DEIS_OFFLINE=1` for a server you run yourself).
-
-The server then refuses every connection that isn't to this computer (an egress guard on every socket), cloud models are refused with a message pointing at Gemma on this computer, the deck shows the jobs it last saved, and you can still paste a job. Checking a licence key waits until you're back online. Settings shows a checklist of what's ready.
-
-## How it's built
-
-- Next.js 16, React 19, Tailwind 4, Motion, Dexie.
-- [Mastra](https://mastra.ai) agents and a parallel kit workflow, with a per-request chain of models and fallbacks (Ollama, Google AI Studio, any OpenAI-compatible server). The hosted demo tries AI Studio, then Gemma on OpenRouter.
-- Mastra scorers with no model judge check every hosted kit after the guard: untraceable numbers, tools and certificates, near-copy lines, a finished degree written as current, prompt leaks, and the share the guard removed (`src/mastra/scorers.ts`). Their scores sit next to the kit's trace in Mastra Platform, as rule names and counts only. While a kit is written, the app shows each workflow step as it finishes (fit checked, CV written, what the guard removed) from the same request, streamed.
-- [SerpApi](https://serpapi.com) Google Jobs for the shared Irish feed; public Greenhouse and Ashby job board APIs.
-- [Sentry](https://sentry.io) agent tracing and one issue per guard rule (never prompts, CVs or keys).
-- [Render](https://render.com) web service and Key Value for the hosted demo (`render.yaml`), with per-person and demo-wide hourly limits on the demo's own key. Your own key or Ollama is never limited.
-- Tests, lint and type checks run in GitHub Actions on every push (`ci.yml`).
-
-How well it works, measured: [eval/RESULTS.md](eval/RESULTS.md). The seniority filter got 51 of 52 unseen postings right, and no kit has left an untraceable number, tool or certificate after the guard.
+- **Desktop app:** your profile, applications and, with Ollama, the model stay on your computer.
+- **Web demo and phones:** two fictional graduates only; a real CV is refused by the server.
+- **Your own AI Studio key or server:** the facts for each request go to the model you chose, and nowhere else.
+- **Tracing:** Sentry and Mastra get step names, timings, token counts and guard rule names. Never a CV, a prompt or a key.
 
 ## Honest limits
 
 - Code catches invented numbers, tools, certificates, employers, dates and status claims. It can't judge every shade of meaning, so read your CV once before you send it.
-- Small local models are slower (see the timing above) and write plainer CVs than the cloud tier. The guard also removes some true sentences: on 16 October about half of what it removed was a real over-claim.
+- Small local models are slower and write plainer CVs than the cloud tier.
 - The hosted demo's Gemma depends on Google AI Studio and OpenRouter, and both have had bad hours. Your own key or Ollama avoids that.
-- Only the macOS installer has been run on a real machine so far. The Android app has been installed and opened on an emulator in CI, not yet on a phone.
-- Ireland only for now. Permit information is general, not immigration advice.
+- Only the macOS installer has been run on a real machine so far; the Android app has run on an emulator in CI.
+- Ireland only, on purpose: CV styles, languages and what employers expect differ by country. Permit information is general, not immigration advice.
 
-## Licence
+## Licence and credits
 
-[AGPL-3.0](LICENSE). You can read, build and run all of it for free. The paid desktop app saves you the setup and pays for the daily Irish job feed.
+[AGPL-3.0](LICENSE): read, build and run all of it for free. The paid desktop app saves you the setup and pays for the daily Irish job feed.
+
+Made by [Muhammad Murtuza Hussain](https://github.com/MuhammadMurtuzaHussain) in Galway, for the DEV Hacktoberfest Open-Source AI Challenge, October 2026. Built with AI assistance (Claude Code).
