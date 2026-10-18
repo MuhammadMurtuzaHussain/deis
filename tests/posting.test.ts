@@ -69,6 +69,18 @@ describe("postingBlocks", () => {
     ]);
   });
 
+  it("keeps an unmarked list's lead-in out of the list", () => {
+    const text = [
+      "Here is a taster of the diverse work our AI & Data analysts do:",
+      "Radically reimagine a client process with AI and be at the heart of the delivery",
+      "Scale AI solutions for the world's largest companies as an AI engineer",
+    ].join("\n");
+    expect(postingBlocks(text)).toEqual([
+      { kind: "paragraph", text: "Here is a taster of the diverse work our AI & Data analysts do:" },
+      { kind: "list", items: ["Radically reimagine a client process with AI and be at the heart of the delivery", "Scale AI solutions for the world's largest companies as an AI engineer"] },
+    ]);
+  });
+
   it("reads three or more bare labels in a row as a list, not headings", () => {
     expect(postingBlocks(["Skills", "", "Python", "SQL", "Power BI"].join("\n"))).toEqual([{ kind: "list", items: ["Skills", "Python", "SQL", "Power BI"] }]);
   });

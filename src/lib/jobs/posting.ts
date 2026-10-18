@@ -81,8 +81,11 @@ export function postingBlocks(text: string): PostingBlock[] {
       }
     } else if (k === "short") {
       // A short line continues an unmarked list, or starts one when the next line is short too.
-      // Before a marked list it's the lead-in ("You'll bring:"), so it stays a paragraph.
-      if (list && !list.marked) list.items.push(line);
+      // A lead-in ("…any of the following:") or a line before a marked list stays a paragraph.
+      if (line.endsWith(":")) {
+        flush();
+        out.push({ kind: "paragraph", text: line });
+      } else if (list && !list.marked) list.items.push(line);
       else if (kinds[i + 1] === "short") {
         flush();
         list = { items: [line], marked: false };
