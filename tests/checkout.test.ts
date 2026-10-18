@@ -49,7 +49,7 @@ describe("GET /checkout", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0].url).toBe("https://api.polar.sh/v1/checkouts/client/polar_c_test");
     expect(calls[0].init?.method).toBe("PATCH");
-    expect(JSON.parse(String(calls[0].init?.body))).toEqual({ discount_code: "hacktoberfest" });
+    expect(JSON.parse(String(calls[0].init?.body))).toEqual({ discount_code: "hacktoberfest2026" });
     expect(res.status).toBe(302);
     expect(res.headers.get("location")).toBe("https://polar.sh/checkout/polar_c_test");
   });

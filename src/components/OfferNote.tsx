@@ -20,8 +20,8 @@ export function OfferNote({ className = "" }: { className?: string }) {
         October only: {OFFER.percentOff}% off with the code{" "}
         <span className="highlight rounded-sm px-1 font-mono text-[0.95em] font-semibold text-ink" data-on="true">
           {OFFER.code}
-        </span>{" "}
-        at checkout, so {OFFER.price} instead of €9.99.
+        </span>
+        , applied for you at checkout, so {OFFER.price} instead of €9.99.
       </span>
     </p>
   );
