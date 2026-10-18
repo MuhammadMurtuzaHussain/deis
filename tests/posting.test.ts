@@ -81,6 +81,40 @@ describe("postingBlocks", () => {
     ]);
   });
 
+  it("keeps items without full stops in the list after a lead-in, and Title Case headings out of it", () => {
+    const text = [
+      "We are looking for graduates who are familiar with any number of the following:",
+      "Knowledge of how data and AI can be used to solve business problems",
+      "Experience with generative AI and agentic AI technologies",
+      "Cloud data platform experience/knowledge (AWS, MS Azure, Google Cloud Platform)",
+      "What You Will Gain",
+      "Structured graduate training and mentoring.",
+      "Hands-on experience working with real-world datasets.",
+    ].join("\n");
+    expect(postingBlocks(text)).toEqual([
+      { kind: "paragraph", text: "We are looking for graduates who are familiar with any number of the following:" },
+      {
+        kind: "list",
+        items: [
+          "Knowledge of how data and AI can be used to solve business problems",
+          "Experience with generative AI and agentic AI technologies",
+          "Cloud data platform experience/knowledge (AWS, MS Azure, Google Cloud Platform)",
+        ],
+      },
+      { kind: "heading", text: "What You Will Gain" },
+      { kind: "list", items: ["Structured graduate training and mentoring.", "Hands-on experience working with real-world datasets."] },
+    ]);
+  });
+
+  it("leaves two prose sentences after a paragraph as paragraphs", () => {
+    const text = [
+      long("Technology is changing the world faster than ever before."),
+      "Every day around the world, we work with exceptional people, the latest and greatest tech and leading companies across industries.",
+      "You'll learn, grow and advance in a diverse culture of shared success.",
+    ].join("\n");
+    expect(postingBlocks(text).map((b) => b.kind)).toEqual(["paragraph", "paragraph", "paragraph"]);
+  });
+
   it("reads three or more bare labels in a row as a list, not headings", () => {
     expect(postingBlocks(["Skills", "", "Python", "SQL", "Power BI"].join("\n"))).toEqual([{ kind: "list", items: ["Skills", "Python", "SQL", "Power BI"] }]);
   });
