@@ -9,6 +9,7 @@ import { PERSONAS, type PersonaId } from "@/lib/demo/personas";
 import { AutoDeck } from "./onboarding/AutoDeck";
 import { StoryScroll } from "./onboarding/StoryScroll";
 import { Credit } from "./Credit";
+import { LinkedInLink } from "./SocialLink";
 import { LaunchVideo } from "./LaunchVideo";
 import { OfferNote } from "./OfferNote";
 import { buttonClass, Button, CompanyMark, Dialog, MOTION, Pill, useMotion, Wordmark } from "./ui";
@@ -203,6 +204,7 @@ export function Welcome() {
               Read the source code
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
+            <LinkedInLink size={18} label="Follow Deis on LinkedIn" underline={false} className="link text-body font-medium" />
             {hosted && (
               <a href="/download" className="link inline-flex min-h-11 items-center text-body">
                 Get the app to use your own details

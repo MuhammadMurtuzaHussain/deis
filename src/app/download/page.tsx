@@ -4,6 +4,7 @@ import { DownloadPicker } from "@/components/DownloadPicker";
 import { OllamaDownload } from "@/components/LocalGemma";
 import { Credit } from "@/components/Credit";
 import { OfferNote } from "@/components/OfferNote";
+import { LinkedInLink } from "@/components/SocialLink";
 import { BuyLink } from "@/components/BuyLink";
 import { Wordmark } from "@/components/ui";
 import { BUY_HREF } from "@/lib/product";
@@ -179,8 +180,9 @@ export default function DownloadPage() {
           </dl>
         </section>
       </main>
-      <footer className="mx-auto w-full max-w-[880px] border-t border-line px-4 py-8 md:px-8">
+      <footer className="mx-auto flex w-full max-w-[880px] flex-wrap items-center justify-between gap-x-6 border-t border-line px-4 py-8 md:px-8">
         <Credit />
+        <LinkedInLink className="text-caption text-ink-3 hover:text-ink" />
       </footer>
     </div>
   );
