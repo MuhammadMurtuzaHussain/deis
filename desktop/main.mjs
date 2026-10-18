@@ -178,10 +178,10 @@ function buildMenu() {
   );
 }
 
-/** Job postings and apply links open in the user's own browser, never inside the app. */
+/** Job postings and apply links open in the user's own browser, never inside the app; mail links in their mail app. */
 function openOutside(url) {
-  if (!/^https?:/.test(url)) return;
-  console.log("[deis] opening in the browser:", new URL(url).host);
+  if (!/^(https?|mailto):/.test(url)) return;
+  console.log("[deis] opening outside:", url.startsWith("mailto:") ? "mail" : new URL(url).host);
   void shell.openExternal(url);
 }
 

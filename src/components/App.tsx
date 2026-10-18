@@ -15,7 +15,7 @@ import { PERSONAS, type PersonaId } from "@/lib/demo/personas";
 import { ApplicationScreen } from "./ApplicationScreen";
 import { CheckIn } from "./CheckIn";
 import { Credit } from "./Credit";
-import { LinkedInLink } from "./SocialLink";
+import { LinkedInLink, SupportLink } from "./SocialLink";
 import { Deck } from "./Deck";
 import { LaneSwitch } from "./deck/LaneSwitch";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -190,6 +190,7 @@ function Shell() {
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
         <LinkedInLink className="text-caption text-ink-3 hover:text-ink" />
+        <SupportLink className="text-caption text-ink-3 hover:text-ink" />
         {status && !status.desktop && (
           <a href="/download" className="inline-flex min-h-11 items-center gap-2 text-caption text-ink-3 hover:text-ink">
             <DownloadSimple size={16} aria-hidden />

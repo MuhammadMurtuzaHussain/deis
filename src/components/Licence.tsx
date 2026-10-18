@@ -4,6 +4,7 @@ import { Check, GithubLogo, Key } from "@phosphor-icons/react";
 import { useState } from "react";
 import { api, ApiError } from "@/lib/client/api";
 import { routeHref, useStore, type Licence as LicenceInfo } from "@/lib/client/store";
+import { SUPPORT_EMAIL } from "@/lib/product";
 import { OfferNote } from "./OfferNote";
 import { Button, Field, inputClass, LinkButton, Notice, PageHeader, Surface } from "./ui";
 
@@ -115,6 +116,12 @@ export function LicenceScreen({ licence, onChange }: { licence: LicenceInfo; onC
             <a href={SOURCE_URL} target="_blank" rel="noreferrer noopener" className="link inline-flex items-center gap-1">
               <GithubLogo size={16} aria-hidden />
               Source code<span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          </p>
+          <p className="text-body text-ink-2">
+            A question, or a key that won&apos;t work?{" "}
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="link">
+              {SUPPORT_EMAIL}
             </a>
           </p>
           {ended && (

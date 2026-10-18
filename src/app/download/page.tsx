@@ -4,10 +4,10 @@ import { DownloadPicker } from "@/components/DownloadPicker";
 import { OllamaDownload } from "@/components/LocalGemma";
 import { Credit } from "@/components/Credit";
 import { OfferNote } from "@/components/OfferNote";
-import { LinkedInLink } from "@/components/SocialLink";
+import { LinkedInLink, SupportLink } from "@/components/SocialLink";
 import { BuyLink } from "@/components/BuyLink";
 import { Wordmark } from "@/components/ui";
-import { BUY_HREF } from "@/lib/product";
+import { BUY_HREF, SUPPORT_EMAIL } from "@/lib/product";
 
 export const metadata: Metadata = {
   title: "Download Deis for Mac, Windows, Linux or Android",
@@ -79,6 +79,13 @@ export default function DownloadPage() {
             <BuyLink href={BUY_HREF}>Buy for €9.99</BuyLink>
             <OfferNote />
           </div>
+          <p className="text-caption text-ink-3">
+            Questions before you buy, or a key that won&apos;t work? Email{" "}
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="underline underline-offset-2 hover:text-ink">
+              {SUPPORT_EMAIL}
+            </a>
+            .
+          </p>
         </section>
 
         <section id="gemma" aria-labelledby="gemma-title" className="grid scroll-mt-6 gap-5 rounded-panel border border-ink p-5 sm:p-6">
@@ -182,7 +189,10 @@ export default function DownloadPage() {
       </main>
       <footer className="mx-auto flex w-full max-w-[880px] flex-wrap items-center justify-between gap-x-6 border-t border-line px-4 py-8 md:px-8">
         <Credit />
-        <LinkedInLink className="text-caption text-ink-3 hover:text-ink" />
+        <span className="flex flex-wrap gap-x-6">
+          <SupportLink className="text-caption text-ink-3 hover:text-ink" />
+          <LinkedInLink className="text-caption text-ink-3 hover:text-ink" />
+        </span>
       </footer>
     </div>
   );
