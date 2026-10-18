@@ -20,6 +20,7 @@ import { yearsReach } from "@/lib/profile/types";
 import { AddJobButton } from "./AddJob";
 import { ActionBar, KeyHint } from "./deck/ActionBar";
 import { hiddenBars, pastedFirst, type Dir } from "./deck/logic";
+import { PostingText } from "./deck/PostingText";
 import { HiddenDialog, QueueLine } from "./deck/Status";
 import { SwipeCard } from "./deck/SwipeCard";
 import { useFeed } from "./deck/useFeed";
@@ -422,8 +423,8 @@ export function Deck() {
       <Dialog open={Boolean(details)} onClose={() => setDetails(null)} title={details ? `${details.title}, ${details.company}` : ""} description={details?.location} wide>
         {details && (
           <div className="grid gap-4">
-            <div className="max-h-[55dvh] overflow-y-auto rounded-panel border border-line bg-bg p-4 text-body leading-relaxed whitespace-pre-line text-ink">
-              {details.description || "This board didn't share a description. Open the original posting."}
+            <div className="max-h-[55dvh] overflow-y-auto rounded-panel border border-line bg-bg p-4 text-body leading-relaxed text-ink">
+              {details.description ? <PostingText text={details.description} /> : "This board didn't share a description. Open the original posting."}
             </div>
             {details.apply.length > 0 ? (
               <div className="flex flex-wrap gap-2">
