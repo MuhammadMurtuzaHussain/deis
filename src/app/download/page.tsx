@@ -10,7 +10,7 @@ import { BUY_HREF } from "@/lib/product";
 
 export const metadata: Metadata = {
   title: "Download Deis for Mac, Windows, Linux or Android",
-  description: "The Deis desktop app: your profile, the job deck and, with Ollama, Gemma itself, all on your own computer. Free for 14 days, then €9.99 once. Free on Android and iPhone.",
+  description: "The Deis desktop app: your profile, the job deck and, with Ollama, Gemma itself, all on your own computer. Free for 14 days, then €9.99 once. On Android and iPhone, the free app runs the demo.",
 };
 
 const REPO = "https://github.com/MuhammadMurtuzaHussain/deis";
@@ -60,7 +60,7 @@ export default function DownloadPage() {
           <div className="grid max-w-[60ch] gap-3">
             <h1 className="display text-[36px] leading-[1.05] text-ink text-balance sm:text-[48px]">Deis on your computer or phone</h1>
             <p className="text-lead text-ink-2">
-              Your profile, the job deck and, with Ollama, Gemma itself stay on your computer. It works offline once the jobs are saved. Free for 14 days with everything included, then €9.99 once. On a phone, Deis is free.
+              Your profile, the job deck and, with Ollama, Gemma itself stay on your computer. It works offline once the jobs are saved. Free for 14 days with everything included, then €9.99 once. On a phone, the free app runs the demo: two sample graduates on real Irish jobs.
             </p>
             <OfferNote />
           </div>
@@ -107,7 +107,7 @@ export default function DownloadPage() {
               <p className="text-body text-ink-2">In Deis, go to Settings, choose On this computer, then Download Gemma. About 7 GB, once. No terminal needed.</p>
             </li>
           </ol>
-          <p className="text-caption text-ink-3">Needs about 8 GB of memory. On a phone, or a computer with less, a free Google AI Studio key in Settings works too and isn&apos;t shared with anyone.</p>
+          <p className="text-caption text-ink-3">Needs about 8 GB of memory. On a computer with less, a free Google AI Studio key in Settings works too and isn&apos;t shared with anyone.</p>
         </section>
 
         <section aria-labelledby="first-open" className="grid gap-5">
@@ -169,7 +169,7 @@ export default function DownloadPage() {
             <div>
               <dt className="font-medium text-ink">On your phone</dt>
               <dd className="mt-1 text-ink-2">
-                The Android app and the iPhone home screen app are free. They run the same Deis as this website, with the demo&apos;s Gemma or your own free AI Studio key, since Deis can&apos;t run Gemma on a phone yet. Your profile stays on the phone.
+                The Android app and the iPhone home screen app are free, and run the same demo as this website: two sample graduates on real Irish jobs. Your own CV is read only by the desktop app, on your computer, so it never reaches Deis&apos;s server.
               </dd>
             </div>
             <div>

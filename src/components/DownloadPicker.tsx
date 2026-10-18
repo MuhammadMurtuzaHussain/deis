@@ -14,7 +14,7 @@ export const BUILDS = [
   { id: "mac-x64", os: "mac", label: "Mac with Intel", note: "macOS 12 or later", file: "Deis-mac-x64.dmg", Icon: AppleLogo },
   { id: "windows-x64", os: "windows", label: "Windows", note: "Windows 10 or 11, 64-bit", file: "Deis-windows-x64.exe", Icon: WindowsLogo },
   { id: "linux-x64", os: "linux", label: "Linux", note: "AppImage, 64-bit", file: "Deis-linux-x86_64.AppImage", Icon: LinuxLogo },
-  { id: "android", os: "android", label: "Android phone", note: "Android 7 or later", file: "Deis-android.apk", Icon: AndroidLogo },
+  { id: "android", os: "android", label: "Android demo", note: "Android 7 or later", file: "Deis-android.apk", Icon: AndroidLogo },
 ] as const;
 type Build = (typeof BUILDS)[number];
 
@@ -57,9 +57,9 @@ export function DownloadPicker() {
         ) : (
           <p className="text-body text-ink-2">
             {mine === "iphone"
-              ? "On an iPhone, Deis installs from Safari: open deiscareers.tech, tap Share, then Add to Home Screen."
+              ? "On an iPhone, the Deis demo installs from Safari: open deiscareers.tech, tap Share, then Add to Home Screen. Your own CV goes in the desktop app."
               : mine === null
-                ? "Deis runs on a Mac, Windows or Linux computer and on Android phones. Open this page there, or pick a build below."
+                ? "Deis runs on a Mac, Windows or Linux computer, and the free Android app runs the demo. Open this page there, or pick a build below."
                 : "Finding the right build for this device."}
           </p>
         )}

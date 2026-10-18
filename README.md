@@ -6,7 +6,7 @@
 
 It runs on your own model: Gemma on your laptop through Ollama, your own free Google AI Studio key, or any server you rent. With Gemma on your laptop it works with the Wi-Fi off.
 
-**Try it:** [deiscareers.tech](https://deiscareers.tech). Choose *Try a demo profile* to use it as one of two fictional graduates. The jobs are real. That makes an application cost about nothing, where pay-per-application tools often charge 30 cents to a euro each.
+**Try it:** [deiscareers.tech](https://deiscareers.tech). Choose *Try as Aoife* or *Try as Rahul* to use it as one of two fictional graduates. The jobs are real. The web demo takes no real CV: your own is read only by the desktop app, on your computer. That makes an application cost about nothing, where pay-per-application tools often charge 30 cents to a euro each.
 
 Built for the [DEV Hacktoberfest Open-Source AI Challenge, Week 2: Side Hustle](https://dev.to/challenges/hacktoberfest-week2-2026-10-12).
 
@@ -68,7 +68,7 @@ Your profile never leaves the browser except as the facts sent with a request to
 
 The desktop app for macOS, Windows and Linux runs everything on your computer: your profile, the job deck and, with [Ollama](https://ollama.com), Gemma itself. It's €9.99 once, after a 14-day free trial with everything included. The money pays for the ready-built app, updates and the daily Irish job feed.
 
-**October only:** 80% off with the code `HACKTOBERFEST` at checkout, so €2.
+**October only:** 80% off with the code `hacktoberfest` at checkout, so €2.
 
 **[Download Deis](https://deiscareers.tech/download)** for a Mac (Apple silicon or Intel), Windows or Linux. Windows and Linux copies update themselves; on a Mac, Deis tells you when a new version is out.
 
@@ -82,7 +82,7 @@ Builds come from the [Desktop installers](.github/workflows/desktop.yml) workflo
 
 ### On your phone
 
-Free on both, and the same Deis as the website: jobs and Gemma come through [deiscareers.tech](https://deiscareers.tech) (the demo's Gemma, or your own free AI Studio key in Settings), because Deis can't run Gemma on a phone yet. Your profile stays in the phone's storage.
+Free on both, and the same demo as the website: two sample graduates on real Irish jobs, through [deiscareers.tech](https://deiscareers.tech). Your own CV is read only by the desktop app, so it never reaches the server; Deis can't run Gemma on a phone yet.
 
 - **Android:** download `Deis-android.apk` from the [download page](https://deiscareers.tech/download) or the [latest release](https://github.com/MuhammadMurtuzaHussain/deis/releases/latest), open it, and allow your browser to install unknown apps when Android asks. Sideloading needs no Google account; Google's developer verification for sideloaded apps covers Brazil, Indonesia, Singapore and Thailand from 30 September 2026 and the rest of the world in 2027, so it doesn't affect Ireland yet.
 - **iPhone:** open deiscareers.tech in Safari, tap Share, then *Add to Home Screen*. Deis is an installable web app (manifest, icons, full screen), so it needs no App Store. An App Store or TestFlight build would need a $99 a year Apple Developer account.

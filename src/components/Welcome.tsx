@@ -105,7 +105,7 @@ export function Welcome() {
               <>
                 <a href="/download" className="link mt-5 inline-flex min-h-11 items-center gap-2 text-body font-medium">
                   <DownloadSimple size={18} weight="bold" aria-hidden />
-                  Get the app for Mac, Windows, Linux or Android
+                  Get the app for Mac, Windows or Linux
                 </a>
                 <p className="mt-3 flex max-w-[48ch] items-start gap-2 rounded-panel bg-accent-soft px-4 py-3 text-body text-ink">
                   <Laptop size={18} aria-hidden className="mt-0.5 shrink-0" />
