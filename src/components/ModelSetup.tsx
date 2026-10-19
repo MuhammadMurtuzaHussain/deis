@@ -1,8 +1,8 @@
 "use client";
 
-import { Check, Cloud, Desktop, HardDrives, Sparkle } from "@phosphor-icons/react";
+import { Check, Cloud, Desktop, HardDrives, Key, Sparkle } from "@phosphor-icons/react";
 import { useEffect, useState, type ReactNode } from "react";
-import { DEFAULTS, type AiSettings } from "@/lib/ai/settings";
+import { DEFAULTS, EFFORTS, type AiSettings, type ModelEffort } from "@/lib/ai/settings";
 import { api, ApiError } from "@/lib/client/api";
 import { effectiveModel, type EffectiveModel } from "@/lib/client/model";
 import { useStore } from "@/lib/client/store";
@@ -73,6 +73,59 @@ function Option({
   );
 }
 
+/** Key, model and effort for the bring-your-own-key options. The model box takes any name the provider offers. */
+function KeyFields({
+  keyValue,
+  setKey,
+  placeholder,
+  model,
+  setModel,
+  models,
+  effort,
+  setEffort,
+}: {
+  keyValue: string;
+  setKey: (v: string) => void;
+  placeholder: string;
+  model: string;
+  setModel: (v: string) => void;
+  models: string[];
+  effort: ModelEffort;
+  setEffort: (v: ModelEffort) => void;
+}) {
+  const list = `models-${placeholder.replace(/\W/g, "")}`;
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <Field label="API key">
+        {(id, d) => <input id={id} aria-describedby={d} type="password" autoComplete="off" spellCheck={false} value={keyValue} onChange={(e) => setKey(e.target.value)} className={inputClass} placeholder={placeholder} />}
+      </Field>
+      <Field label="Model" help="Pick one, or type any model name.">
+        {(id, d) => (
+          <>
+            <input id={id} aria-describedby={d} list={list} value={model} onChange={(e) => setModel(e.target.value)} className={inputClass} spellCheck={false} />
+            <datalist id={list}>
+              {models.map((m) => (
+                <option key={m} value={m} />
+              ))}
+            </datalist>
+          </>
+        )}
+      </Field>
+      <Field label="Effort" help="Low is quickest and cheapest. High thinks longest and writes best.">
+        {(id, d) => (
+          <select id={id} aria-describedby={d} value={effort} onChange={(e) => setEffort(e.target.value as ModelEffort)} className={selectClass}>
+            {EFFORTS.map((e) => (
+              <option key={e} value={e}>
+                {e[0].toUpperCase() + e.slice(1)}
+              </option>
+            ))}
+          </select>
+        )}
+      </Field>
+    </div>
+  );
+}
+
 export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded?: boolean }) {
   const { ai, setAi, status, effectiveModel: current } = useStore();
   const hosted = Boolean(status?.hosted);
@@ -85,6 +138,12 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
   const [baseUrl, setBaseUrl] = useState(ai?.provider === "openai" ? ai.baseUrl : "http://127.0.0.1:1234/v1");
   const [customModel, setCustomModel] = useState(ai?.provider === "openai" ? ai.model : "");
   const [customKey, setCustomKey] = useState(ai?.provider === "openai" ? (ai.apiKey ?? "") : "");
+  const [anthropicKey, setAnthropicKey] = useState(ai?.provider === "anthropic" ? ai.apiKey : "");
+  const [anthropicModel, setAnthropicModel] = useState(ai?.provider === "anthropic" ? ai.model : DEFAULTS.anthropic);
+  const [anthropicEffort, setAnthropicEffort] = useState<ModelEffort>(ai?.provider === "anthropic" ? ai.effort : "medium");
+  const [openaiKey, setOpenaiKey] = useState(ai?.provider === "openaiApi" ? ai.apiKey : "");
+  const [openaiModel, setOpenaiModel] = useState(ai?.provider === "openaiApi" ? ai.model : DEFAULTS.openaiApi);
+  const [openaiEffort, setOpenaiEffort] = useState<ModelEffort>(ai?.provider === "openaiApi" ? ai.effort : "medium");
   const { info: ollama, checking, refresh } = useOllama(hosted);
   // Waiting for Ollama to be installed and opened: look again every few seconds, so the next step appears by itself.
   const waiting = !hosted && ollama !== null && !ollama.running;
@@ -112,6 +171,10 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
         return googleKey.trim().length >= 10 ? { provider: "google", apiKey: googleKey.trim(), model: googleModel } : { provider: "google", apiKey: "placeholder-key", model: googleModel };
       case "ollama":
         return { provider: "ollama", baseUrl: DEFAULTS.ollamaUrl, model: ollamaModel, ...(betterWriting && ollamaModel !== DEFAULTS.kitModel ? { kitModel: DEFAULTS.kitModel } : {}) };
+      case "anthropic":
+        return { provider: "anthropic", apiKey: anthropicKey.trim().length >= 10 ? anthropicKey.trim() : "placeholder-key", model: anthropicModel.trim() || DEFAULTS.anthropic, effort: anthropicEffort };
+      case "openaiApi":
+        return { provider: "openaiApi", apiKey: openaiKey.trim().length >= 10 ? openaiKey.trim() : "placeholder-key", model: openaiModel.trim() || DEFAULTS.openaiApi, effort: openaiEffort };
       case "openai":
         return { provider: "openai", baseUrl: baseUrl.trim() || "http://127.0.0.1:1234/v1", model: customModel.trim() || "model" };
     }
@@ -119,6 +182,8 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
   // Only complete settings can be tested or saved.
   const settings = (): AiSettings | null => {
     if (choice === "google" && googleKey.trim().length < 10) return null;
+    if (choice === "anthropic" && anthropicKey.trim().length < 10) return null;
+    if (choice === "openaiApi" && openaiKey.trim().length < 10) return null;
     if (choice === "openai") return baseUrl && customModel ? { provider: "openai", baseUrl: baseUrl.trim(), model: customModel.trim(), apiKey: customKey.trim() || undefined } : null;
     return settingsFor(choice);
   };
@@ -313,6 +378,54 @@ export function ModelSetup({ onDone, embedded }: { onDone?: () => void; embedded
               )}
             </Field>
           </div>
+        </Option>
+
+        <Option
+          id="anthropic"
+          choice={choice}
+          setChoice={setPicked}
+          icon={<Key size={20} />}
+          title="Your own Anthropic key"
+          sub="Use Claude, such as Sonnet, with an effort setting. You pay Anthropic for what you use; Deis charges nothing extra."
+          model={modelOf("anthropic")}
+          inUse={inUse("anthropic")}
+        >
+          <ol className="mb-4 grid list-decimal gap-1 pl-5 text-body text-ink-2">
+            <li>
+              Create a key at{" "}
+              <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer noopener" className="link">
+                console.anthropic.com
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+              .
+            </li>
+            <li>Paste it here. It&apos;s kept on this device and sent with each request{hosted ? " through the demo server" : ""}.</li>
+          </ol>
+          <KeyFields keyValue={anthropicKey} setKey={setAnthropicKey} placeholder="sk-ant-..." model={anthropicModel} setModel={setAnthropicModel} models={["claude-sonnet-5-5", "claude-sonnet-5", "claude-sonnet-4-6", "claude-haiku-5-5", "claude-opus-5-5"]} effort={anthropicEffort} setEffort={setAnthropicEffort} />
+        </Option>
+
+        <Option
+          id="openaiApi"
+          choice={choice}
+          setChoice={setPicked}
+          icon={<Key size={20} />}
+          title="Your own OpenAI key"
+          sub="Use GPT with a reasoning effort. You pay OpenAI for what you use; Deis charges nothing extra."
+          model={modelOf("openaiApi")}
+          inUse={inUse("openaiApi")}
+        >
+          <ol className="mb-4 grid list-decimal gap-1 pl-5 text-body text-ink-2">
+            <li>
+              Create a key at{" "}
+              <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer noopener" className="link">
+                platform.openai.com/api-keys
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+              .
+            </li>
+            <li>Paste it here. It&apos;s kept on this device and sent with each request{hosted ? " through the demo server" : ""}.</li>
+          </ol>
+          <KeyFields keyValue={openaiKey} setKey={setOpenaiKey} placeholder="sk-..." model={openaiModel} setModel={setOpenaiModel} models={["gpt-5.5", "gpt-5.4", "gpt-5.4-mini", "gpt-5"]} effort={openaiEffort} setEffort={setOpenaiEffort} />
         </Option>
 
         <Option

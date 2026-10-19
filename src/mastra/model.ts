@@ -1,14 +1,18 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createOllama } from "ollama-ai-provider-v2";
 import type { ModelWithRetries } from "@mastra/core/agent";
-import { DEFAULTS, tierOf, type AiSettings, type Tier } from "@/lib/ai/settings";
+import { DEFAULTS, tierOf, type AiSettings, type ModelEffort, type Tier } from "@/lib/ai/settings";
 import { guardedFetch, isLoopback, isOfflineError, isOfflineMode, netFetch } from "@/lib/server/net";
 
 // One switch decides where Gemma runs, per request:
 //   ollama  → the user's own laptop; nothing leaves it
 //   google  → the user's free Google AI Studio key
+//   anthropic → the user's own Claude key, with an effort setting
+//   openaiApi → the user's own OpenAI key, with a reasoning effort
 //   openai  → any OpenAI-compatible server the user runs or rents
 //   demo    → the hosted demo's key, then up to two fallback hosts (AI Studio's Gemma 4 has bouts of 500s)
 // Each entry is a Mastra fallback: if one host fails, the next one answers.
@@ -128,6 +132,30 @@ function googleEntries(apiKey: string, primary: string, effort: Effort, id: stri
     modelSettings: { timeout: { stepMs: BUDGET[effort].stepMs } },
     providerOptions: { google: { thinkingConfig: { thinkingLevel: thinkingLevel(m, effort) } } },
   }));
+}
+
+/** The user's own Anthropic key. Effort is Claude's own setting for how much it thinks; the deadlines are the cloud ones. */
+function anthropicEntry(apiKey: string, model: string, effort: ModelEffort, budget: Effort): ModelWithRetries {
+  const anthropic = createAnthropic({ apiKey, fetch: via("Anthropic", "anthropic", guardedFetch("model")) });
+  return {
+    id: `anthropic:${model}`,
+    model: anthropic(model),
+    maxRetries: 1,
+    modelSettings: { timeout: { stepMs: BUDGET[budget].stepMs } },
+    providerOptions: { anthropic: { effort } },
+  };
+}
+
+/** The user's own OpenAI key. The chat endpoint, so the schema can ride along as JSON mode like on every other host. */
+function openaiApiEntry(apiKey: string, model: string, effort: ModelEffort, budget: Effort): ModelWithRetries {
+  const openai = createOpenAI({ apiKey, fetch: via("OpenAI", "openai", guardedFetch("model")) });
+  return {
+    id: `openaiApi:${model}`,
+    model: openai.chat(model),
+    maxRetries: 1,
+    modelSettings: { timeout: { stepMs: BUDGET[budget].stepMs } },
+    providerOptions: { openai: { reasoningEffort: effort } },
+  };
 }
 
 const ollamaUrl = () => (process.env.OLLAMA_BASE_URL || DEFAULTS.ollamaUrl).replace(/\/$/, "");
@@ -303,6 +331,10 @@ export function modelChain(settings: AiSettings, effort: Effort = "light"): Mode
       return demoChain(effort);
     case "google":
       return { tier: tierOf(settings), label: `${settings.model} on your Google AI Studio key`, models: googleEntries(settings.apiKey, settings.model, effort, "google"), effort };
+    case "anthropic":
+      return { tier: tierOf(settings), label: `${settings.model} on your Anthropic key`, models: [anthropicEntry(settings.apiKey, settings.model, settings.effort, effort)], effort };
+    case "openaiApi":
+      return { tier: tierOf(settings), label: `${settings.model} on your OpenAI key`, models: [openaiApiEntry(settings.apiKey, settings.model, settings.effort, effort)], effort };
     case "ollama":
       return ollamaChain(settings, effort);
     case "openai":

@@ -36,6 +36,7 @@ const firstName = (id: PersonaId) => PERSONAS[id].header.name.split(" ")[0];
 const MODELS: { where: PrivacyWhere; Icon: typeof Laptop; name: string; text: string }[] = [
   { where: "this computer", Icon: Laptop, name: "Gemma on this computer", text: "Runs through Ollama. Works offline, and your facts never leave the laptop." },
   { where: "google", Icon: Key, name: "Your Google AI Studio key", text: "Google's free tier runs Gemma for you. The posting and your facts go to Google." },
+  { where: "anthropic", Icon: Key, name: "Your Anthropic or OpenAI key", text: "Use Claude or GPT on your own key, with an effort setting. The posting and your facts go to that provider." },
   { where: "your server", Icon: HardDrives, name: "Your own server", text: "Any OpenAI-compatible server you run or trust, at home or at work." },
 ];
 

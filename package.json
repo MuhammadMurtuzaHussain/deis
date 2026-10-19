@@ -1,6 +1,6 @@
 {
   "name": "deis",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "private": true,
   "license": "AGPL-3.0-only",
   "scripts": {
@@ -22,7 +22,9 @@
     "node": ">=22 <25"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "4.0.82",
     "@ai-sdk/google": "^4.0.93",
+    "@ai-sdk/openai": "4.0.96",
     "@ai-sdk/openai-compatible": "^3.0.67",
     "@mastra/core": "^1.76.0",
     "@mastra/observability": "1.19.0",

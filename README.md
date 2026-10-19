@@ -48,7 +48,7 @@ Deis keeps your facts in one place, hides the Irish jobs you can't get before yo
 | **Paste any job** | A posting you found elsewhere goes through the same code and lands on top of the deck. It works offline. |
 | **Every line traced** | Select a fact and a lime highlighter draws behind every CV line that cites it. The Checks tab lists everything the guard removed. |
 | **You apply** | Word or PDF, copy the answers, open the posting. Deis never submits for you. A tracker nudges you to follow up. |
-| **Your model** | Gemma on your laptop through Ollama (Wi-Fi off, if you like), your own free AI Studio key, or any server you rent. |
+| **Your model** | Gemma on your laptop through Ollama (Wi-Fi off, if you like), your own free AI Studio key, your own Anthropic key (Claude Sonnet and others, with an effort setting), your own OpenAI key, or any server you rent. |
 
 ## Screenshots
 
@@ -151,7 +151,7 @@ flowchart LR
   D -->|swipe right| W[Mastra kit workflow: CV, letter and answers in parallel]
   W --> M{Model chain}
   M --> O[Gemma on Ollama, this computer]
-  M --> A[Your AI Studio key]
+  M --> A[Your AI Studio, Anthropic or OpenAI key]
   M --> R[OpenRouter Gemma, demo fallback]
   W --> GU[Guard: every line cites confirmed facts]
   GU --> K[Kit: Word, PDF, Checks tab]
@@ -178,7 +178,7 @@ The first person who used Deis properly wasn't who I built it for: an MBA studen
 
 - **Desktop app:** your profile, applications and, with Ollama, the model stay on your computer.
 - **Web demo and phones:** two fictional graduates only; a real CV is refused by the server.
-- **Your own AI Studio key or server:** the facts for each request go to the model you chose, and nowhere else.
+- **Your own AI Studio, Anthropic or OpenAI key, or server:** the facts for each request go to the model you chose, and nowhere else.
 - **Tracing:** Sentry and Mastra get step names, timings, token counts and guard rule names. Never a CV, a prompt or a key.
 
 ## Honest limits

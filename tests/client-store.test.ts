@@ -39,6 +39,16 @@ describe("effectiveModel", () => {
     expect(m.detail).toMatch(/127\.0\.0\.1:11434/);
   });
 
+  it("names Anthropic or OpenAI when the user brings their own key", () => {
+    const a = effectiveModel({ provider: "anthropic", apiKey: "sk-ant-test-0000000000", model: "claude-sonnet-5-5", effort: "high" }, status({}));
+    expect(a.privacy.where).toBe("anthropic");
+    expect(a.privacy.badge).toBe("Sent to Anthropic");
+    expect(a.detail).toBe("claude-sonnet-5-5 on your Anthropic key, high effort");
+    const o = effectiveModel({ provider: "openaiApi", apiKey: "sk-test-0000000000", model: "gpt-5.5", effort: "low" }, status({ offline: { mode: "on" } }));
+    expect(o.privacy.where).toBe("openai");
+    expect(o.usable).toBe(false);
+  });
+
   it("stands in with local Gemma for the demo in offline mode", () => {
     const m = effectiveModel(null, status({ demoModel: true, offline: { mode: "on" } }));
     expect(m.tier).toBe("local");

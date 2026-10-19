@@ -157,7 +157,7 @@ export default function DownloadPage() {
                 <a href="https://ollama.com" className="underline underline-offset-2 hover:text-ink">
                   Ollama
                 </a>{" "}
-                and Deis downloads Gemma for you in one click: about 8 GB of memory and a 7 GB download. Or use the demo&apos;s Gemma or your own free Google AI Studio key.
+                and Deis downloads Gemma for you in one click: about 8 GB of memory and a 7 GB download. Or use the demo&apos;s Gemma your own free Google AI Studio key, or your own Anthropic or OpenAI key (Claude Sonnet and GPT, with an effort setting).
               </dd>
             </div>
             <div>

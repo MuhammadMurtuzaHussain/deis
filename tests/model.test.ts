@@ -105,6 +105,36 @@ describe("local models", () => {
   });
 });
 
+describe("your own Anthropic or OpenAI key", () => {
+  it("sends Claude the effort setting and tags the tier as cloud", async () => {
+    const { modelChain } = await load();
+    const c = modelChain({ provider: "anthropic", apiKey: "sk-ant-test-0000000000", model: "claude-sonnet-5-5", effort: "high" }, "careful");
+    expect(c.tier).toBe("cloud");
+    expect(c.label).toMatch(/claude-sonnet-5-5.*Anthropic/);
+    expect(c.models).toHaveLength(1);
+    expect(c.models[0].providerOptions).toEqual({ anthropic: { effort: "high" } });
+  });
+
+  it("sends GPT the reasoning effort", async () => {
+    const { modelChain } = await load();
+    const c = modelChain({ provider: "openaiApi", apiKey: "sk-test-0000000000", model: "gpt-5.5", effort: "low" });
+    expect(c.tier).toBe("cloud");
+    expect(c.models[0].providerOptions).toEqual({ openai: { reasoningEffort: "low" } });
+  });
+
+  it("defaults to Sonnet at medium effort when the saved settings omit them", async () => {
+    const { aiSettingsSchema } = await import("@/lib/ai/settings");
+    expect(aiSettingsSchema.parse({ provider: "anthropic", apiKey: "sk-ant-test-0000000000" })).toMatchObject({ model: "claude-sonnet-5-5", effort: "medium" });
+    expect(aiSettingsSchema.safeParse({ provider: "anthropic", apiKey: "sk-ant-test-0000000000", effort: "extreme" }).success).toBe(false);
+  });
+
+  it("is refused in offline mode", async () => {
+    vi.stubEnv("DEIS_OFFLINE", "1");
+    const { modelChain } = await load();
+    expect(() => modelChain({ provider: "anthropic", apiKey: "sk-ant-test-0000000000", model: "claude-sonnet-5-5", effort: "medium" })).toThrow(/Offline mode is on/);
+  });
+});
+
 describe("offline mode", () => {
   beforeEach(() => vi.stubEnv("DEIS_OFFLINE", "1"));
 

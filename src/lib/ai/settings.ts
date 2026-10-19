@@ -10,7 +10,13 @@ export const DEFAULTS = {
   /** "Better writing": the bigger local model writes the kit (about 2 minutes on a 16 GB laptop). */
   kitModel: "gemma4:12b",
   ollamaUrl: "http://127.0.0.1:11434/api",
+  anthropic: "claude-sonnet-5-5",
+  openaiApi: "gpt-5.5",
 } as const;
+
+/** How hard a Claude or GPT model thinks before it answers. Higher is slower and costs more of the user's own credit. */
+export const EFFORTS = ["low", "medium", "high"] as const;
+export type ModelEffort = (typeof EFFORTS)[number];
 
 export const aiSettingsSchema = z.discriminatedUnion("provider", [
   /** The hosted demo's own key. Web demo only, rate limited. */
@@ -24,6 +30,10 @@ export const aiSettingsSchema = z.discriminatedUnion("provider", [
     model: z.string().max(80).default(DEFAULTS.ollama),
     kitModel: z.string().max(80).optional(),
   }),
+  /** The user's own Anthropic key: Claude, with the effort setting. */
+  z.object({ provider: z.literal("anthropic"), apiKey: z.string().min(10).max(300), model: z.string().min(1).max(80).default(DEFAULTS.anthropic), effort: z.enum(EFFORTS).default("medium") }),
+  /** The user's own OpenAI key: GPT, with the reasoning effort. */
+  z.object({ provider: z.literal("openaiApi"), apiKey: z.string().min(10).max(300), model: z.string().min(1).max(80).default(DEFAULTS.openaiApi), effort: z.enum(EFFORTS).default("medium") }),
   /** Any OpenAI-compatible server: LM Studio, llama.cpp, vLLM, OpenRouter. */
   z.object({
     provider: z.literal("openai"),
@@ -41,6 +51,8 @@ export function tierOf(s: AiSettings): Tier {
     case "demo":
       return "demo";
     case "google":
+    case "anthropic":
+    case "openaiApi":
       return "cloud";
     case "ollama":
       return "local";

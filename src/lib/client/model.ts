@@ -18,11 +18,13 @@ export type ServerStatus = {
   services: { jobSearch: boolean; tracing: boolean; cache: string; cachePing?: unknown };
 };
 
-export type PrivacyWhere = "this computer" | "google" | "your server" | "deis demo server";
+export type PrivacyWhere = "this computer" | "google" | "anthropic" | "openai" | "your server" | "deis demo server";
 
 export const PRIVACY_BADGE: Record<PrivacyWhere, string> = {
   "this computer": "Stays on this computer",
   google: "Sent to Google AI Studio",
+  anthropic: "Sent to Anthropic",
+  openai: "Sent to OpenAI",
   "your server": "Sent to your server",
   "deis demo server": "Sent to the Deis demo server",
 };
@@ -145,6 +147,22 @@ export function effectiveModel(ai: AiSettings | null, status: ServerStatus | nul
         usable: !offline,
         reason: offline ? OFFLINE_REASON : undefined,
       };
+    case "anthropic":
+    case "openaiApi": {
+      const a = settings.provider === "anthropic";
+      const who = a ? "Anthropic" : "OpenAI";
+      return {
+        ...base,
+        tier: "cloud",
+        label: a ? "Claude on your Anthropic key" : "GPT on your OpenAI key",
+        model: settings.model,
+        detail: `${settings.model} on your ${who} key, ${settings.effort} effort`,
+        privacy: privacy(a ? "anthropic" : "openai", `The facts used for each kit and the job posting are sent to ${who} on your own key, and the usage is billed to your ${who} account.`),
+        worksOffline: false,
+        usable: !offline,
+        reason: offline ? OFFLINE_REASON : undefined,
+      };
+    }
     case "ollama": {
       const local = LOOPBACK.test(settings.baseUrl);
       const kit = settings.kitModel && settings.kitModel !== settings.model ? `, kits by ${settings.kitModel}` : "";
